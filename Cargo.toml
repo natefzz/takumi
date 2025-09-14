@@ -18,7 +18,3 @@ codegen-units = 1
 # https://github.com/fzyzcjy/flutter_rust_bridge/issues/2601#issuecomment-2708849140
 [profile.release.package.takumi-wasm]
 strip = "debuginfo"
-
-# https://kobzol.github.io/rust/rustc/2025/05/20/disable-debuginfo-to-improve-rust-compile-times.html
-[profile.dev]
-debug = "line-tables-only"

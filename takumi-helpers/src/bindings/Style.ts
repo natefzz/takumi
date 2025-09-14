@@ -33,6 +33,8 @@ import type { OverflowWrap } from "./OverflowWrap";
 import type { Position } from "./Position";
 import type { Sides } from "./Sides";
 import type { TextAlign } from "./TextAlign";
+import type { TextDecoration } from "./TextDecoration";
+import type { TextDecorationLines } from "./TextDecorationLines";
 import type { TextOverflow } from "./TextOverflow";
 import type { TextShadows } from "./TextShadows";
 import type { TextStroke } from "./TextStroke";
@@ -97,7 +99,7 @@ export type Style = {
   borderRightWidth: CssValue<LengthUnit | null>;
   borderBottomWidth: CssValue<LengthUnit | null>;
   borderLeftWidth: CssValue<LengthUnit | null>;
-  border: CssValue<Border | null>;
+  border: CssValue<Border>;
   objectFit: CssValue<ObjectFit>;
   objectPosition: CssValue<BackgroundPosition>;
   backgroundImage: CssValue<BackgroundImages | null>;
@@ -131,6 +133,9 @@ export type Style = {
   textStrokeColor: CssValue<Color | null>;
   textStroke: CssValue<TextStroke | null>;
   textShadow: CssValue<TextShadows | null>;
+  textDecoration: CssValue<TextDecoration>;
+  textDecorationLine: CssValue<TextDecorationLines | null>;
+  textDecorationColor: CssValue<Color | null>;
   letterSpacing: CssValue<LengthUnit | null>;
   wordSpacing: CssValue<LengthUnit | null>;
   imageRendering: CssValue<ImageScalingAlgorithm>;

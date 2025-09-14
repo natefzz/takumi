@@ -279,6 +279,11 @@ impl Deref for Angle {
 }
 
 impl Angle {
+  /// Returns a zero angle.
+  pub const fn zero() -> Self {
+    Angle(0.0)
+  }
+
   /// Creates a new angle value, normalizing it to the range [0, 360).
   pub fn new(value: f32) -> Self {
     Angle(value.rem_euclid(360.0))

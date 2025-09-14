@@ -2,14 +2,17 @@ use std::borrow::Cow;
 use std::sync::Arc;
 
 use image::RgbaImage;
-use parley::{Glyph, PositionedLayoutItem, StyleProperty};
+use parley::{Glyph, GlyphRun, PositionedLayoutItem, StyleProperty};
 use swash::{Setting, tag_from_bytes};
 use taffy::{Layout, Point, Size};
 use zeno::{Command, Join, Mask, PathData, Placement, Stroke};
 
 use crate::{
   GlobalContext,
-  layout::style::{Affine, ImageScalingAlgorithm, SizedFontStyle, TextOverflow, TextTransform},
+  layout::style::{
+    Affine, Color, ImageScalingAlgorithm, SizedFontStyle, TextDecorationLine, TextOverflow,
+    TextTransform,
+  },
   rendering::{
     BorderProperties, Canvas, RenderContext, apply_mask_alpha_to_pixel, overlay_image,
     resolve_layers_tiles,
@@ -114,7 +117,7 @@ pub fn draw_text(text: &str, context: &RenderContext, canvas: &Canvas, layout: L
 
 fn draw_buffer(
   context: &RenderContext,
-  buffer: &parley::Layout<()>,
+  buffer: &parley::Layout<Color>,
   canvas: &Canvas,
   style: SizedFontStyle,
   layout: Layout,
@@ -126,7 +129,34 @@ fn draw_buffer(
         continue;
       };
 
+      let decoration_line = style
+        .parent
+        .text_decoration_line
+        .as_ref()
+        .unwrap_or(&style.parent.text_decoration.line);
+
+      let decoration_color = style
+        .parent
+        .text_decoration_color
+        .or(style.parent.text_decoration.color)
+        .unwrap_or(Color::black());
+
       let run = glyph_run.run();
+      let metrics = run.metrics();
+
+      // decoration underline should not overlap with the glyph descent part,
+      // as a temporary workaround, we draw the decoration under the glyph.
+      if decoration_line.has(TextDecorationLine::Underline) {
+        draw_decoration(
+          canvas,
+          &glyph_run,
+          decoration_color,
+          glyph_run.baseline() - metrics.underline_offset,
+          glyph_run.run().font_size() / 18.0,
+          layout,
+          context.transform,
+        );
+      }
 
       // Collect all glyph IDs for batch processing
       let glyph_ids = glyph_run.positioned_glyphs().map(|glyph| glyph.id);
@@ -151,8 +181,64 @@ fn draw_buffer(
           );
         }
       });
+
+      if decoration_line.has(TextDecorationLine::LineThrough) {
+        let size = glyph_run.run().font_size() / 18.0;
+        let offset = glyph_run.baseline() - metrics.strikethrough_offset;
+
+        draw_decoration(
+          canvas,
+          &glyph_run,
+          decoration_color,
+          offset,
+          size,
+          layout,
+          context.transform,
+        );
+      }
+
+      if decoration_line.has(TextDecorationLine::Overline) {
+        draw_decoration(
+          canvas,
+          &glyph_run,
+          decoration_color,
+          glyph_run.baseline() - metrics.ascent - metrics.underline_offset,
+          glyph_run.run().font_size() / 18.0,
+          layout,
+          context.transform,
+        );
+      }
     }
   }
+}
+
+fn draw_decoration(
+  canvas: &Canvas,
+  glyph_run: &GlyphRun<'_, Color>,
+  color: Color,
+  offset: f32,
+  size: f32,
+  layout: Layout,
+  transform: Affine,
+) {
+  let transform = Affine::translation(Size {
+    width: layout.border.left + layout.padding.left + glyph_run.offset(),
+    height: layout.border.top + layout.padding.top + offset,
+  }) * transform;
+
+  canvas.fill_color(
+    Point {
+      x: layout.location.x as i32,
+      y: layout.location.y as i32,
+    },
+    Size {
+      width: glyph_run.advance().round() as u32,
+      height: size.round() as u32,
+    },
+    color,
+    BorderProperties::default(),
+    transform,
+  );
 }
 
 fn draw_glyph(
@@ -345,7 +431,7 @@ pub(crate) fn create_text_layout(
   global: &GlobalContext,
   max_width: f32,
   max_height: Option<MaxHeight>,
-) -> parley::Layout<()> {
+) -> parley::Layout<Color> {
   let mut layout = global.font_context.create_layout(text, |builder| {
     let font_weight = font_style.parent.font_weight.into();
 
@@ -412,7 +498,7 @@ pub(crate) fn create_text_layout(
   layout
 }
 
-fn break_lines(layout: &mut parley::Layout<()>, max_width: f32, max_height: Option<MaxHeight>) {
+fn break_lines(layout: &mut parley::Layout<Color>, max_width: f32, max_height: Option<MaxHeight>) {
   let Some(max_height) = max_height else {
     return layout.break_all_lines(Some(max_width));
   };

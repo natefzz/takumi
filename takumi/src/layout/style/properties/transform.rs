@@ -436,3 +436,19 @@ impl Display for DecomposedTransform {
     )
   }
 }
+
+impl DecomposedTransform {
+  /// Checks if the transform is rotated
+  pub fn is_rotated(&self) -> bool {
+    self.rotation != Angle::zero()
+  }
+
+  /// Checks if the transform is scaled
+  pub fn is_scaled(&self) -> bool {
+    self.scale
+      != Size {
+        width: 1.0,
+        height: 1.0,
+      }
+  }
+}

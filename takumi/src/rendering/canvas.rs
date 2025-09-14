@@ -21,7 +21,7 @@ use zeno::{Mask, Placement};
 use crate::{
   layout::{
     Viewport,
-    style::{Affine, Color, ImageScalingAlgorithm},
+    style::{Affine, Angle, Color, ImageScalingAlgorithm},
   },
   rendering::BorderProperties,
 };
@@ -230,7 +230,7 @@ impl DrawCommand {
         color,
         border: radius,
         transform,
-      } => draw_filled_rect_color(canvas, size, offset, color, radius, transform),
+      } => fill_color(canvas, size, offset, color, radius, transform),
       DrawCommand::DrawMask {
         ref mask,
         placement,
@@ -270,7 +270,7 @@ pub(crate) fn apply_mask_alpha_to_pixel(pixel: Rgba<u8>, alpha: u8) -> Rgba<u8> 
 }
 
 /// Draws a filled rectangle with a solid color.
-pub(crate) fn draw_filled_rect_color<C: Into<Rgba<u8>>>(
+pub(crate) fn fill_color<C: Into<Rgba<u8>>>(
   image: &mut RgbaImage,
   size: Size<u32>,
   offset: Point<i32>,
@@ -279,10 +279,10 @@ pub(crate) fn draw_filled_rect_color<C: Into<Rgba<u8>>>(
   transform: Affine,
 ) {
   let color: Rgba<u8> = color.into();
-  let can_direct_draw = transform.is_identity() && radius.is_zero();
 
   // Fast path: if drawing on the entire canvas, we can just replace the entire canvas with the color
-  if can_direct_draw
+  if transform.is_identity()
+    && radius.is_zero()
     && color.0[3] == 255
     && offset.x == 0
     && offset.y == 0
@@ -299,12 +299,25 @@ pub(crate) fn draw_filled_rect_color<C: Into<Rgba<u8>>>(
     return;
   }
 
-  // Fast path: if drawing on the entire canvas, we can just replace the entire canvas with the color
+  let transform_part = transform.decompose();
+  let can_direct_draw = transform_part.rotation == Angle::zero() && radius.is_zero();
+
+  // Fast path: if no sub-pixel interpolation is needed, we can just draw the color directly
   if can_direct_draw {
-    for y in 0..size.height {
-      for x in 0..size.width {
-        let dest_x = x as i32 + offset.x;
-        let dest_y = y as i32 + offset.y;
+    let transformed_size = Size {
+      width: (size.width as f32 * transform_part.scale.width).round() as u32,
+      height: (size.height as f32 * transform_part.scale.height).round() as u32,
+    };
+
+    let transformed_offset = Point {
+      x: (offset.x as f32 + transform_part.translation.width).round() as i32,
+      y: (offset.y as f32 + transform_part.translation.height).round() as i32,
+    };
+
+    for y in 0..transformed_size.height {
+      for x in 0..transformed_size.width {
+        let dest_x = x as i32 + transformed_offset.x;
+        let dest_y = y as i32 + transformed_offset.y;
 
         if dest_x < 0 || dest_y < 0 {
           continue;
@@ -376,11 +389,20 @@ pub(crate) fn overlay_image(
   transform: Affine,
   algorithm: ImageScalingAlgorithm,
 ) {
-  if transform.is_identity() && border.is_zero() {
+  let transform_part = transform.decompose();
+  let can_direct_draw =
+    !transform_part.is_rotated() && !transform_part.is_scaled() && border.is_zero();
+
+  if can_direct_draw {
+    let transformed_offset = Point {
+      x: (offset.x as f32 + transform_part.translation.width).round() as i32,
+      y: (offset.y as f32 + transform_part.translation.height).round() as i32,
+    };
+
     for y in 0..image.height() {
       for x in 0..image.width() {
-        let dest_x = offset.x + x as i32;
-        let dest_y = offset.y + y as i32;
+        let dest_x = x as i32 + transformed_offset.x;
+        let dest_y = y as i32 + transformed_offset.y;
 
         if dest_x < 0 || dest_y < 0 {
           continue;

@@ -114,7 +114,7 @@ define_style!(
   border_right_width: Option<LengthUnit> = None => None,
   border_bottom_width: Option<LengthUnit> = None => None,
   border_left_width: Option<LengthUnit> = None => None,
-  border: Option<Border> = None => None,
+  border: Border = Border::default() => Border::default(),
   object_fit: ObjectFit = CssValue::Inherit => Default::default(),
   object_position: BackgroundPosition = CssValue::Inherit => BackgroundPosition::default(),
   background_image: Option<BackgroundImages> = None => None,
@@ -151,6 +151,9 @@ define_style!(
   #[serde(alias = "webkitTextStroke")]
   text_stroke: Option<TextStroke> = CssValue::Inherit => None,
   text_shadow: Option<TextShadows> = CssValue::Inherit => None,
+  text_decoration: TextDecoration = TextDecoration::default() => TextDecoration::default(),
+  text_decoration_line: Option<TextDecorationLines> = CssValue::Inherit => None,
+  text_decoration_color: Option<Color> = CssValue::Inherit => None,
   letter_spacing: Option<LengthUnit> = CssValue::Inherit => None,
   word_spacing: Option<LengthUnit> = CssValue::Inherit => None,
   image_rendering: ImageScalingAlgorithm = CssValue::Inherit => Default::default(),
@@ -295,7 +298,7 @@ impl InheritedStyle {
     Self::resolve_rect_with_longhands(
       self
         .border_width
-        .or_else(|| self.border.and_then(|border| border.width.map(Into::into)))
+        .or_else(|| self.border.width.map(Into::into))
         .unwrap_or(Sides::zero()),
       self.border_top_width,
       self.border_right_width,

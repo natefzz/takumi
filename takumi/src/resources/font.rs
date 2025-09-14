@@ -16,6 +16,8 @@ use swash::{
   scale::{ScaleContext, image::Image, outline::Outline},
 };
 
+use crate::layout::style::Color;
+
 /// Represents a resolved glyph that can be either a bitmap image or an outline
 #[derive(Clone)]
 pub enum ResolvedGlyph {
@@ -156,7 +158,7 @@ fn guess_font_format(source: &[u8]) -> Result<FontFormat, FontError> {
 
 /// A context for managing fonts in the rendering system.
 pub struct FontContext {
-  layout: Mutex<(parley::FontContext, LayoutContext<()>)>,
+  layout: Mutex<(parley::FontContext, LayoutContext<Color>)>,
   scale_cache: Mutex<FontScaleCache>,
 }
 
@@ -168,7 +170,7 @@ impl Default for FontContext {
 
 impl FontContext {
   /// Generate a cache key for glyph resolution
-  fn create_cache_key(&self, run: &Run<'_, ()>, glyph_id: u16) -> GlyphCacheKey {
+  fn create_cache_key(&self, run: &Run<'_, Color>, glyph_id: u16) -> GlyphCacheKey {
     let font = run.font();
     let synthesis = run.synthesis();
     let variations = synthesis.variations();
@@ -195,7 +197,7 @@ impl FontContext {
   /// Returns a HashMap of glyph_id -> CachedGlyph for efficient batch processing
   pub fn get_or_resolve_glyphs(
     &self,
-    run: &Run<'_, ()>,
+    run: &Run<'_, Color>,
     glyph_ids: impl Iterator<Item = u16> + Clone,
   ) -> HashMap<u16, CachedGlyph> {
     // Collect unique glyph IDs to avoid duplicate work
@@ -252,7 +254,7 @@ impl FontContext {
   }
 
   /// Get or resolve a single glyph using the cache (backward compatibility)
-  pub fn get_or_resolve_glyph(&self, run: &Run<'_, ()>, glyph_id: u16) -> Option<CachedGlyph> {
+  pub fn get_or_resolve_glyph(&self, run: &Run<'_, Color>, glyph_id: u16) -> Option<CachedGlyph> {
     self
       .get_or_resolve_glyphs(run, std::iter::once(glyph_id))
       .into_iter()
@@ -265,8 +267,8 @@ impl FontContext {
   pub fn create_layout(
     &self,
     text: &str,
-    func: impl FnOnce(&mut RangedBuilder<'_, ()>),
-  ) -> Layout<()> {
+    func: impl FnOnce(&mut RangedBuilder<'_, Color>),
+  ) -> Layout<Color> {
     let mut lock = self.layout.lock().unwrap();
     let (fcx, lcx) = &mut *lock;
 

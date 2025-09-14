@@ -68,7 +68,7 @@ impl BorderProperties {
       color: context
         .style
         .border_color
-        .or_else(|| context.style.border.and_then(|border| border.color))
+        .or(context.style.border.color)
         .unwrap_or(Color::black()),
       radius: Sides([top_left, top_right, bottom_right, bottom_left]),
       transform: context.transform,
