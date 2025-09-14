@@ -3,7 +3,13 @@ use std::{
   sync::mpsc::channel,
 };
 
-use image::{ExtendedColorType, ImageFormat, RgbaImage, codecs::jpeg::JpegEncoder};
+use image::{
+  ExtendedColorType, ImageEncoder, ImageFormat, RgbaImage,
+  codecs::{
+    jpeg::JpegEncoder,
+    png::{CompressionType, FilterType, PngEncoder},
+  },
+};
 use serde::{Deserialize, Serialize};
 use taffy::{AvailableSpace, NodeId, Point, TaffyTree, geometry::Size};
 
@@ -81,8 +87,19 @@ pub fn write_image<T: Write + Seek>(
         rgb.extend_from_slice(&px[..3]);
       }
 
-      let mut encoder = JpegEncoder::new_with_quality(destination, jpeg_quality.unwrap_or(75));
-      encoder.encode(&rgb, image.width(), image.height(), ExtendedColorType::Rgb8)?;
+      let encoder = JpegEncoder::new_with_quality(destination, jpeg_quality.unwrap_or(75));
+      encoder.write_image(&rgb, image.width(), image.height(), ExtendedColorType::Rgb8)?;
+    }
+    ImageOutputFormat::Png => {
+      let encoder =
+        PngEncoder::new_with_quality(destination, CompressionType::Fast, FilterType::Sub);
+
+      encoder.write_image(
+        image.as_raw(),
+        image.width(),
+        image.height(),
+        ExtendedColorType::Rgba8,
+      )?;
     }
     _ => {
       image.write_to(destination, format.into())?;

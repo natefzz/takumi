@@ -1,11 +1,11 @@
-use std::{path::Path, sync::Arc};
+use std::{fs::File, io::BufWriter, path::Path, sync::Arc};
 
-use image::{ColorType::Rgba8, load_from_memory, save_buffer};
+use image::load_from_memory;
 use parley::{GenericFamily, fontique::FontInfoOverride};
 use takumi::{
   GlobalContext,
   layout::{Viewport, node::NodeKind},
-  rendering::render,
+  rendering::{ImageOutputFormat, render, write_image},
   resources::image::ImageSource,
 };
 
@@ -69,5 +69,8 @@ pub fn run_style_width_test(node: NodeKind, fixture_path: &str) {
 
   let path = Path::new(fixture_path);
 
-  save_buffer(path, &image, 1200, 630, Rgba8).expect("Failed to save image");
+  let mut file = File::create(path).unwrap();
+  let mut buf = BufWriter::new(&mut file);
+
+  write_image(&image, &mut buf, ImageOutputFormat::Png, None).unwrap();
 }
