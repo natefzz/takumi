@@ -559,7 +559,7 @@ mod tests {
     let ctx = RenderContext {
       global: &GlobalContext::default(),
       viewport: Viewport::new(200, 100),
-      parent_font_size: DEFAULT_FONT_SIZE,
+      font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
     };
@@ -595,7 +595,7 @@ mod tests {
     let ctx = RenderContext {
       global: &GlobalContext::default(),
       viewport: Viewport::new(200, 100),
-      parent_font_size: DEFAULT_FONT_SIZE,
+      font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
     };

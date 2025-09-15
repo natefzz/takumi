@@ -35,8 +35,8 @@ pub struct RenderContext<'g> {
   pub(crate) global: &'g GlobalContext,
   /// The viewport for the image renderer.
   pub(crate) viewport: Viewport,
-  /// The font size in pixels, used for em and rem units.
-  pub(crate) parent_font_size: f32,
+  /// The font size in pixels.
+  pub(crate) font_size: f32,
   /// The scale factor for the image renderer.
   pub(crate) transform: Affine,
   /// The style after inheritance.

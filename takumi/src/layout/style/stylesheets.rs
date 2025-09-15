@@ -316,34 +316,31 @@ impl InheritedStyle {
   }
 
   pub fn to_sized_font_style(&'_ self, context: &RenderContext) -> SizedFontStyle<'_> {
-    let font_size = self
-      .font_size
-      .resolve_to_px(context, context.parent_font_size);
     let line_height = self.line_height.into_parley(context);
 
     let resolved_stroke_width = self
       .text_stroke
       .map(|stroke| stroke.width)
       .unwrap_or(self.text_stroke_width)
-      .resolve_to_px(context, font_size);
+      .resolve_to_px(context, context.font_size);
 
     SizedFontStyle {
       parent: self,
-      font_size,
+      font_size: context.font_size,
       line_height,
       stroke_width: resolved_stroke_width,
       letter_spacing: self
         .letter_spacing
-        .map(|spacing| spacing.resolve_to_px(context, font_size) / font_size),
+        .map(|spacing| spacing.resolve_to_px(context, context.font_size) / context.font_size),
       word_spacing: self
         .word_spacing
-        .map(|spacing| spacing.resolve_to_px(context, font_size) / font_size),
+        .map(|spacing| spacing.resolve_to_px(context, context.font_size) / context.font_size),
       text_shadow: self.text_shadow.as_ref().map(|shadows| {
         shadows
           .0
           .iter()
           .map(|shadow| {
-            SizedShadow::from_text_shadow(*shadow, context, Size::from_length(font_size))
+            SizedShadow::from_text_shadow(*shadow, context, Size::from_length(context.font_size))
           })
           .collect()
       }),

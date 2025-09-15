@@ -165,7 +165,7 @@ mod tests {
   fn create_test_context() -> RenderContext<'static> {
     RenderContext {
       global: &SHARED_GLOBAL_CONTEXT,
-      parent_font_size: DEFAULT_FONT_SIZE,
+      font_size: DEFAULT_FONT_SIZE,
       viewport: Viewport {
         width: VIEWPORT_WIDTH,
         height: VIEWPORT_HEIGHT,
@@ -364,7 +364,10 @@ mod tests {
 
   #[test]
   fn test_measure_text_with_different_font_size() {
-    let context = create_test_context();
+    let context = RenderContext {
+      font_size: 24.0,
+      ..create_test_context()
+    };
     let parent = InheritedStyle {
       font_size: LengthUnit::Px(24.0),
       ..Default::default()

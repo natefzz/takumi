@@ -56,7 +56,14 @@ optional = true
 [dependencies.taffy]
 version = "0.9"
 default-features = false
-features = ["flexbox", "grid", "taffy_tree"]
+features = [
+  "flexbox",
+  "grid",
+  "std",
+  "alloc",
+  "taffy_tree",
+  "strict_provenance",
+]
 
 [dependencies.serde]
 version = "1"

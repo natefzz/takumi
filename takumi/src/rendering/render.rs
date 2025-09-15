@@ -123,12 +123,12 @@ pub fn render<Nodes: Node<Nodes>>(
   let render_context = RenderContext {
     global,
     viewport,
-    parent_font_size: viewport.font_size,
+    font_size: viewport.font_size,
     transform: Affine::identity(),
     style: InheritedStyle::default(),
   };
 
-  let root_node_id = insert_taffy_node(&mut taffy, root_node, &render_context);
+  let root_node_id = insert_taffy_node(&mut taffy, root_node, &render_context, viewport.font_size);
 
   let available_space = Size {
     width: AvailableSpace::Definite(viewport.width as f32),
@@ -239,22 +239,26 @@ fn insert_taffy_node<'ctx, Nodes: Node<Nodes>>(
   taffy: &mut TaffyTree<NodeContext<'ctx, Nodes>>,
   mut node: Nodes,
   render_context: &RenderContext<'ctx>,
+  parent_font_size: f32,
 ) -> NodeId {
   let children = node.take_children();
   let node_style = node.get_style().inherit(&render_context.style);
 
-  let parent_font_size = node_style
+  let font_size = node_style
     .font_size
-    .resolve_to_px(render_context, render_context.parent_font_size);
+    .resolve_to_px(render_context, parent_font_size);
+
+  let new_context = RenderContext {
+    style: node_style.clone(),
+    font_size,
+    ..*render_context
+  };
 
   let node_id = taffy
     .new_leaf_with_context(
-      node_style.to_taffy_style(render_context),
+      node_style.to_taffy_style(&new_context),
       NodeContext {
-        context: RenderContext {
-          style: node_style.clone(),
-          ..*render_context
-        },
+        context: new_context,
         node,
       },
     )
@@ -263,13 +267,13 @@ fn insert_taffy_node<'ctx, Nodes: Node<Nodes>>(
   if let Some(children) = children {
     let render_context = RenderContext {
       style: node_style,
-      parent_font_size,
+      font_size,
       ..*render_context
     };
 
     let children_ids = children
       .into_iter()
-      .map(|child| insert_taffy_node(taffy, child, &render_context))
+      .map(|child| insert_taffy_node(taffy, child, &render_context, font_size))
       .collect::<Vec<_>>();
 
     taffy.set_children(node_id, &children_ids).unwrap();

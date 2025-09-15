@@ -215,7 +215,7 @@ impl LengthUnit {
       LengthUnit::Auto => CompactLength::auto(),
       LengthUnit::Percentage(value) => CompactLength::percent(value / 100.0),
       LengthUnit::Rem(value) => CompactLength::length(value * context.viewport.font_size),
-      LengthUnit::Em(value) => CompactLength::length(value * context.parent_font_size),
+      LengthUnit::Em(value) => CompactLength::length(value * context.font_size),
       LengthUnit::Vh(value) => {
         CompactLength::length(context.viewport.height as f32 * value / 100.0)
       }
@@ -250,7 +250,7 @@ impl LengthUnit {
       LengthUnit::Px(value) => value,
       LengthUnit::Percentage(value) => (value / 100.0) * percentage_full_px,
       LengthUnit::Rem(value) => value * context.viewport.font_size,
-      LengthUnit::Em(value) => value * context.parent_font_size,
+      LengthUnit::Em(value) => value * context.font_size,
       LengthUnit::Vh(value) => value * context.viewport.height as f32 / 100.0,
       LengthUnit::Vw(value) => value * context.viewport.width as f32 / 100.0,
       LengthUnit::Cm(value) => value * ONE_CM_IN_PX,

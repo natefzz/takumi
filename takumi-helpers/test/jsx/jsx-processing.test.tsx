@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { User2 } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { container, em } from "../../src/helpers";
+import { container } from "../../src/helpers";
 import { fromJsx } from "../../src/jsx/jsx";
 import type { ContainerNode, ImageNode, TextNode } from "../../src/types";
 
@@ -78,7 +78,8 @@ describe("fromJsx", () => {
       type: "text",
       text: "Hello",
       style: {
-        margin: [em(1), 0],
+        marginTop: "1em",
+        marginBottom: "1em",
         textStroke: "1px red",
       },
     } satisfies TextNode);
@@ -189,9 +190,12 @@ describe("fromJsx", () => {
           type: "text",
           text: "Title",
           style: {
-            fontSize: { em: 2 },
-            fontWeight: 700,
-            margin: [{ em: 0.67 }, 0],
+            fontSize: "2em",
+            fontWeight: "bold",
+            marginTop: "0.67em",
+            marginBottom: "0.67em",
+            marginLeft: 0,
+            marginRight: 0,
           },
         },
         {
@@ -205,13 +209,14 @@ describe("fromJsx", () => {
                   type: "text",
                   text: "bold",
                   style: {
-                    fontWeight: 700,
+                    fontWeight: "bold",
                   },
                 },
                 { type: "text", text: " text" },
               ],
               style: {
-                margin: [{ em: 1 }, 0],
+                marginTop: "1em",
+                marginBottom: "1em",
               },
             },
             {
@@ -269,9 +274,12 @@ describe("fromJsx", () => {
               type: "text",
               text: "Welcome",
               style: {
-                fontSize: { em: 2 },
-                fontWeight: 700,
-                margin: [{ em: 0.67 }, 0],
+                fontSize: "2em",
+                fontWeight: "bold",
+                marginBottom: "0.67em",
+                marginLeft: 0,
+                marginRight: 0,
+                marginTop: "0.67em",
               },
             },
             {

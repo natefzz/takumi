@@ -1,5 +1,4 @@
 import type { JSX } from "react";
-import { em, rgba } from "../helpers";
 import type { PartialStyle } from "../types";
 
 // Reference from Chromium's default style presets
@@ -10,54 +9,87 @@ export const stylePresets: Partial<
 > = {
   // Generic block-level elements
   p: {
-    margin: [em(1), 0],
+    marginTop: "1em",
+    marginBottom: "1em",
   },
   blockquote: {
-    margin: [em(1), 40],
+    marginTop: "1em",
+    marginBottom: "1em",
+    marginLeft: 40,
+    marginRight: 40,
   },
   center: {
     textAlign: "center",
   },
   hr: {
-    margin: [em(0.5), "auto"],
+    marginTop: "0.5em",
+    marginBottom: "0.5em",
+    marginLeft: "auto",
+    marginRight: "auto",
     borderWidth: 1,
   },
   // Heading elements
   h1: {
-    fontSize: em(2),
-    margin: [em(0.67), 0],
-    fontWeight: 700,
+    fontSize: "2em",
+    marginTop: "0.67em",
+    marginBottom: "0.67em",
+    marginLeft: 0,
+    marginRight: 0,
+    fontWeight: "bold",
   },
   h2: {
-    fontSize: em(1.5),
-    margin: [em(0.83), 0],
-    fontWeight: 700,
+    fontSize: "1.5em",
+    marginTop: "0.83em",
+    marginBottom: "0.83em",
+    marginLeft: 0,
+    marginRight: 0,
+    fontWeight: "bold",
   },
   h3: {
-    fontSize: em(1.17),
-    margin: [em(1), 0],
-    fontWeight: 700,
+    fontSize: "1.17em",
+    marginTop: "1em",
+    marginBottom: "1em",
+    marginLeft: 0,
+    marginRight: 0,
+    fontWeight: "bold",
   },
   h4: {
-    margin: [em(1.33), 0],
-    fontWeight: 700,
+    marginTop: "1.33em",
+    marginBottom: "1.33em",
+    marginLeft: 0,
+    marginRight: 0,
+    fontWeight: "bold",
   },
   h5: {
-    fontSize: em(0.83),
-    margin: [em(1.67), 0],
-    fontWeight: 700,
+    fontSize: "0.83em",
+    marginTop: "1.67em",
+    marginBottom: "1.67em",
+    marginLeft: 0,
+    marginRight: 0,
+    fontWeight: "bold",
   },
   h6: {
-    fontSize: em(0.67),
-    margin: [em(2.33), 0],
-    fontWeight: 700,
+    fontSize: "0.67em",
+    marginTop: "2.33em",
+    marginBottom: "2.33em",
+    marginLeft: 0,
+    marginRight: 0,
+    fontWeight: "bold",
   },
-  // Inline elements
+  u: {
+    textDecoration: "underline",
+  },
   strong: {
-    fontWeight: 700,
+    fontWeight: "bold",
   },
   b: {
-    fontWeight: 700,
+    fontWeight: "bold",
+  },
+  i: {
+    fontStyle: "italic",
+  },
+  em: {
+    fontStyle: "italic",
   },
   code: {
     fontFamily: "monospace",
@@ -67,16 +99,20 @@ export const stylePresets: Partial<
   },
   pre: {
     fontFamily: "monospace",
-    margin: [em(1), 0],
+    marginTop: "1em",
+    marginBottom: "1em",
   },
   mark: {
-    backgroundColor: rgba(255, 255, 0),
+    backgroundColor: 0xffff00,
     color: 0,
   },
   big: {
-    fontSize: em(1.2),
+    fontSize: "1.2em",
   },
   small: {
-    fontSize: em(1 / 1.2),
+    fontSize: "0.8em",
+  },
+  s: {
+    textDecoration: "line-through",
   },
 };
