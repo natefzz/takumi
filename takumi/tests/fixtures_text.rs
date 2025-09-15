@@ -356,3 +356,26 @@ fn fixtures_text_shadow() {
 
   run_style_width_test(text.into(), "tests/fixtures/text_shadow.png");
 }
+
+#[test]
+fn fixtures_text_shadow_no_blur_radius() {
+  // 5px 5px #558abb
+  let shadows = TextShadows(smallvec![TextShadow {
+    offset_x: Px(5.0),
+    offset_y: Px(5.0),
+    blur_radius: Px(0.0),
+    color: Color([85, 138, 187, 255]),
+  }]);
+
+  let text = TextNode {
+    style: StyleBuilder::default()
+      .background_color(Color([240, 240, 240, 255]))
+      .font_size(Px(72.0))
+      .text_shadow(Some(shadows))
+      .build()
+      .unwrap(),
+    text: "Shadowed Text".to_string(),
+  };
+
+  run_style_width_test(text.into(), "tests/fixtures/text_shadow_no_blur_radius.png");
+}

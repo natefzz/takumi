@@ -99,11 +99,11 @@ impl TryFrom<TextShadowsValue> for TextShadows {
             break;
           };
 
+          shadows.push(shadow);
+
           if parser.expect_comma().is_err() {
             break;
           }
-
-          shadows.push(shadow);
         }
 
         Ok(TextShadows(shadows))
@@ -174,5 +174,38 @@ impl<'i> FromCss<'i> for TextShadow {
       offset_y: lengths.1,
       blur_radius: lengths.2,
     })
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use crate::layout::style::LengthUnit::Px;
+
+  use super::*;
+
+  #[test]
+  fn test_parse_text_shadow_no_blur_radius() {
+    let result: TextShadows = TextShadowsValue::Css("5px 5px #558abb".to_string())
+      .try_into()
+      .unwrap();
+
+    assert_eq!(result.0.len(), 1);
+
+    let shadow = result.0[0];
+
+    assert_eq!(shadow.offset_x, Px(5.0));
+    assert_eq!(shadow.offset_y, Px(5.0));
+    assert_eq!(shadow.blur_radius, Px(0.0));
+    assert_eq!(shadow.color, Color([85, 138, 187, 255]));
+  }
+
+  #[test]
+  fn test_parse_text_shadow_multiple_values() {
+    let result: TextShadows =
+      TextShadowsValue::Css("5px 5px #558abb, 10px 10px #558abb".to_string())
+        .try_into()
+        .unwrap();
+
+    assert_eq!(result.0.len(), 2);
   }
 }
