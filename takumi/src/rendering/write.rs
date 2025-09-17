@@ -3,7 +3,6 @@ use std::io::Write;
 use image::{
   ExtendedColorType, ImageEncoder, ImageFormat, RgbaImage,
   codecs::{
-    avif::AvifEncoder,
     jpeg::JpegEncoder,
     png::{CompressionType, FilterType, PngEncoder},
   },
@@ -11,6 +10,8 @@ use image::{
 use serde::{Deserialize, Serialize};
 
 use image_webp::{ColorType, WebPEncoder};
+
+#[cfg(feature = "rayon")]
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::Error::IoError;
@@ -79,7 +80,11 @@ pub fn write_image<T: Write + std::io::Seek>(
       encoder.write_image(&rgb, image.width(), image.height(), ExtendedColorType::Rgb8)?;
     }
     ImageOutputFormat::Avif => {
-      let encoder = AvifEncoder::new_with_speed_quality(destination, 10, quality.unwrap_or(75));
+      let encoder = image::codecs::avif::AvifEncoder::new_with_speed_quality(
+        destination,
+        10,
+        quality.unwrap_or(75),
+      );
 
       encoder.write_image(
         image.as_raw(),
@@ -107,6 +112,28 @@ pub fn write_image<T: Write + std::io::Seek>(
   Ok(())
 }
 
+/// Extracts VP8L/VP8 payload from a RIFF WEBP buffer produced by `WebPEncoder`.
+fn extract_vp8_payload(buf: &[u8]) -> Result<Vec<u8>, crate::Error> {
+  let mut i = 12usize; // skip RIFF header
+  while i + 8 <= buf.len() {
+    let name = &buf[i..i + 4];
+    let len = u32::from_le_bytes(buf[i + 4..i + 8].try_into().unwrap()) as usize;
+    let start = i + 8;
+    let end = start + len;
+    if end > buf.len() {
+      break;
+    }
+    if name == b"VP8L" || name == b"VP8 " {
+      return Ok(buf[start..end].to_vec());
+    }
+    i = end + (len % 2);
+  }
+
+  Err(IoError(std::io::Error::other(
+    "failed to extract VP8 payload",
+  )))
+}
+
 /// Encode a sequence of RGBA frames into an animated WebP and write to `destination`.
 pub fn encode_animated_webp<W: Write>(
   frames: &[RgbaImage],
@@ -118,7 +145,8 @@ pub fn encode_animated_webp<W: Write>(
 ) -> Result<(), crate::Error> {
   assert_ne!(frames.len(), 0);
 
-  // encode frames losslessly and collect VP8L/VP8 payloads in parallel
+  // encode frames losslessly and collect VP8L/VP8 payloads
+  #[cfg(feature = "rayon")]
   let frames_payloads: Vec<Vec<u8>> = frames
     .par_iter()
     .map(|frame| {
@@ -127,25 +155,20 @@ pub fn encode_animated_webp<W: Write>(
         .encode(frame, frame.width(), frame.height(), ColorType::Rgba8)
         .map_err(|_| IoError(std::io::Error::other("WebP encode error")))?;
 
-      // extract VP8L/VP8 payload from RIFF WEBP produced by WebPEncoder
-      let mut i = 12usize; // skip RIFF header
-      while i + 8 <= buf.len() {
-        let name = &buf[i..i + 4];
-        let len = u32::from_le_bytes(buf[i + 4..i + 8].try_into().unwrap()) as usize;
-        let start = i + 8;
-        let end = start + len;
-        if end > buf.len() {
-          break;
-        }
-        if name == b"VP8L" || name == b"VP8 " {
-          return Ok(buf[start..end].to_vec());
-        }
-        i = end + (len % 2);
-      }
+      extract_vp8_payload(&buf)
+    })
+    .collect::<Result<_, _>>()?;
 
-      Err(IoError(std::io::Error::other(
-        "failed to extract VP8 payload",
-      )))
+  #[cfg(not(feature = "rayon"))]
+  let frames_payloads: Vec<Vec<u8>> = frames
+    .iter()
+    .map(|frame| {
+      let mut buf = Vec::new();
+      WebPEncoder::new(&mut buf)
+        .encode(frame, frame.width(), frame.height(), ColorType::Rgba8)
+        .map_err(|_| IoError(std::io::Error::other("WebP encode error")))?;
+
+      extract_vp8_payload(&buf)
     })
     .collect::<Result<_, _>>()?;
 
