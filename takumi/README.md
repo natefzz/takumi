@@ -12,7 +12,7 @@ Create a [`GlobalContext`](https://docs.rs/takumi/latest/takumi/struct.GlobalCon
 
 Then call [`render`](https://docs.rs/takumi/latest/takumi/rendering/render/) with [`Node`](https://docs.rs/takumi/latest/takumi/layout/node/trait.Node.html) and [`Viewport`](https://docs.rs/takumi/latest/takumi/layout/viewport/struct.Viewport.html) to get [`RgbaImage`](image::RgbaImage).
 
-Theres a helper function [`write_image`](https://docs.rs/takumi/latest/takumi/rendering/render/fn.write_image.html) to write the image to a destination implements [`Write`](std::io::Write) and [`Seek`](std::io::Seek).
+Theres a helper function [`write_image`](https://docs.rs/takumi/latest/takumi/rendering/write/fn.write_image.html) to write the image to a destination implements [`Write`](std::io::Write) and [`Seek`](std::io::Seek).
 
 ## Example
 

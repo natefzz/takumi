@@ -23,7 +23,7 @@
 //!
 //! Then call [`render`](crate::rendering::render) with [`Node`](crate::layout::node::Node) and [`Viewport`](crate::layout::viewport::Viewport) to get [`RgbaImage`](image::RgbaImage).
 //!
-//! Theres a helper function [`write_image`](crate::rendering::render::write_image) to write the image to a destination implements [`Write`](std::io::Write) and [`Seek`](std::io::Seek).
+//! Theres a helper function [`write_image`](crate::rendering::write::write_image) to write the image to a destination implements [`Write`](std::io::Write) and [`Seek`](std::io::Seek).
 //!
 //! # Example
 //!
