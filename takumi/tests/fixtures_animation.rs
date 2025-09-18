@@ -14,17 +14,22 @@ use test_utils::run_webp_animation_test;
 
 use crate::test_utils::run_png_animation_test;
 
-fn create_bouncing_text_nodes() -> Vec<NodeKind> {
-  (0..45)
+fn create_bouncing_text_nodes() -> Vec<(NodeKind, u32)> {
+  const FPS: u32 = 30;
+  const DURATION_MS: u32 = 1500;
+
+  const TOTAL_FRAMES: u32 = DURATION_MS * FPS / 1000;
+
+  (0..TOTAL_FRAMES)
     .map(|frame| {
       // compute bounce progress and transforms
-      let frames = 45u32;
+      let frames = TOTAL_FRAMES;
       let t = frame as f32 / (frames - 1) as f32;
       let theta = t * 2.0 * PI; // full cycle over all frames
       let bounce = (theta.sin()).abs();
       let y_offset = -bounce * 140.0; // pixels up
 
-      ContainerNode {
+      let node = ContainerNode {
         style: StyleBuilder::default()
           .background_color(Color([240, 240, 240, 255]))
           .width(Percentage(100.0))
@@ -60,7 +65,9 @@ fn create_bouncing_text_nodes() -> Vec<NodeKind> {
           .into(),
         ]),
       }
-      .into()
+      .into();
+
+      (node, DURATION_MS / TOTAL_FRAMES)
     })
     .collect::<Vec<_>>()
 }
@@ -68,8 +75,7 @@ fn create_bouncing_text_nodes() -> Vec<NodeKind> {
 #[test]
 fn fixtures_animation_bouncing_text_webp() {
   run_webp_animation_test(
-    &create_bouncing_text_nodes(),
-    1500,
+    create_bouncing_text_nodes(),
     "tests/fixtures/animation_bouncing_text.webp",
     true,
     false,
@@ -80,8 +86,7 @@ fn fixtures_animation_bouncing_text_webp() {
 #[test]
 fn fixtures_animation_bouncing_text_png() {
   run_png_animation_test(
-    &create_bouncing_text_nodes(),
-    1500,
+    create_bouncing_text_nodes(),
     "tests/fixtures/animation_bouncing_text.png",
     None,
   );

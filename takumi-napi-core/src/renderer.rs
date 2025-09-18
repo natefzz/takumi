@@ -10,7 +10,8 @@ use takumi::{
 
 use crate::{
   FontInput, FontInputOwned, load_font_task::LoadFontTask,
-  put_persistent_image_task::PutPersistentImageTask, render_task::RenderTask,
+  put_persistent_image_task::PutPersistentImageTask, render_animation_task::RenderAnimationTask,
+  render_task::RenderTask,
 };
 use std::{io::Cursor, sync::Arc};
 
@@ -24,6 +25,28 @@ pub struct RenderOptions {
   pub height: u32,
   pub format: Option<OutputFormat>,
   pub quality: Option<u8>,
+}
+
+#[napi(object)]
+pub struct AnimationFrameSource<'ctx> {
+  #[napi(ts_type = "AnyNode")]
+  pub node: Object<'ctx>,
+  pub duration_ms: u32,
+}
+
+#[napi(object)]
+pub struct RenderAnimationOptions {
+  pub width: u32,
+  pub height: u32,
+  pub format: Option<AnimationOutputFormat>,
+}
+
+#[napi(string_enum)]
+#[allow(non_camel_case_types)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum AnimationOutputFormat {
+  webp,
+  apng,
 }
 
 #[napi(string_enum)]
@@ -247,7 +270,7 @@ impl Renderer {
   }
 
   #[napi(
-    ts_args_type = "source: { type: string }, options: RenderOptions, signal?: AbortSignal",
+    ts_args_type = "source: AnyNode, options: RenderOptions, signal?: AbortSignal",
     ts_return_type = "Promise<Buffer>"
   )]
   pub fn render_async(
@@ -271,7 +294,34 @@ impl Renderer {
     ))
   }
 
-  #[napi(ts_args_type = "source: { type: string }, options: RenderOptions")]
+  #[napi(
+    ts_args_type = "source: AnimationFrameSource[], options: RenderAnimationOptions, signal?: AbortSignal",
+    ts_return_type = "Promise<Buffer>"
+  )]
+  pub fn render_animation(
+    &self,
+    env: Env,
+    source: Vec<AnimationFrameSource>,
+    options: RenderAnimationOptions,
+    signal: Option<AbortSignal>,
+  ) -> Result<AsyncTask<RenderAnimationTask>> {
+    let nodes = source
+      .into_iter()
+      .map(|frame| (env.from_js_value(frame.node).unwrap(), frame.duration_ms))
+      .collect::<Vec<_>>();
+
+    Ok(AsyncTask::with_optional_signal(
+      RenderAnimationTask {
+        nodes: Some(nodes),
+        context: Arc::clone(&self.0),
+        viewport: Viewport::new(options.width, options.height),
+        format: options.format.unwrap_or(AnimationOutputFormat::webp),
+      },
+      signal,
+    ))
+  }
+
+  #[napi(ts_args_type = "source: AnyNode, options: RenderOptions")]
   pub fn render(&self, env: Env, source: Object, options: RenderOptions) -> Result<Buffer> {
     let node: NodeKind = env.from_js_value(source)?;
 

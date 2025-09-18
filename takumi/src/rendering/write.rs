@@ -60,6 +60,25 @@ impl From<ImageOutputFormat> for ImageFormat {
   }
 }
 
+/// Represents a single frame of an animated image.
+#[derive(Debug, Clone)]
+pub struct AnimationFrame {
+  /// The image data for the frame.
+  pub image: RgbaImage,
+  /// The duration of the frame in milliseconds.
+  /// Maximum value is 0xffffff (24-bit), overflow will be clamped.
+  pub duration_ms: u32,
+}
+
+impl AnimationFrame {
+  /// Creates a new animation frame.
+  pub fn new(image: RgbaImage, duration_ms: u32) -> Self {
+    Self { image, duration_ms }
+  }
+}
+
+const U24_MAX: u32 = 0xffffff;
+
 /// Writes a single rendered image to `destination` using `format`.
 pub fn write_image<T: Write + std::io::Seek>(
   image: &RgbaImage,
@@ -137,8 +156,7 @@ fn extract_vp8_payload(buf: &[u8]) -> Result<Vec<u8>, crate::Error> {
 
 /// Encode a sequence of RGBA frames into an animated WebP and write to `destination`.
 pub fn encode_animated_webp<W: Write>(
-  frames: &[RgbaImage],
-  duration_ms: u16,
+  frames: &[AnimationFrame],
   destination: &mut W,
   blend: bool,
   dispose: bool,
@@ -148,30 +166,42 @@ pub fn encode_animated_webp<W: Write>(
 
   // encode frames losslessly and collect VP8L/VP8 payloads
   #[cfg(feature = "rayon")]
-  let frames_payloads: Vec<Vec<u8>> = frames
+  let frames_payloads: Vec<(&AnimationFrame, Vec<u8>)> = frames
     .par_iter()
     .map(|frame| {
       let mut buf = Vec::new();
       WebPEncoder::new(&mut buf)
-        .encode(frame, frame.width(), frame.height(), ColorType::Rgba8)
+        .encode(
+          &frame.image,
+          frame.image.width(),
+          frame.image.height(),
+          ColorType::Rgba8,
+        )
         .map_err(|_| IoError(std::io::Error::other("WebP encode error")))?;
 
-      extract_vp8_payload(&buf)
+      let payload = extract_vp8_payload(&buf)?;
+
+      Ok((frame, payload))
     })
-    .collect::<Result<_, _>>()?;
+    .collect::<Result<Vec<(&AnimationFrame, Vec<u8>)>, crate::Error>>()?;
 
   #[cfg(not(feature = "rayon"))]
-  let frames_payloads: Vec<Vec<u8>> = frames
+  let frames_payloads: Vec<(&AnimationFrame, Vec<u8>)> = frames
     .iter()
     .map(|frame| {
       let mut buf = Vec::new();
       WebPEncoder::new(&mut buf)
-        .encode(frame, frame.width(), frame.height(), ColorType::Rgba8)
+        .encode(
+          &frame.image,
+          frame.image.width(),
+          frame.image.height(),
+          ColorType::Rgba8,
+        )
         .map_err(|_| IoError(std::io::Error::other("WebP encode error")))?;
 
-      extract_vp8_payload(&buf)
+      Ok((frame, extract_vp8_payload(&buf)?))
     })
-    .collect::<Result<_, _>>()?;
+    .collect::<Result<Vec<(&AnimationFrame, Vec<u8>)>, crate::Error>>()?;
 
   // assemble RIFF WEBP with VP8X + ANIM + ANMF frames
   let mut chunks: Vec<u8> = Vec::new();
@@ -179,52 +209,64 @@ pub fn encode_animated_webp<W: Write>(
   // VP8X: set animation bit and alpha bit
   let mut vp8x = Vec::new();
   let mut flags: u8 = 0;
+
   flags |= 1 << 1; // animation
   flags |= 1 << 4; // alpha assumed
+
   vp8x.push(flags);
   vp8x.extend_from_slice(&[0u8; 3]);
+
   // canvas width/height (24-bit little-endian, stored as width-1 / height-1)
-  let cw = frames[0].width() - 1;
-  let ch = frames[0].height() - 1;
+  let cw = frames[0].image.width() - 1;
+  let ch = frames[0].image.height() - 1;
   let cw = cw.to_le_bytes();
   let ch = ch.to_le_bytes();
+
   vp8x.extend_from_slice(&cw[..3]);
   vp8x.extend_from_slice(&ch[..3]);
+
   // write VP8X chunk
   chunks.extend_from_slice(b"VP8X");
   chunks.extend_from_slice(&(vp8x.len() as u32).to_le_bytes());
   chunks.extend_from_slice(&vp8x);
+
   if vp8x.len() % 2 == 1 {
     chunks.push(0);
   }
 
   // ANIM chunk: background color (24-bit), loop count (u16)
   let mut anim = Vec::new();
+
   anim.extend_from_slice(&[0u8, 0u8, 0u8]); // bgcolor
+
   let loop_value: u16 = loop_count.unwrap_or(0);
+
   anim.extend_from_slice(&loop_value.to_le_bytes());
+
   chunks.extend_from_slice(b"ANIM");
   chunks.extend_from_slice(&(anim.len() as u32).to_le_bytes());
   chunks.extend_from_slice(&anim);
+
   if anim.len() % 2 == 1 {
     chunks.push(0);
   }
 
   // ANMF frames
-  let frames_len = frames_payloads.len() as u32;
-  for frame_payload in frames_payloads.into_iter() {
+  for (frame, vp8_data) in frames_payloads.into_iter() {
     let mut anmf = Vec::new();
     // frame rect: x(24) y(24) w(24) h(24) - x/y = 0
     anmf.extend_from_slice(&[0u8, 0u8, 0u8]); // x
     anmf.extend_from_slice(&[0u8, 0u8, 0u8]); // y
-    let w_bytes = (frames[0].width() - 1).to_le_bytes();
-    let h_bytes = (frames[0].height() - 1).to_le_bytes();
+
+    let w_bytes = (frame.image.width() - 1).to_le_bytes();
+    let h_bytes = (frame.image.height() - 1).to_le_bytes();
+
     anmf.extend_from_slice(&w_bytes[..3]);
     anmf.extend_from_slice(&h_bytes[..3]);
+
     // frame duration as 24-bit little-endian (milliseconds per spec)
-    let per_frame_ms = (duration_ms as u32) / frames_len;
-    let delay_bytes = per_frame_ms.to_le_bytes();
-    anmf.extend_from_slice(&delay_bytes[..3]);
+    anmf.extend_from_slice(&frame.duration_ms.clamp(0, U24_MAX).to_le_bytes()[..3]);
+
     // flags: 1 bit for dispose, 1 bit for blend in LSBs of a single byte
     let mut f: u8 = 0;
     if !blend {
@@ -237,9 +279,10 @@ pub fn encode_animated_webp<W: Write>(
 
     // append frame payload as nested chunk (VP8L or VP8)
     anmf.extend_from_slice(b"VP8L");
-    anmf.extend_from_slice(&(frame_payload.len() as u32).to_le_bytes());
-    anmf.extend_from_slice(&frame_payload);
-    if frame_payload.len() % 2 == 1 {
+    anmf.extend_from_slice(&(vp8_data.len() as u32).to_le_bytes());
+    anmf.extend_from_slice(&vp8_data);
+
+    if vp8_data.len() % 2 == 1 {
       anmf.push(0);
     }
 
@@ -254,6 +297,7 @@ pub fn encode_animated_webp<W: Write>(
   // write RIFF header
   destination.write_all(b"RIFF")?;
   let total_size = (4 + chunks.len()) as u32; // 'WEBP' + chunks
+
   destination.write_all(&total_size.to_le_bytes())?;
   destination.write_all(b"WEBP")?;
   destination.write_all(&chunks)?;
@@ -263,26 +307,31 @@ pub fn encode_animated_webp<W: Write>(
 
 /// Encode a sequence of RGBA frames into an animated PNG and write to `destination`.
 pub fn encode_animated_png<W: Write>(
-  frames: &[RgbaImage],
-  duration_ms: u16,
+  frames: &[AnimationFrame],
   destination: &mut W,
   loop_count: Option<u16>,
 ) -> Result<(), crate::Error> {
   assert_ne!(frames.len(), 0);
 
-  let mut encoder = png::Encoder::new(destination, frames[0].width(), frames[0].height());
+  let mut encoder = png::Encoder::new(
+    destination,
+    frames[0].image.width(),
+    frames[0].image.height(),
+  );
 
   encoder.set_color(png::ColorType::Rgba);
   encoder.set_compression(png::Compression::Fastest);
   encoder.set_animated(frames.len() as u32, loop_count.unwrap_or(0) as u32)?;
 
-  let per_frame_ms = duration_ms / frames.len() as u16;
-  encoder.set_frame_delay(per_frame_ms, 1000)?;
+  // Since APNG doesn't support variable frame duration, we use the minimum duration of all frames.
+  let min_duration_ms = frames.iter().map(|frame| frame.duration_ms).min().unwrap();
+
+  encoder.set_frame_delay(min_duration_ms.clamp(0, u16::MAX as u32) as u16, 1000)?;
 
   let mut writer = encoder.write_header()?;
 
   for frame in frames {
-    writer.write_image_data(frame.as_raw())?;
+    writer.write_image_data(frame.image.as_raw())?;
   }
 
   writer.finish()?;

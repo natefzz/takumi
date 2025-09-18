@@ -6,3 +6,7 @@ export interface FontDetails {
 }
 
 export type Font = FontDetails | Buffer | ArrayBuffer;
+
+export interface AnyNode {
+  type: string;
+}

@@ -2,11 +2,14 @@ use std::{fs::File, io::BufWriter, path::Path, sync::Arc};
 
 use image::load_from_memory;
 use parley::{GenericFamily, fontique::FontInfoOverride};
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use takumi::{
   GlobalContext,
   layout::{Viewport, node::NodeKind},
-  rendering::{ImageOutputFormat, encode_animated_png, encode_animated_webp, render, write_image},
+  rendering::{
+    AnimationFrame, ImageOutputFormat, encode_animated_png, encode_animated_webp, render,
+    write_image,
+  },
   resources::image::ImageSource,
 };
 
@@ -79,8 +82,7 @@ pub fn run_style_width_test(node: NodeKind, fixture_path: &str) {
 
 #[allow(dead_code)]
 pub fn run_webp_animation_test(
-  nodes: &[NodeKind],
-  duration_ms: u16,
+  nodes: Vec<(NodeKind, u32)>,
   fixture_path: &str,
   blend: bool,
   dispose: bool,
@@ -92,18 +94,19 @@ pub fn run_webp_animation_test(
   let viewport = create_test_viewport();
 
   let frames: Vec<_> = nodes
-    .par_iter()
-    .map(|node| render(viewport, &context, node.clone()).unwrap())
+    .into_par_iter()
+    .map(|(node, duration_ms)| {
+      AnimationFrame::new(render(viewport, &context, node).unwrap(), duration_ms)
+    })
     .collect();
 
   let mut out = File::create(fixture_path).unwrap();
-  encode_animated_webp(&frames, duration_ms, &mut out, blend, dispose, loop_count).unwrap();
+  encode_animated_webp(&frames, &mut out, blend, dispose, loop_count).unwrap();
 }
 
 #[allow(dead_code)]
 pub fn run_png_animation_test(
-  nodes: &[NodeKind],
-  duration_ms: u16,
+  nodes: Vec<(NodeKind, u32)>,
   fixture_path: &str,
   loop_count: Option<u16>,
 ) {
@@ -113,10 +116,12 @@ pub fn run_png_animation_test(
   let viewport = create_test_viewport();
 
   let frames: Vec<_> = nodes
-    .par_iter()
-    .map(|node| render(viewport, &context, node.clone()).unwrap())
+    .into_par_iter()
+    .map(|(node, duration_ms)| {
+      AnimationFrame::new(render(viewport, &context, node).unwrap(), duration_ms)
+    })
     .collect();
 
   let mut out = File::create(fixture_path).unwrap();
-  encode_animated_png(&frames, duration_ms, &mut out, loop_count).unwrap();
+  encode_animated_png(&frames, &mut out, loop_count).unwrap();
 }
