@@ -11,8 +11,8 @@
       "example/*"
     ],
     "catalog": {
-      "@types/bun": "^1.2.21",
-      "typescript": "^5.9.2"
+      "@types/bun": "^1.2.23",
+      "typescript": "^5.9.3"
     }
   },
   "scripts": {
@@ -26,9 +26,6 @@
   "trustedDependencies": [
     "simple-git-hooks"
   ],
-  "overrides": {
-    "simple-swizzle": "0.2.2"
-  },
   "simple-git-hooks": {
     "pre-commit": "bun lint && cargo fmt --all -- --check && cargo check"
   }

@@ -10,15 +10,15 @@
     "url": "git+https://github.com/kane50613/takumi.git"
   },
   "devDependencies": {
-    "@types/bun": "^1.2.21",
-    "@types/react": "^19.1.13",
+    "@types/bun": "^1.2.23",
+    "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
     "bun-plugin-dts": "^0.3.0",
     "lucide-react": "^0.544.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "tsup": "^8.5.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   },
   "exports": {
     ".": {
