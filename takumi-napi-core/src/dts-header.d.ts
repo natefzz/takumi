@@ -9,4 +9,6 @@ export type Font = FontDetails | Buffer | ArrayBuffer;
 
 export interface AnyNode {
   type: string;
+  // biome-ignore lint/suspicious/noExplicitAny: for extensibility
+  [key: string]: any;
 }

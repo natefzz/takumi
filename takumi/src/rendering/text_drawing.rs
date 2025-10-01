@@ -32,7 +32,7 @@ pub fn draw_text(text: &str, context: &RenderContext, canvas: &Canvas, layout: L
 
   let render_text = apply_text_transform(text, font_style.parent.text_transform);
 
-  let max_height = match font_style.parent.line_clamp {
+  let max_height = match *font_style.parent.line_clamp {
     Some(max_lines) => Some(MaxHeight::Both(content_box.height, max_lines)),
     None => Some(MaxHeight::Absolute(content_box.height)),
   };
@@ -75,7 +75,7 @@ pub fn draw_text(text: &str, context: &RenderContext, canvas: &Canvas, layout: L
 
   // If we have a mask image on the style, render it using the background tiling logic into a
   // temporary image and use that as the glyph fill.
-  if let Some(images) = &font_style.parent.mask_image {
+  if let Some(images) = &*font_style.parent.mask_image {
     let resolved_tiles = resolve_layers_tiles(
       images,
       font_style.parent.mask_position.as_ref(),
@@ -407,7 +407,8 @@ fn draw_glyph(
       let color = style
         .parent
         .text_stroke_color
-        .or_else(|| style.parent.text_stroke.and_then(|stroke| stroke.color))
+        .0
+        .or(style.parent.text_stroke.and_then(|stroke| stroke.color))
         .unwrap_or(style.parent.color);
 
       canvas.draw_mask(stroke_mask, stroke_placement, color, None);

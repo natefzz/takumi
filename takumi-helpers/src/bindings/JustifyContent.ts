@@ -7,6 +7,7 @@
  * along the main axis of the flex container.
  */
 export type JustifyContent =
+  | "normal"
   | "start"
   | "end"
   | "flex-start"

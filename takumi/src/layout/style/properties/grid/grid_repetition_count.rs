@@ -4,24 +4,35 @@ use ts_rs::TS;
 
 use crate::layout::style::{FromCss, ParseResult};
 
-/// Represents a grid track repetition pattern
+/// Represents grid track repetition keywords
 #[derive(Debug, Clone, Deserialize, Serialize, TS, Copy, PartialEq)]
 #[serde(rename_all = "kebab-case")]
-pub enum GridRepetitionCount {
+pub enum GridRepetitionKeyword {
   /// Automatically fills the available space with as many tracks as possible
   AutoFill,
   /// Automatically fits as many tracks as possible while maintaining minimum size
   AutoFit,
+}
+
+/// Represents a grid track repetition pattern
+#[derive(Debug, Clone, Deserialize, Serialize, TS, Copy, PartialEq)]
+#[serde(untagged)]
+pub enum GridRepetitionCount {
+  /// Keywords for auto-fill and auto-fit
+  Keyword(GridRepetitionKeyword),
   /// Specifies an exact number of track repetitions
-  #[serde(untagged)]
   Count(u16),
 }
 
 impl From<GridRepetitionCount> for taffy::RepetitionCount {
   fn from(repetition: GridRepetitionCount) -> Self {
     match repetition {
-      GridRepetitionCount::AutoFill => taffy::RepetitionCount::AutoFill,
-      GridRepetitionCount::AutoFit => taffy::RepetitionCount::AutoFit,
+      GridRepetitionCount::Keyword(GridRepetitionKeyword::AutoFill) => {
+        taffy::RepetitionCount::AutoFill
+      }
+      GridRepetitionCount::Keyword(GridRepetitionKeyword::AutoFit) => {
+        taffy::RepetitionCount::AutoFit
+      }
       GridRepetitionCount::Count(count) => taffy::RepetitionCount::Count(count),
     }
   }
@@ -32,10 +43,12 @@ impl<'i> FromCss<'i> for GridRepetitionCount {
     if let Ok(ident) = input.try_parse(Parser::expect_ident_cloned) {
       let ident_str = ident.as_ref();
       if ident_str.eq_ignore_ascii_case("auto-fill") {
-        return Ok(GridRepetitionCount::AutoFill);
+        return Ok(GridRepetitionCount::Keyword(
+          GridRepetitionKeyword::AutoFill,
+        ));
       }
       if ident_str.eq_ignore_ascii_case("auto-fit") {
-        return Ok(GridRepetitionCount::AutoFit);
+        return Ok(GridRepetitionCount::Keyword(GridRepetitionKeyword::AutoFit));
       }
       // If it's some other ident, treat as error
       let location = input.current_source_location();
@@ -87,14 +100,14 @@ mod tests {
     let mut parser = Parser::new(&mut input);
     assert_eq!(
       GridRepetitionCount::from_css(&mut parser).unwrap(),
-      GridRepetitionCount::AutoFill
+      GridRepetitionCount::Keyword(GridRepetitionKeyword::AutoFill)
     );
 
     let mut input = ParserInput::new("auto-fit");
     let mut parser = Parser::new(&mut input);
     assert_eq!(
       GridRepetitionCount::from_css(&mut parser).unwrap(),
-      GridRepetitionCount::AutoFit
+      GridRepetitionCount::Keyword(GridRepetitionKeyword::AutoFit)
     );
 
     let mut input = ParserInput::new("3");

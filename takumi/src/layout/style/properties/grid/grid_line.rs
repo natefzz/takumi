@@ -64,7 +64,7 @@ mod tests {
     let mut input = ParserInput::new("span 2 / 3");
     let mut parser = Parser::new(&mut input);
     let line = GridLine::from_css(&mut parser).unwrap();
-    assert_eq!(line.start, Some(GridPlacement::Span(2)));
+    assert_eq!(line.start, Some(GridPlacement::span(2)));
     assert_eq!(line.end, Some(GridPlacement::Line(3)));
   }
 }

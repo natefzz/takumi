@@ -8,6 +8,14 @@ use crate::{
   rendering::RenderContext,
 };
 
+/// Represents a fraction of the available space
+#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum FrLengthUnit {
+  /// A fraction of the available space
+  Fr(f32),
+}
+
 /// Represents a grid track sizing function with serde support
 #[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
 #[serde(try_from = "GridLengthUnitValue")]
@@ -16,21 +24,18 @@ pub enum GridLengthUnit {
   /// A fraction of the available space
   Fr(f32),
   /// A fixed length
-  #[serde(untagged)]
   Unit(LengthUnit),
 }
 
 /// Represents a grid length unit value with serde support
 #[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[serde(untagged)]
 pub enum GridLengthUnitValue {
   /// A fraction of the available space
-  Fr(f32),
+  Fr(FrLengthUnit),
   /// A fixed length
-  #[serde(untagged)]
   Unit(LengthUnit),
   /// A CSS string representation
-  #[serde(untagged)]
   Css(String),
 }
 
@@ -39,7 +44,7 @@ impl TryFrom<GridLengthUnitValue> for GridLengthUnit {
 
   fn try_from(value: GridLengthUnitValue) -> Result<Self, Self::Error> {
     match value {
-      GridLengthUnitValue::Fr(fr) => Ok(GridLengthUnit::Fr(fr)),
+      GridLengthUnitValue::Fr(FrLengthUnit::Fr(fr)) => Ok(GridLengthUnit::Fr(fr)),
       GridLengthUnitValue::Unit(unit) => Ok(GridLengthUnit::Unit(unit)),
       GridLengthUnitValue::Css(css) => {
         let mut input = ParserInput::new(&css);

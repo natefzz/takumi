@@ -17,7 +17,7 @@ fn test_style_align_items() {
       .width(Percentage(100.0))
       .height(Percentage(100.0))
       .display(Display::Flex)
-      .align_items(Some(AlignItems::Center))
+      .align_items(AlignItems::Center)
       .background_color(Color([0, 0, 255, 255]))
       .build()
       .unwrap(),
@@ -65,7 +65,7 @@ fn test_style_justify_content() {
       .width(Percentage(100.0))
       .height(Percentage(100.0))
       .display(Display::Flex)
-      .justify_content(Some(JustifyContent::Center))
+      .justify_content(JustifyContent::Center)
       .background_color(Color([0, 0, 255, 255]))
       .build()
       .unwrap(),

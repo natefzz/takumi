@@ -3,6 +3,7 @@
 //! This module contains CSS-like properties including layout properties,
 //! typography settings, positioning, and visual effects.
 
+mod aspect_ratio;
 mod background_image;
 mod background_position;
 mod background_repeat;
@@ -33,6 +34,7 @@ mod word_break;
 
 use std::borrow::Cow;
 
+pub use aspect_ratio::*;
 pub use background_image::*;
 pub use background_position::*;
 pub use background_repeat::*;
@@ -205,9 +207,12 @@ impl_from_taffy_enum!(
 ///
 /// This enum determines how space is distributed between and around flex items
 /// along the main axis of the flex container.
-#[derive(Debug, Clone, Deserialize, Serialize, Copy, TS, PartialEq)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, Copy, TS, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum JustifyContent {
+  /// The items are distributed using the normal flow of the flex container.
+  #[default]
+  Normal,
   /// Items are packed toward the start of the line.
   Start,
   /// Items are packed toward the end of the line.
@@ -235,19 +240,22 @@ pub enum JustifyContent {
   SpaceAround,
 }
 
-impl_from_taffy_enum!(
-  JustifyContent,
-  taffy::JustifyContent,
-  Start,
-  End,
-  FlexStart,
-  FlexEnd,
-  Center,
-  Stretch,
-  SpaceBetween,
-  SpaceAround,
-  SpaceEvenly
-);
+impl From<JustifyContent> for Option<taffy::JustifyContent> {
+  fn from(value: JustifyContent) -> Self {
+    match value {
+      JustifyContent::Normal => None,
+      JustifyContent::Start => Some(taffy::JustifyContent::Start),
+      JustifyContent::End => Some(taffy::JustifyContent::End),
+      JustifyContent::FlexStart => Some(taffy::JustifyContent::FlexStart),
+      JustifyContent::FlexEnd => Some(taffy::JustifyContent::FlexEnd),
+      JustifyContent::Center => Some(taffy::JustifyContent::Center),
+      JustifyContent::Stretch => Some(taffy::JustifyContent::Stretch),
+      JustifyContent::SpaceBetween => Some(taffy::JustifyContent::SpaceBetween),
+      JustifyContent::SpaceAround => Some(taffy::JustifyContent::SpaceAround),
+      JustifyContent::SpaceEvenly => Some(taffy::JustifyContent::SpaceEvenly),
+    }
+  }
+}
 
 /// This enum determines the layout algorithm used for the children of a node.
 #[derive(Debug, Clone, Deserialize, Serialize, Copy, TS, PartialEq, Default)]
@@ -266,9 +274,12 @@ impl_from_taffy_enum!(Display, taffy::Display, Flex, Grid);
 ///
 /// This enum determines how items are aligned within the flex container
 /// along the cross axis (perpendicular to the main axis).
-#[derive(Debug, Clone, Deserialize, Serialize, Copy, TS, PartialEq)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, Copy, TS, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum AlignItems {
+  /// The items are distributed using the normal flow of the flex container.
+  #[default]
+  Normal,
   /// Items are aligned to the start of the line in the cross axis
   Start,
   /// Items are aligned to the end of the line in the cross axis
@@ -285,17 +296,20 @@ pub enum AlignItems {
   Stretch,
 }
 
-impl_from_taffy_enum!(
-  AlignItems,
-  taffy::AlignItems,
-  Start,
-  End,
-  FlexStart,
-  FlexEnd,
-  Center,
-  Baseline,
-  Stretch
-);
+impl From<AlignItems> for Option<taffy::AlignItems> {
+  fn from(value: AlignItems) -> Self {
+    match value {
+      AlignItems::Normal => None,
+      AlignItems::Start => Some(taffy::AlignItems::Start),
+      AlignItems::End => Some(taffy::AlignItems::End),
+      AlignItems::FlexStart => Some(taffy::AlignItems::FlexStart),
+      AlignItems::FlexEnd => Some(taffy::AlignItems::FlexEnd),
+      AlignItems::Center => Some(taffy::AlignItems::Center),
+      AlignItems::Baseline => Some(taffy::AlignItems::Baseline),
+      AlignItems::Stretch => Some(taffy::AlignItems::Stretch),
+    }
+  }
+}
 
 /// Defines how flex items should wrap.
 ///

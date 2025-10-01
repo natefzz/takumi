@@ -118,7 +118,7 @@ fn render_node<Nodes: Node<Nodes>>(
 
   let node_context = taffy.get_node_context_mut(node_id).unwrap();
 
-  if let Some(node_transform) = &node_context.context.style.transform {
+  if let Some(node_transform) = &*node_context.context.style.transform {
     let node_transform = node_transform.to_affine(
       &node_context.context,
       &layout,
@@ -126,6 +126,7 @@ fn render_node<Nodes: Node<Nodes>>(
         .context
         .style
         .transform_origin
+        .0
         .unwrap_or_default(),
     );
 

@@ -7,6 +7,7 @@
  * along the cross axis (perpendicular to the main axis).
  */
 export type AlignItems =
+  | "normal"
   | "start"
   | "end"
   | "flex-start"

@@ -20,10 +20,8 @@ pub struct GridTemplateAreas(pub Vec<Vec<String>>);
 #[serde(untagged)]
 pub enum GridTemplateAreasValue {
   /// A 2D matrix representation (use "." for empty)
-  #[serde(untagged)]
   Matrix(Vec<Vec<String>>),
   /// A CSS string representation
-  #[serde(untagged)]
   Css(String),
 }
 

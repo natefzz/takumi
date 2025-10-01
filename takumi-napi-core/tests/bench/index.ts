@@ -229,35 +229,35 @@ const renderer = new Renderer();
 bench("createNode", createNode);
 
 summary(() => {
-  bench("createNode + renderAsync (raw)", async () => {
+  bench("createNode + render (raw)", async () => {
     const node = await createNode();
-    return renderer.renderAsync(node, {
+    return renderer.render(node, {
       width: 1200,
       height: 630,
       format: "raw",
     });
   });
 
-  bench("createNode + renderAsync (png)", async () => {
+  bench("createNode + render (png)", async () => {
     const node = await createNode();
-    return renderer.renderAsync(node, {
+    return renderer.render(node, {
       width: 1200,
       height: 630,
     });
   });
 
-  bench("createNode + renderAsync (webp)", async () => {
+  bench("createNode + render (webp)", async () => {
     const node = await createNode();
-    return renderer.renderAsync(node, {
+    return renderer.render(node, {
       width: 1200,
       height: 630,
       format: "webp",
     });
   });
 
-  bench("createNode + renderAsync (avif)", async () => {
+  bench("createNode + render (avif)", async () => {
     const node = await createNode();
-    return renderer.renderAsync(node, {
+    return renderer.render(node, {
       width: 1200,
       height: 630,
       format: "avif",
@@ -266,7 +266,7 @@ summary(() => {
 });
 
 summary(() => {
-  bench("createNode + renderAnimationAsync (webp, 30fps, 1000ms)", async () => {
+  bench("createNode + renderAnimation (webp, 30fps, 1000ms)", async () => {
     const { frames, fps, durationMs } = await createAnimationNodes();
 
     if (fps !== 30 || durationMs !== 1000) {
@@ -280,7 +280,7 @@ summary(() => {
     });
   });
 
-  bench("createNode + renderAnimationAsync (apng, 30fps, 1000ms)", async () => {
+  bench("createNode + renderAnimation (apng, 30fps, 1000ms)", async () => {
     const { frames, fps, durationMs } = await createAnimationNodes();
 
     if (fps !== 30 || durationMs !== 1000) {
@@ -297,7 +297,7 @@ summary(() => {
 
 await writeFile(
   "tests/bench/bench.png",
-  renderer.render(await createNode(), {
+  await renderer.render(await createNode(), {
     width: 1200,
     height: 630,
   }),

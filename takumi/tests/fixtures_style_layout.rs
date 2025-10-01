@@ -1,7 +1,7 @@
 use takumi::layout::{
   node::ContainerNode,
   style::{
-    Color, Display, FlexDirection, Gap, GridLengthUnit, GridTemplateComponent,
+    Color, CssOption, Display, FlexDirection, Gap, GridLengthUnit, GridTemplateComponent,
     GridTemplateComponents, GridTrackSize,
     LengthUnit::{Percentage, Px},
     StyleBuilder,
@@ -165,7 +165,7 @@ fn test_style_grid_template_columns() {
       .width(Px(200.0))
       .height(Px(200.0))
       .display(Display::Grid)
-      .grid_template_columns(Some(GridTemplateComponents(vec![
+      .grid_template_columns(CssOption::some(GridTemplateComponents(vec![
         GridTemplateComponent::Single(GridTrackSize::Fixed(GridLengthUnit::Unit(Px(50.0)))),
         GridTemplateComponent::Single(GridTrackSize::Fixed(GridLengthUnit::Unit(Px(100.0)))),
       ])))
@@ -205,7 +205,7 @@ fn test_style_grid_template_rows() {
       .width(Px(200.0))
       .height(Px(200.0))
       .display(Display::Grid)
-      .grid_template_rows(Some(GridTemplateComponents(vec![
+      .grid_template_rows(CssOption::some(GridTemplateComponents(vec![
         GridTemplateComponent::Single(GridTrackSize::Fixed(GridLengthUnit::Unit(Px(50.0)))),
         GridTemplateComponent::Single(GridTrackSize::Fixed(GridLengthUnit::Unit(Px(100.0)))),
       ])))

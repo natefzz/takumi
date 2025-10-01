@@ -12,7 +12,7 @@ import { Renderer } from "@takumi-rs/core";
 const render = new Renderer();
 
 const node = await fromJsx(<DocsTemplateV1 />);
-const buffer = await render.renderAsync(node, {
+const buffer = await render.render(node, {
   width: 1200,
   height: 630,
   format: "webp",

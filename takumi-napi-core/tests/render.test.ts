@@ -112,14 +112,14 @@ describe("setup", () => {
   });
 });
 
-describe("renderAsync", () => {
+describe("render", () => {
   const options = {
     width: 1200,
     height: 630,
   };
 
   test("webp sync", () => {
-    const result = renderer.render(node, {
+    const result = renderer.renderSync(node, {
       ...options,
       format: "webp",
     });
@@ -128,7 +128,7 @@ describe("renderAsync", () => {
   });
 
   test("webp", async () => {
-    const result = await renderer.renderAsync(node, {
+    const result = await renderer.render(node, {
       ...options,
       format: "webp",
     });
@@ -137,7 +137,7 @@ describe("renderAsync", () => {
   });
 
   test("avif", async () => {
-    const result = await renderer.renderAsync(node, {
+    const result = await renderer.render(node, {
       ...options,
       format: "avif",
     });
@@ -146,7 +146,7 @@ describe("renderAsync", () => {
   });
 
   test("png", async () => {
-    const result = await renderer.renderAsync(node, {
+    const result = await renderer.render(node, {
       ...options,
       format: "png",
     });
@@ -155,7 +155,7 @@ describe("renderAsync", () => {
   });
 
   test("jpeg 75% Quality", async () => {
-    const result = await renderer.renderAsync(node, {
+    const result = await renderer.render(node, {
       ...options,
       format: "jpeg",
       quality: 75,
@@ -165,7 +165,7 @@ describe("renderAsync", () => {
   });
 
   test("jpeg 100% Quality", async () => {
-    const result = await renderer.renderAsync(node, {
+    const result = await renderer.render(node, {
       ...options,
       format: "jpeg",
       quality: 100,

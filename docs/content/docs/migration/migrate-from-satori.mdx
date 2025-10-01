@@ -59,7 +59,7 @@ function OgImage({ title }: { title: string }) {
 - const png = new Resvg(svg).render().asPng();
 
 + const node = await fromJsx(<OgImage title="Takumi" />);
-+ const png = await renderer.renderAsync(node, {
++ const png = await renderer.render(node, {
 +   width: 1200,
 +   height: 630,
 +   format: "png", // "webp" is recommended too.

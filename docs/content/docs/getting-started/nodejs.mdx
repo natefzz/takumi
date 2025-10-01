@@ -57,7 +57,7 @@ Finally, render the layout to an image buffer.
 ```ts
 import type { OutputFormat } from "@takumi-rs/core";
 
-const imageBuffer = await renderer.renderAsync(createOpenGraphImage("John Doe"), {
+const imageBuffer = await renderer.render(createOpenGraphImage("John Doe"), {
   width: 1200,
   height: 630,
   format: "webp"

@@ -1,5 +1,6 @@
-use napi::bindgen_prelude::*;
+use napi::{De, bindgen_prelude::*};
 use napi_derive::napi;
+use serde::de::DeserializeOwned;
 use takumi::{
   GlobalContext,
   layout::{Viewport, node::NodeKind},
@@ -273,14 +274,13 @@ impl Renderer {
     ts_args_type = "source: AnyNode, options: RenderOptions, signal?: AbortSignal",
     ts_return_type = "Promise<Buffer>"
   )]
-  pub fn render_async(
+  pub fn render(
     &self,
-    env: Env,
     source: Object,
     options: RenderOptions,
     signal: Option<AbortSignal>,
   ) -> Result<AsyncTask<RenderTask>> {
-    let node = env.from_js_value(source)?;
+    let node = deserialize_with_tracing(source)?;
 
     Ok(AsyncTask::with_optional_signal(
       RenderTask {
@@ -294,20 +294,38 @@ impl Renderer {
     ))
   }
 
+  /// @deprecated Use `render` instead (to align with the naming convention for sync/async functions).
+  #[napi(
+    ts_args_type = "source: AnyNode, options: RenderOptions, signal?: AbortSignal",
+    ts_return_type = "Promise<Buffer>"
+  )]
+  pub fn render_async(
+    &self,
+    source: Object,
+    options: RenderOptions,
+    signal: Option<AbortSignal>,
+  ) -> Result<AsyncTask<RenderTask>> {
+    self.render(source, options, signal)
+  }
+
   #[napi(
     ts_args_type = "source: AnimationFrameSource[], options: RenderAnimationOptions, signal?: AbortSignal",
     ts_return_type = "Promise<Buffer>"
   )]
   pub fn render_animation(
     &self,
-    env: Env,
     source: Vec<AnimationFrameSource>,
     options: RenderAnimationOptions,
     signal: Option<AbortSignal>,
   ) -> Result<AsyncTask<RenderAnimationTask>> {
     let nodes = source
       .into_iter()
-      .map(|frame| (env.from_js_value(frame.node).unwrap(), frame.duration_ms))
+      .map(|frame| {
+        (
+          deserialize_with_tracing(frame.node).unwrap(),
+          frame.duration_ms,
+        )
+      })
       .collect::<Vec<_>>();
 
     Ok(AsyncTask::with_optional_signal(
@@ -322,8 +340,8 @@ impl Renderer {
   }
 
   #[napi(ts_args_type = "source: AnyNode, options: RenderOptions")]
-  pub fn render(&self, env: Env, source: Object, options: RenderOptions) -> Result<Buffer> {
-    let node: NodeKind = env.from_js_value(source)?;
+  pub fn render_sync(&self, source: Object, options: RenderOptions) -> Result<Buffer> {
+    let node: NodeKind = deserialize_with_tracing(source)?;
 
     let viewport = Viewport::new(options.width, options.height);
     let image = render(viewport, &self.0, node).unwrap();
@@ -341,4 +359,9 @@ impl Renderer {
 
     Ok(buffer.into())
   }
+}
+
+fn deserialize_with_tracing<T: DeserializeOwned>(value: Object) -> Result<T> {
+  let mut de = De::new(&value);
+  T::deserialize(&mut de).map_err(|e| Error::from_reason(e.to_string()))
 }

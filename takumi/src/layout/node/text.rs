@@ -92,7 +92,7 @@ pub(crate) fn measure_text(
     AvailableSpace::Definite(height) => Some(height),
   });
 
-  let height_constraint_with_max_lines = match (style.parent.line_clamp, height_constraint) {
+  let height_constraint_with_max_lines = match (*style.parent.line_clamp, height_constraint) {
     (Some(max_lines), Some(height)) => Some(MaxHeight::Both(height, max_lines)),
     (Some(max_lines), None) => Some(MaxHeight::Lines(max_lines)),
     (None, Some(height)) => Some(MaxHeight::Absolute(height)),
@@ -138,7 +138,7 @@ mod tests {
     layout::{
       DEFAULT_FONT_SIZE, DEFAULT_LINE_HEIGHT_SCALER, Viewport,
       node::measure_text,
-      style::{Affine, InheritedStyle, LengthUnit, LineHeight, SizedFontStyle},
+      style::{Affine, CssOption, InheritedStyle, LengthUnit, LineHeight, SizedFontStyle},
     },
     rendering::RenderContext,
   };
@@ -263,7 +263,7 @@ mod tests {
   fn test_measure_text_with_height_constraint() {
     let context = create_test_context();
     let parent = InheritedStyle {
-      line_clamp: Some(2),
+      line_clamp: CssOption::some(2),
       ..Default::default()
     };
 
@@ -315,7 +315,7 @@ mod tests {
   fn test_measure_text_with_line_clamp() {
     let context = create_test_context();
     let parent = InheritedStyle {
-      line_clamp: Some(3),
+      line_clamp: CssOption::some(3),
       ..Default::default()
     };
 
@@ -369,7 +369,7 @@ mod tests {
       ..create_test_context()
     };
     let parent = InheritedStyle {
-      font_size: Some(LengthUnit::Px(24.0)),
+      font_size: CssOption::some(LengthUnit::Px(24.0)),
       ..Default::default()
     };
 

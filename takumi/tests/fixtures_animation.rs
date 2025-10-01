@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use takumi::layout::{
   node::{ContainerNode, NodeKind, TextNode},
   style::{
-    AlignItems, Color, FlexDirection, FontFamily, FontWeight, JustifyContent,
+    AlignItems, Color, CssOption, FlexDirection, FontFamily, FontWeight, JustifyContent,
     LengthUnit::{Percentage, Px},
     StyleBuilder, Transform, Transforms,
   },
@@ -35,24 +35,23 @@ fn create_bouncing_text_nodes() -> Vec<(NodeKind, u32)> {
           .width(Percentage(100.0))
           .height(Percentage(100.0))
           .flex_direction(FlexDirection::Column)
-          .align_items(Some(AlignItems::Center))
-          .justify_content(Some(JustifyContent::Center))
+          .align_items(AlignItems::Center)
+          .justify_content(JustifyContent::Center)
           .build()
           .unwrap(),
         children: Some(vec![
           ContainerNode {
             style: StyleBuilder::default()
-              .transform(Some(Transforms(smallvec![Transform::Translate(
-                Px(0.0),
-                Px(y_offset)
-              ),])))
+              .transform(CssOption::some(Transforms(smallvec![
+                Transform::Translate(Px(0.0), Px(y_offset)),
+              ])))
               .build()
               .unwrap(),
             children: Some(vec![
               TextNode {
                 style: StyleBuilder::default()
-                  .font_size(Some(Px(56.0)))
-                  .font_family(Some(FontFamily::from("monospace")))
+                  .font_size(CssOption::some(Px(56.0)))
+                  .font_family(CssOption::some(FontFamily::from("monospace")))
                   .font_weight(FontWeight::from(700.0))
                   .color(Color([10, 10, 10, 255]))
                   .build()

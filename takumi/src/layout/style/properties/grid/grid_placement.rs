@@ -5,29 +5,61 @@ use ts_rs::TS;
 use crate::layout::style::{FromCss, ParseResult};
 
 /// Represents a grid placement with serde support
+#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
+#[serde(untagged)]
+pub enum GridPlacement {
+  /// Keyword placement
+  Keyword(GridPlacementKeyword),
+  /// Span count
+  Span(GridPlacementSpan),
+  /// Line index (1-based)
+  Line(i16),
+  /// Named grid area
+  Named(String),
+}
+
+impl Default for GridPlacement {
+  fn default() -> Self {
+    Self::auto()
+  }
+}
+
+impl GridPlacement {
+  /// Auto placement
+  pub const fn auto() -> Self {
+    Self::Keyword(GridPlacementKeyword::Auto)
+  }
+
+  /// Span placement
+  pub const fn span(span: u16) -> Self {
+    Self::Span(GridPlacementSpan::Span(span))
+  }
+}
+
+/// Represents a grid placement keyword
 #[derive(Debug, Clone, Deserialize, Serialize, TS, Default, PartialEq)]
 #[serde(rename_all = "kebab-case")]
-pub enum GridPlacement {
+pub enum GridPlacementKeyword {
   /// Auto placement
   #[default]
   Auto,
+}
+
+/// Represents a grid placement span
+#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum GridPlacementSpan {
   /// Span count
   Span(u16),
-  /// Line index (1-based)
-  #[serde(untagged)]
-  Line(i16),
-  #[serde(untagged)]
-  /// Named grid area
-  Named(String),
 }
 
 // Note: GridPlacement has a custom conversion due to its complex nature
 impl From<GridPlacement> for taffy::GridPlacement {
   fn from(placement: GridPlacement) -> Self {
     match placement {
-      GridPlacement::Auto => taffy::GridPlacement::Auto,
+      GridPlacement::Keyword(GridPlacementKeyword::Auto) => taffy::GridPlacement::Auto,
       GridPlacement::Line(line) => taffy::GridPlacement::Line(line.into()),
-      GridPlacement::Span(span) => taffy::GridPlacement::Span(span),
+      GridPlacement::Span(GridPlacementSpan::Span(span)) => taffy::GridPlacement::Span(span),
       GridPlacement::Named(_) => taffy::GridPlacement::Auto,
     }
   }
@@ -38,19 +70,19 @@ impl<'i> FromCss<'i> for GridPlacement {
     if let Ok(ident) = input.try_parse(Parser::expect_ident_cloned) {
       let ident_str = ident.as_ref();
       if ident_str.eq_ignore_ascii_case("auto") {
-        return Ok(GridPlacement::Auto);
+        return Ok(GridPlacement::auto());
       }
       if ident_str.eq_ignore_ascii_case("span") {
         // Next token should be a number or ident
         // Try integer first
         if let Ok(count) = input.try_parse(Parser::expect_integer) {
           let count = if count <= 0 { 1 } else { count as u16 };
-          return Ok(GridPlacement::Span(count));
+          return Ok(GridPlacement::span(count));
         }
 
         // Try identifier span name (treated as span 1 for named; enum only carries count)
         if let Ok(_name) = input.try_parse(Parser::expect_ident_cloned) {
-          return Ok(GridPlacement::Span(1));
+          return Ok(GridPlacement::span(1));
         }
 
         // If neither, error
@@ -98,21 +130,21 @@ mod tests {
     let mut parser = Parser::new(&mut input);
     assert_eq!(
       GridPlacement::from_css(&mut parser).unwrap(),
-      GridPlacement::Auto
+      GridPlacement::auto()
     );
 
     let mut input = ParserInput::new("span 2");
     let mut parser = Parser::new(&mut input);
     assert_eq!(
       GridPlacement::from_css(&mut parser).unwrap(),
-      GridPlacement::Span(2)
+      GridPlacement::span(2)
     );
 
     let mut input = ParserInput::new("span name");
     let mut parser = Parser::new(&mut input);
     assert_eq!(
       GridPlacement::from_css(&mut parser).unwrap(),
-      GridPlacement::Span(1)
+      GridPlacement::span(1)
     );
 
     let mut input = ParserInput::new("3");

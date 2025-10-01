@@ -22,7 +22,7 @@ function testRender(name: string, template: ReactNode) {
     const node = await fromJsx(template);
     const start = performance.now();
 
-    const buffer = await renderer.renderAsync(node, {
+    const buffer = await renderer.render(node, {
       width: 1200,
       height: 630,
       format: "webp",

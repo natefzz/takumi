@@ -2,7 +2,7 @@ use smallvec::smallvec;
 use takumi::layout::{
   node::{ContainerNode, TextNode},
   style::{
-    BoxShadow, BoxShadows, Color, FontWeight,
+    BoxShadow, BoxShadows, Color, CssOption, FontWeight,
     LengthUnit::{Percentage, Px, Rem},
     LineHeight, Position, Sides, StyleBuilder,
   },
@@ -53,10 +53,10 @@ fn test_style_border_radius_per_corner() {
       .height(Percentage(100.0))
       .background_color(Color([255, 0, 0, 255]))
       // Per-corner radii
-      .border_top_left_radius(Some(Px(40.0)))
-      .border_top_right_radius(Some(Px(10.0)))
-      .border_bottom_right_radius(Some(Px(80.0)))
-      .border_bottom_left_radius(Some(Px(0.0)))
+      .border_top_left_radius(CssOption::some(Px(40.0)))
+      .border_top_right_radius(CssOption::some(Px(10.0)))
+      .border_bottom_right_radius(CssOption::some(Px(80.0)))
+      .border_bottom_left_radius(CssOption::some(Px(0.0)))
       .build()
       .unwrap(),
     children: None,
@@ -75,8 +75,8 @@ fn test_style_border_width() {
       .width(Percentage(100.0))
       .height(Percentage(100.0))
       .background_color(Color::white())
-      .border_width(Some(Sides([Px(10.0); 4])))
-      .border_color(Some(Color([255, 0, 0, 255])))
+      .border_width(CssOption::some(Sides([Px(10.0); 4])))
+      .border_color(CssOption::some(Color([255, 0, 0, 255])))
       .build()
       .unwrap(),
     children: None,
@@ -93,7 +93,7 @@ fn test_style_border_width_with_radius() {
       .height(Percentage(100.0))
       .padding(Sides([Rem(4.0); 4]))
       .background_color(Color::white())
-      .border_color(Some(Color([255, 0, 0, 255])))
+      .border_color(CssOption::some(Color([255, 0, 0, 255])))
       .build()
       .unwrap(),
     children: Some(vec![
@@ -102,7 +102,7 @@ fn test_style_border_width_with_radius() {
           .width(Rem(16.0))
           .height(Rem(8.0))
           .border_radius(Sides([Px(10.0); 4]))
-          .border_width(Some(Sides([Px(4.0); 4])))
+          .border_width(CssOption::some(Sides([Px(4.0); 4])))
           .build()
           .unwrap(),
         children: None,
@@ -132,7 +132,7 @@ fn test_style_box_shadow() {
           .width(Px(100.0))
           .height(Px(100.0))
           .background_color(Color([255, 0, 0, 255]))
-          .box_shadow(Some(BoxShadows(smallvec![BoxShadow {
+          .box_shadow(CssOption::some(BoxShadows(smallvec![BoxShadow {
             color: Color([0, 0, 0, 128]),
             offset_x: Px(5.0),
             offset_y: Px(5.0),
@@ -167,7 +167,7 @@ fn test_style_box_shadow_inset() {
           .height(Px(80.0))
           .background_color(Color::white()) // White child for inset visibility
           .border_radius(Sides([Px(16.0); 4]))
-          .box_shadow(Some(BoxShadows(smallvec![BoxShadow {
+          .box_shadow(CssOption::some(BoxShadows(smallvec![BoxShadow {
             color: Color([0, 0, 0, 153]),
             offset_x: Px(4.0),
             offset_y: Px(6.0),
@@ -253,9 +253,9 @@ fn test_style_border_radius_width_offset() {
           .width(Percentage(100.0))
           .height(Percentage(100.0))
           .background_color(Color::white())
-          .border_width(Some(Sides([Px(1.0); 4])))
+          .border_width(CssOption::some(Sides([Px(1.0); 4])))
           .border_radius(Sides([Px(24.0); 4]))
-          .border_color(Some(Color([0, 0, 0, 255])))
+          .border_color(CssOption::some(Color([0, 0, 0, 255])))
           .build()
           .unwrap(),
         children: Some(vec![
@@ -264,7 +264,7 @@ fn test_style_border_radius_width_offset() {
             style: StyleBuilder::default()
               .width(Percentage(100.0))
               .padding(Sides([Rem(4.0); 4]))
-              .font_size(Some(Rem(4.0)))
+              .font_size(CssOption::some(Rem(4.0)))
               .font_weight(FontWeight::from(500.0))
               .line_height(LineHeight(Rem(4.0 * 1.5)))
               .build()

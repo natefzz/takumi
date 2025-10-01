@@ -103,7 +103,7 @@ function createStream(component: ReactNode, options?: ImageResponseOptions) {
         const renderer = await getRenderer(options);
 
         const node = await fromJsx(component);
-        const image = await renderer.renderAsync(
+        const image = await renderer.render(
           node,
           options ?? defaultOptions,
           options?.signal,

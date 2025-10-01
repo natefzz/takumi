@@ -23,7 +23,7 @@ async function render(module: Component) {
 
   const start = performance.now();
 
-  const buffer = await renderer.renderAsync(component, {
+  const buffer = await renderer.render(component, {
     width: module.width,
     height: module.height,
   });

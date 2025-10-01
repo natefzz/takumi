@@ -20,6 +20,7 @@ lru = "0.16"
 derive_builder = "0.20"
 image-webp = "0.2"
 png = "0.18.0"
+serde-untagged = "0.1"
 
 [dependencies.smallvec]
 version = "1.15"

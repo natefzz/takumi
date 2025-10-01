@@ -2,7 +2,7 @@ use takumi::layout::{
   node::{ContainerNode, NodeKind},
   style::{
     BackgroundImagesValue, BackgroundPositionsValue, BackgroundRepeat, BackgroundRepeats,
-    BackgroundRepeatsValue, BackgroundSizesValue, Color, CssValue, LengthUnit::Percentage,
+    BackgroundRepeatsValue, BackgroundSizesValue, Color, CssOption, LengthUnit::Percentage,
     StyleBuilder,
   },
 };
@@ -15,7 +15,7 @@ fn create_container(background_images: BackgroundImagesValue) -> ContainerNode<N
     style: StyleBuilder::default()
       .width(Percentage(100.0))
       .height(Percentage(100.0))
-      .background_image(Some(background_images.try_into().unwrap()))
+      .background_image(CssOption::some(background_images.try_into().unwrap()))
       .build()
       .unwrap(),
     children: None,
@@ -32,10 +32,12 @@ fn create_container_with(
     style: StyleBuilder::default()
       .width(Percentage(100.0))
       .height(Percentage(100.0))
-      .background_image(Some(background_images.try_into().unwrap()))
-      .background_size(background_size.map(|v| v.try_into().unwrap()))
-      .background_position(background_position.map(|v| v.try_into().unwrap()))
-      .background_repeat(background_repeat.map(|v| v.try_into().unwrap()))
+      .background_image(CssOption::some(background_images.try_into().unwrap()))
+      .background_size(CssOption(background_size.map(|v| v.try_into().unwrap())))
+      .background_position(CssOption(
+        background_position.map(|v| v.try_into().unwrap()),
+      ))
+      .background_repeat(CssOption(background_repeat.map(|v| v.try_into().unwrap())))
       .build()
       .unwrap(),
     children: None,
@@ -246,10 +248,11 @@ fn test_background_image_grid_pattern() {
 
   assert_eq!(
     container.style.background_repeat,
-    CssValue::Value(Some(BackgroundRepeats(vec![
+    CssOption::some(BackgroundRepeats(vec![
       BackgroundRepeat::repeat(),
       BackgroundRepeat::repeat()
-    ])))
+    ]))
+    .into()
   );
 
   run_style_width_test(

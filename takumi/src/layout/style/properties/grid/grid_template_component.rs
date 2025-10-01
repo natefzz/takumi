@@ -143,6 +143,8 @@ impl<'i> FromCss<'i> for GridTemplateComponent {
 
 #[cfg(test)]
 mod tests {
+  use crate::layout::style::GridRepetitionKeyword;
+
   use super::*;
   use cssparser::{Parser, ParserInput};
 
@@ -153,7 +155,10 @@ mod tests {
     let tpl = GridTemplateComponent::from_css(&mut parser).unwrap();
     match tpl {
       GridTemplateComponent::Repeat(repetition, tracks) => {
-        assert_eq!(repetition, GridRepetitionCount::AutoFill);
+        assert_eq!(
+          repetition,
+          GridRepetitionCount::Keyword(GridRepetitionKeyword::AutoFill)
+        );
         assert_eq!(tracks.len(), 2);
         assert_eq!(tracks[0].names, vec!["a".to_string()]);
         assert_eq!(tracks[1].names, vec!["b".to_string()]);

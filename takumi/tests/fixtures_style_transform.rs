@@ -2,7 +2,7 @@ use smallvec::smallvec;
 use takumi::layout::{
   node::{ContainerNode, ImageNode, TextNode},
   style::{
-    Angle, BackgroundPosition, Color, Display,
+    Angle, BackgroundPosition, Color, CssOption, Display,
     LengthUnit::{Percentage, Px},
     Position, PositionComponent, PositionKeywordX, PositionKeywordY, Sides, Style, StyleBuilder,
     Transform, Transforms,
@@ -26,7 +26,7 @@ fn test_style_transform_origin_center() {
     children: Some(
       ROTATED_ANGLES
         .iter()
-        .map(|angle| create_rotated_container(*angle, None).into())
+        .map(|angle| create_rotated_container(*angle, BackgroundPosition::default()).into())
         .collect(),
     ),
   };
@@ -45,7 +45,7 @@ fn test_style_transform_origin_top_left() {
       .height(Percentage(100.0))
       .background_color(Color::white())
       .display(Display::Flex)
-      .font_size(Some(Px(24.0)))
+      .font_size(CssOption::some(Px(24.0)))
       .build()
       .unwrap(),
     children: Some(
@@ -54,10 +54,10 @@ fn test_style_transform_origin_top_left() {
         .map(|angle| {
           create_rotated_container(
             *angle,
-            Some(BackgroundPosition {
+            BackgroundPosition {
               x: PositionComponent::KeywordX(PositionKeywordX::Left),
               y: PositionComponent::KeywordY(PositionKeywordY::Top),
-            }),
+            },
           )
           .into()
         })
@@ -71,10 +71,10 @@ fn test_style_transform_origin_top_left() {
   );
 }
 
-fn create_rotated_container(angle: f32, transform_origin: Option<BackgroundPosition>) -> ImageNode {
+fn create_rotated_container(angle: f32, transform_origin: BackgroundPosition) -> ImageNode {
   ImageNode {
     style: StyleBuilder::default()
-      .transform(Some(Transforms(smallvec![
+      .transform(CssOption::some(Transforms(smallvec![
         Transform::Translate(Percentage(-50.0), Percentage(-50.0)),
         Transform::Rotate(Angle::new(angle)),
       ])))
@@ -85,11 +85,11 @@ fn create_rotated_container(angle: f32, transform_origin: Option<BackgroundPosit
         Percentage(0.0),
         Percentage(50.0),
       ]))
-      .transform_origin(transform_origin)
+      .transform_origin(CssOption::some(transform_origin))
       .width(Px(200.0))
       .height(Px(200.0))
       .background_color(Color([255, 0, 0, 30]))
-      .border_width(Some(Sides([Px(1.0); 4])))
+      .border_width(CssOption::some(Sides([Px(1.0); 4])))
       .border_radius(Sides([Px(12.0); 4]))
       .build()
       .unwrap(),
@@ -107,7 +107,7 @@ fn test_style_transform_translate_and_scale() {
       .height(Percentage(100.0))
       .background_color(Color::white())
       .display(Display::Flex)
-      .font_size(Some(Px(24.0)))
+      .font_size(CssOption::some(Px(24.0)))
       .build()
       .unwrap(),
     children: None,
@@ -133,8 +133,8 @@ fn test_style_transform_translate_and_scale() {
     style: StyleBuilder::default()
       .width(Px(300.0))
       .height(Px(300.0))
-      .border_width(Some(Sides([Px(1.0); 4])))
-      .transform(Some(Transforms(smallvec![
+      .border_width(CssOption::some(Sides([Px(1.0); 4])))
+      .transform(CssOption::some(Transforms(smallvec![
         Transform::Translate(Px(-100.0), Px(100.0)),
         Transform::Rotate(Angle::new(90.0)),
       ])))
@@ -158,15 +158,15 @@ fn test_style_transform_translate_and_scale() {
 
   let scaled = ContainerNode {
     style: StyleBuilder::default()
-      .transform(Some(Transforms(smallvec![
+      .transform(CssOption::some(Transforms(smallvec![
         Transform::Translate(Px(0.0), Px(200.0)),
         Transform::Scale(2.0, 2.0),
       ])))
       .background_color(Color([0, 255, 0, 255]))
       .width(Px(100.0))
       .height(Px(100.0))
-      .border_width(Some(Sides([Px(1.0); 4])))
-      .font_size(Some(Px(12.0)))
+      .border_width(CssOption::some(Sides([Px(1.0); 4])))
+      .font_size(CssOption::some(Px(12.0)))
       .build()
       .unwrap(),
     children: Some(vec![
@@ -180,13 +180,13 @@ fn test_style_transform_translate_and_scale() {
 
   let rotated = ContainerNode {
     style: StyleBuilder::default()
-      .transform(Some(Transforms(smallvec![Transform::Rotate(Angle::new(
-        45.0
-      ))])))
+      .transform(CssOption::some(Transforms(smallvec![Transform::Rotate(
+        Angle::new(45.0)
+      )])))
       .background_color(Color([0, 0, 255, 255]))
       .width(Px(200.0))
       .height(Px(200.0))
-      .border_width(Some(Sides([Px(1.0); 4])))
+      .border_width(CssOption::some(Sides([Px(1.0); 4])))
       .color(Color::white())
       .build()
       .unwrap(),
