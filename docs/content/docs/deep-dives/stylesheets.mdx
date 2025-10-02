@@ -88,7 +88,20 @@ You can check the [`Style` interface in `@takumi-rs/helpers`](https://github.com
       <td>Supported</td>
     </tr>
     <tr>
-      <td rowSpan={13}>Flex</td>
+      <td rowSpan={3}>`flex`</td>
+      <td>`flexBasis`</td>
+      <td>Supported</td>
+    </tr>
+    <tr>
+      <td>`flexGrow`</td>
+      <td>Supported</td>
+    </tr>
+    <tr>
+      <td>`flexShrink`</td>
+      <td>Supported</td>
+    </tr>
+    <tr>
+      <td rowSpan={10}>Flexbox</td>
       <td>`flexDirection`</td>
       <td>Supported</td>
     </tr>
@@ -123,18 +136,6 @@ You can check the [`Style` interface in `@takumi-rs/helpers`](https://github.com
     <tr>
       <td>`flexWrap`</td>
       <td>`nowrap`, `wrap`, `wrap-reverse`</td>
-    </tr>
-    <tr>
-      <td>`flexBasis`</td>
-      <td>Supported</td>
-    </tr>
-    <tr>
-      <td>`flexGrow`</td>
-      <td>Supported</td>
-    </tr>
-    <tr>
-      <td>`flexShrink`</td>
-      <td>Supported</td>
     </tr>
     <tr>
       <td>`gap`</td>
@@ -234,7 +235,7 @@ You can check the [`Style` interface in `@takumi-rs/helpers`](https://github.com
     <tr>
       <td rowSpan={17}>Typography</td>
       <td>`textOverflow`</td>
-      <td>`ellipsis`, `clip`</td>
+      <td>`ellipsis`, `clip`, custom character</td>
     </tr>
     <tr>
       <td>`textTransform`</td>
@@ -278,7 +279,7 @@ You can check the [`Style` interface in `@takumi-rs/helpers`](https://github.com
     </tr>
     <tr>
       <td>`lineClamp`</td>
-      <td>Supported</td>
+      <td>number, `1 "ellipsis character"`</td>
     </tr>
     <tr>
       <td>`textAlign`</td>

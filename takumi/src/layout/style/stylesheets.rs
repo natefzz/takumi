@@ -90,7 +90,7 @@ define_style!(
   align_items: AlignItems = AlignItems::Normal => AlignItems::Normal,
   align_self: AlignItems = AlignItems::Normal => AlignItems::Normal,
   flex_wrap: FlexWrap = FlexWrap::NoWrap => FlexWrap::NoWrap,
-  flex_basis: LengthUnit = LengthUnit::Auto => LengthUnit::Auto,
+  flex_basis: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
   position: Position = Position::Relative => Position::Relative,
   transform: CssOption<Transforms> = CssOption::none() => CssOption::none(),
   transform_origin: CssOption<BackgroundPosition> = CssOption::none() => CssOption::none(),
@@ -99,8 +99,9 @@ define_style!(
   mask_position: CssOption<BackgroundPositions> = CssOption::none() => CssOption::none(),
   mask_repeat: CssOption<BackgroundRepeats> = CssOption::none() => CssOption::none(),
   gap: Gap = Gap::default() => Gap::default(),
-  flex_grow: FlexGrow = FlexGrow(0.0) => FlexGrow(0.0),
-  flex_shrink: FlexGrow = FlexGrow(1.0) => FlexGrow(1.0),
+  flex: CssOption<Flex> = CssOption::none() => CssOption::none(),
+  flex_grow: CssOption<FlexGrow> = CssOption::none() => CssOption::none(),
+  flex_shrink: CssOption<FlexGrow> = CssOption::none() => CssOption::none(),
   border_radius: Sides<LengthUnit> = Sides::zero() => Sides::zero(),
   border_top_left_radius: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
   border_top_right_radius: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
@@ -391,11 +392,23 @@ impl InheritedStyle {
       justify_content: self.justify_content.into(),
       align_content: self.align_content.into(),
       justify_items: self.justify_items.into(),
-      flex_grow: self.flex_grow.0,
+      flex_grow: self
+        .flex_grow
+        .map(|grow| grow.0)
+        .or_else(|| self.flex.map(|flex| flex.grow))
+        .unwrap_or(0.0),
       align_items: self.align_items.into(),
       gap: self.gap.resolve_to_size(context),
-      flex_basis: self.flex_basis.resolve_to_dimension(context),
-      flex_shrink: self.flex_shrink.0,
+      flex_basis: self
+        .flex_basis
+        .or_else(|| self.flex.map(|flex| flex.basis))
+        .unwrap_or(LengthUnit::Auto)
+        .resolve_to_dimension(context),
+      flex_shrink: self
+        .flex_shrink
+        .map(|shrink| shrink.0)
+        .or_else(|| self.flex.map(|flex| flex.shrink))
+        .unwrap_or(1.0),
       flex_wrap: self.flex_wrap.into(),
       min_size: Size {
         width: self.min_width.resolve_to_dimension(context),

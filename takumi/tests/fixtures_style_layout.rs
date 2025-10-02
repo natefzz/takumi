@@ -25,7 +25,7 @@ fn test_style_flex_basis() {
     children: Some(vec![
       ContainerNode {
         style: StyleBuilder::default()
-          .flex_basis(Px(100.0))
+          .flex_basis(CssOption::some(Px(100.0)))
           .height(Px(50.0))
           .background_color(Color([255, 0, 0, 255]))
           .build()
@@ -35,7 +35,7 @@ fn test_style_flex_basis() {
       .into(),
       ContainerNode {
         style: StyleBuilder::default()
-          .flex_basis(Px(100.0))
+          .flex_basis(CssOption::some(Px(100.0)))
           .height(Px(50.0))
           .background_color(Color([0, 255, 0, 255]))
           .build()
@@ -45,7 +45,7 @@ fn test_style_flex_basis() {
       .into(),
       ContainerNode {
         style: StyleBuilder::default()
-          .flex_basis(Px(100.0))
+          .flex_basis(CssOption::some(Px(100.0)))
           .height(Px(50.0))
           .background_color(Color([255, 255, 0, 255]))
           .build()

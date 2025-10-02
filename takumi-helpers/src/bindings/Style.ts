@@ -13,6 +13,7 @@ import type { Color } from "./Color";
 import type { CssOption } from "./CssOption";
 import type { CssValue } from "./CssValue";
 import type { Display } from "./Display";
+import type { Flex } from "./Flex";
 import type { FlexDirection } from "./FlexDirection";
 import type { FlexGrow } from "./FlexGrow";
 import type { FlexWrap } from "./FlexWrap";
@@ -82,7 +83,7 @@ export type Style = {
   alignItems: CssValue<AlignItems>;
   alignSelf: CssValue<AlignItems>;
   flexWrap: CssValue<FlexWrap>;
-  flexBasis: CssValue<LengthUnit>;
+  flexBasis: CssValue<CssOption<LengthUnit>>;
   position: CssValue<Position>;
   transform: CssValue<CssOption<Transforms>>;
   transformOrigin: CssValue<CssOption<BackgroundPosition>>;
@@ -91,8 +92,9 @@ export type Style = {
   maskPosition: CssValue<CssOption<BackgroundPositions>>;
   maskRepeat: CssValue<CssOption<BackgroundRepeats>>;
   gap: CssValue<Gap>;
-  flexGrow: CssValue<FlexGrow>;
-  flexShrink: CssValue<FlexGrow>;
+  flex: CssValue<CssOption<Flex>>;
+  flexGrow: CssValue<CssOption<FlexGrow>>;
+  flexShrink: CssValue<CssOption<FlexGrow>>;
   borderRadius: CssValue<Sides<LengthUnit>>;
   borderTopLeftRadius: CssValue<CssOption<LengthUnit>>;
   borderTopRightRadius: CssValue<CssOption<LengthUnit>>;
