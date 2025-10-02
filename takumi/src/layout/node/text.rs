@@ -92,9 +92,10 @@ pub(crate) fn measure_text(
     AvailableSpace::Definite(height) => Some(height),
   });
 
-  let height_constraint_with_max_lines = match (*style.parent.line_clamp, height_constraint) {
-    (Some(max_lines), Some(height)) => Some(MaxHeight::Both(height, max_lines)),
-    (Some(max_lines), None) => Some(MaxHeight::Lines(max_lines)),
+  let height_constraint_with_max_lines = match (style.parent.line_clamp.as_ref(), height_constraint)
+  {
+    (Some(clamp), Some(height)) => Some(MaxHeight::Both(height, clamp.count)),
+    (Some(clamp), None) => Some(MaxHeight::Lines(clamp.count)),
     (None, Some(height)) => Some(MaxHeight::Absolute(height)),
     (None, None) => None,
   };
@@ -264,7 +265,7 @@ mod tests {
   fn test_measure_text_with_height_constraint() {
     let context = create_test_context();
     let parent = InheritedStyle {
-      line_clamp: CssOption::some(2),
+      line_clamp: CssOption::some(2.into()),
       ..Default::default()
     };
 
@@ -316,7 +317,7 @@ mod tests {
   fn test_measure_text_with_line_clamp() {
     let context = create_test_context();
     let parent = InheritedStyle {
-      line_clamp: CssOption::some(3),
+      line_clamp: CssOption::some(3.into()),
       ..Default::default()
     };
 

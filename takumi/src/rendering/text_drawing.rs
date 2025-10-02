@@ -19,8 +19,6 @@ use crate::{
   resources::font::{CachedGlyph, ResolvedGlyph},
 };
 
-const ELLIPSIS_CHAR: &str = "…";
-
 /// Draws text on the canvas with the specified font style and layout.
 pub fn draw_text(text: &str, context: &RenderContext, canvas: &Canvas, layout: Layout) {
   let font_style = context.style.to_sized_font_style(context);
@@ -32,8 +30,8 @@ pub fn draw_text(text: &str, context: &RenderContext, canvas: &Canvas, layout: L
 
   let render_text = apply_text_transform(text, font_style.parent.text_transform);
 
-  let max_height = match *font_style.parent.line_clamp {
-    Some(max_lines) => Some(MaxHeight::Both(content_box.height, max_lines)),
+  let max_height = match font_style.parent.line_clamp.as_ref() {
+    Some(clamp) => Some(MaxHeight::Both(content_box.height, clamp.count)),
     None => Some(MaxHeight::Absolute(content_box.height)),
   };
 
@@ -51,7 +49,7 @@ pub fn draw_text(text: &str, context: &RenderContext, canvas: &Canvas, layout: L
 
   let last_line_range = last_line.text_range();
 
-  let should_append_ellipsis = font_style.parent.text_overflow == TextOverflow::Ellipsis
+  let should_append_ellipsis = font_style.parent.text_overflow != TextOverflow::Clip
     && last_line_range.end < render_text.len();
 
   if should_append_ellipsis {
@@ -62,6 +60,7 @@ pub fn draw_text(text: &str, context: &RenderContext, canvas: &Canvas, layout: L
       &font_style,
       context.global,
       content_box.width,
+      font_style.ellipsis_char(),
     );
 
     buffer = create_text_layout(
@@ -588,15 +587,16 @@ fn make_ellipsis_text<'s>(
   font_style: &SizedFontStyle,
   global: &GlobalContext,
   max_width: f32,
+  ellipsis_char: &'s str,
 ) -> Cow<'s, str> {
   let mut truncated_text = &render_text[start_index..end_index];
 
   while !truncated_text.is_empty() {
     // try to calculate the last line only with the truncated text and ellipsis character
-    let mut text_with_ellipsis = String::with_capacity(truncated_text.len() + ELLIPSIS_CHAR.len());
+    let mut text_with_ellipsis = String::with_capacity(truncated_text.len() + ellipsis_char.len());
 
     text_with_ellipsis.push_str(truncated_text);
-    text_with_ellipsis.push_str(ELLIPSIS_CHAR);
+    text_with_ellipsis.push_str(ellipsis_char);
 
     let buffer = create_text_layout(&text_with_ellipsis, font_style, global, max_width, None);
 
@@ -606,11 +606,11 @@ fn make_ellipsis_text<'s>(
 
       // build the text with ellipsis character
       let mut text_with_ellipsis =
-        String::with_capacity(before_last_line.len() + truncated_text.len() + ELLIPSIS_CHAR.len());
+        String::with_capacity(before_last_line.len() + truncated_text.len() + ellipsis_char.len());
 
       text_with_ellipsis.push_str(before_last_line);
       text_with_ellipsis.push_str(truncated_text);
-      text_with_ellipsis.push_str(ELLIPSIS_CHAR);
+      text_with_ellipsis.push_str(ellipsis_char);
 
       return Cow::Owned(text_with_ellipsis);
     }

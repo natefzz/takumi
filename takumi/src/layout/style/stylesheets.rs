@@ -139,7 +139,7 @@ define_style!(
   font_weight: FontWeight = CssValue::inherit() => Default::default(),
   font_variation_settings: CssOption<FontVariationSettings> = CssValue::inherit() => CssOption::none(),
   font_feature_settings: CssOption<FontFeatureSettings> = CssValue::inherit() => CssOption::none(),
-  line_clamp: CssOption<u32> = CssValue::inherit() => CssOption::none(),
+  line_clamp: CssOption<LineClamp> = CssValue::inherit() => CssOption::none(),
   text_align: TextAlign = CssValue::inherit() => Default::default(),
   text_stroke_width: LengthUnit = CssValue::inherit() => LengthUnit::Px(0.0),
   text_stroke_color: CssOption<Color> = CssValue::inherit() => CssOption::none(),
@@ -164,6 +164,30 @@ pub(crate) struct SizedFontStyle<'s> {
   pub letter_spacing: Option<f32>,
   pub word_spacing: Option<f32>,
   pub text_shadow: Option<SmallVec<[SizedShadow; 4]>>,
+}
+
+impl<'s> SizedFontStyle<'s> {
+  pub(crate) fn ellipsis_char(&self) -> &str {
+    const ELLIPSIS_CHAR: &str = "…";
+
+    match &self.parent.text_overflow {
+      TextOverflow::Ellipsis => return ELLIPSIS_CHAR,
+      TextOverflow::Custom(custom) => return custom.as_str(),
+      _ => {}
+    }
+
+    if let Some(clamp) = &self
+      .parent
+      .line_clamp
+      .0
+      .as_ref()
+      .and_then(|clamp| clamp.ellipsis.as_deref())
+    {
+      return clamp;
+    }
+
+    ELLIPSIS_CHAR
+  }
 }
 
 impl InheritedStyle {

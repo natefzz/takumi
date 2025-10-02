@@ -20,6 +20,7 @@ mod gap;
 mod gradient_utils;
 mod grid;
 mod length_unit;
+mod line_clamp;
 mod line_height;
 mod linear_gradient;
 mod noise_v1;
@@ -28,6 +29,7 @@ mod parser;
 mod radial_gradient;
 mod sides;
 mod text_decoration;
+mod text_overflow;
 mod text_shadow;
 mod text_stroke;
 mod transform;
@@ -51,6 +53,7 @@ pub use font_weight::*;
 pub use gap::*;
 pub use grid::*;
 pub use length_unit::*;
+pub use line_clamp::*;
 pub use line_height::*;
 pub use linear_gradient::*;
 pub use noise_v1::*;
@@ -59,6 +62,7 @@ pub use parser::*;
 pub use radial_gradient::*;
 pub use sides::*;
 pub use text_decoration::*;
+pub use text_overflow::*;
 pub use text_shadow::*;
 pub use text_stroke::*;
 pub use transform::*;
@@ -329,19 +333,6 @@ pub enum FlexWrap {
 }
 
 impl_from_taffy_enum!(FlexWrap, taffy::FlexWrap, NoWrap, Wrap, WrapReverse);
-
-/// Defines how text should be overflowed.
-///
-/// This enum determines how text should be handled when it exceeds the container width.
-#[derive(Debug, Clone, Deserialize, Serialize, Copy, TS, PartialEq, Default)]
-#[serde(rename_all = "kebab-case")]
-pub enum TextOverflow {
-  /// Text is simply clipped at the overflow edge with no visual indication
-  #[default]
-  Clip,
-  /// Text is truncated with an ellipsis (…) at the end when it overflows
-  Ellipsis,
-}
 
 /// Controls text case transformation when rendering.
 #[derive(Default, Debug, Clone, Deserialize, Serialize, Copy, TS, PartialEq)]

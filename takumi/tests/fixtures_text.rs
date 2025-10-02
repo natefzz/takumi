@@ -213,7 +213,7 @@ Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliqu
       .font_size(CssOption::some(Px(18.0)))
       .line_height(LineHeight(Px(24.0)))
       .text_overflow(TextOverflow::Ellipsis)
-      .line_clamp(CssOption::some(2))
+      .line_clamp(CssOption::some(2.into()))
       .build()
       .unwrap(),
     text: long_text.to_string(),

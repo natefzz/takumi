@@ -30,6 +30,7 @@ import type { GridTrackSizes } from "./GridTrackSizes";
 import type { ImageScalingAlgorithm } from "./ImageScalingAlgorithm";
 import type { JustifyContent } from "./JustifyContent";
 import type { LengthUnit } from "./LengthUnit";
+import type { LineClamp } from "./LineClamp";
 import type { LineHeight } from "./LineHeight";
 import type { ObjectFit } from "./ObjectFit";
 import type { OverflowWrap } from "./OverflowWrap";
@@ -130,7 +131,7 @@ export type Style = {
   fontWeight: CssValue<FontWeight>;
   fontVariationSettings: CssValue<CssOption<FontVariationSettings>>;
   fontFeatureSettings: CssValue<CssOption<FontFeatureSettings>>;
-  lineClamp: CssValue<CssOption<number>>;
+  lineClamp: CssValue<CssOption<LineClamp>>;
   textAlign: CssValue<TextAlign>;
   textStrokeWidth: CssValue<LengthUnit>;
   textStrokeColor: CssValue<CssOption<Color>>;
