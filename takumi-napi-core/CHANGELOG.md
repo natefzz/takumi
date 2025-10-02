@@ -1,5 +1,11 @@
 # @takumi-rs/core
 
+## 0.33.1
+
+### Patch Changes
+
+- df18b3d: exclude `CHANGELOG.md` from being published
+
 ## 0.33.0
 
 ### Minor Changes
