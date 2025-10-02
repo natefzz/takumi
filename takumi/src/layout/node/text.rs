@@ -173,6 +173,7 @@ mod tests {
       },
       transform: Affine::identity(),
       style: InheritedStyle::default(),
+      draw_debug_border: false,
     }
   }
 

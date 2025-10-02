@@ -15,10 +15,7 @@ async fn main() {
 
   let args = Args::parse();
 
-  let context = GlobalContext {
-    draw_debug_border: args.draw_debug_border,
-    ..Default::default()
-  };
+  let context = GlobalContext::default();
 
   run_server(args, context).await;
 }

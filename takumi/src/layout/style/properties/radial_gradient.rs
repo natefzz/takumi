@@ -562,6 +562,7 @@ mod tests {
       font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
+      draw_debug_border: false,
     };
     let resolved = gradient.resolve_stops_for_radius(ctx.viewport.width as f32, &ctx);
 
@@ -598,6 +599,7 @@ mod tests {
       font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
+      draw_debug_border: false,
     };
     let resolved = gradient.resolve_stops_for_radius(ctx.viewport.width as f32, &ctx);
 

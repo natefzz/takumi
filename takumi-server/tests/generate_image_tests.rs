@@ -27,6 +27,7 @@ async fn test_generate_image_handler() {
       format: None,
       quality: None,
       payload: serde_json::to_string(&node).unwrap(),
+      draw_debug_border: Some(false),
     }),
     state,
   )
@@ -49,6 +50,7 @@ async fn test_generate_image_handler_invalid_width() {
       format: None,
       quality: None,
       payload: serde_json::to_string(&node).unwrap(),
+      draw_debug_border: Some(false),
     }),
     state,
   )

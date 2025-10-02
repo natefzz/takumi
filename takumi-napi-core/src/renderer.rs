@@ -5,7 +5,7 @@ use takumi::{
   GlobalContext,
   layout::{Viewport, node::NodeKind},
   parley::{FontWeight, GenericFamily, fontique::FontInfoOverride},
-  rendering::{ImageOutputFormat, render, write_image},
+  rendering::{ImageOutputFormat, RenderOptionsBuilder, render, write_image},
   resources::image::load_image_source_from_bytes,
 };
 
@@ -26,6 +26,7 @@ pub struct RenderOptions {
   pub height: u32,
   pub format: Option<OutputFormat>,
   pub quality: Option<u8>,
+  pub draw_debug_border: Option<bool>,
 }
 
 #[napi(object)]
@@ -37,6 +38,7 @@ pub struct AnimationFrameSource<'ctx> {
 
 #[napi(object)]
 pub struct RenderAnimationOptions {
+  pub draw_debug_border: Option<bool>,
   pub width: u32,
   pub height: u32,
   pub format: Option<AnimationOutputFormat>,
@@ -92,7 +94,6 @@ pub struct PersistentImage<'ctx> {
 #[napi(object)]
 #[derive(Default)]
 pub struct ConstructRendererOptions<'ctx> {
-  pub debug: Option<bool>,
   pub persistent_images: Option<Vec<PersistentImage<'ctx>>>,
   #[napi(ts_type = "Font[] | undefined")]
   pub fonts: Option<Vec<Object<'ctx>>>,
@@ -122,10 +123,7 @@ impl Renderer {
       .load_default_fonts
       .unwrap_or_else(|| options.fonts.is_none());
 
-    let renderer = Self(Arc::new(GlobalContext {
-      draw_debug_border: options.debug.unwrap_or_default(),
-      ..Default::default()
-    }));
+    let renderer = Self(Arc::new(GlobalContext::default()));
 
     if load_default_fonts {
       for (font, name, generic) in EMBEDDED_FONTS {
@@ -289,6 +287,7 @@ impl Renderer {
         viewport: Viewport::new(options.width, options.height),
         format: options.format.unwrap_or(OutputFormat::png),
         quality: options.quality,
+        draw_debug_border: options.draw_debug_border.unwrap_or_default(),
       },
       signal,
     ))
@@ -334,6 +333,7 @@ impl Renderer {
         context: Arc::clone(&self.0),
         viewport: Viewport::new(options.width, options.height),
         format: options.format.unwrap_or(AnimationOutputFormat::webp),
+        draw_debug_border: options.draw_debug_border.unwrap_or_default(),
       },
       signal,
     ))
@@ -344,7 +344,16 @@ impl Renderer {
     let node: NodeKind = deserialize_with_tracing(source)?;
 
     let viewport = Viewport::new(options.width, options.height);
-    let image = render(viewport, &self.0, node).unwrap();
+    let image = render(
+      RenderOptionsBuilder::default()
+        .viewport(viewport)
+        .node(node)
+        .global(&self.0)
+        .draw_debug_border(options.draw_debug_border.unwrap_or_default())
+        .build()
+        .unwrap(),
+    )
+    .unwrap();
 
     let format = options.format.unwrap_or(OutputFormat::png);
 

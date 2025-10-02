@@ -13,7 +13,7 @@ use crate::{
 
 /// A trait for gradients that can be sampled at a specific point.
 /// This trait is used to avoid trait objects in the rendering pipeline.
-pub trait Gradient: Send + Sync {
+pub(crate) trait Gradient: Send + Sync {
   /// The type of the draw context.
   type DrawContext: Send + Sync;
 
@@ -50,7 +50,7 @@ pub struct LinearGradient {
 /// Proxy type for `LinearGradient` Css deserialization.
 #[derive(Debug, Clone, PartialEq, TS, Deserialize)]
 #[serde(untagged)]
-pub enum LinearGradientValue {
+pub(crate) enum LinearGradientValue {
   /// Represents a linear gradient.
   Structured {
     /// The angle of the gradient.
@@ -867,6 +867,7 @@ mod tests {
       font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
+      draw_debug_border: false,
     };
     let ctx = gradient.to_draw_context(100.0, 100.0, &dummy_context);
     let color_top = gradient.at(50, 0, &ctx);
@@ -909,6 +910,7 @@ mod tests {
       font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
+      draw_debug_border: false,
     };
     let ctx = gradient.to_draw_context(100.0, 100.0, &dummy_context);
     let color_left = gradient.at(0, 50, &ctx);
@@ -936,6 +938,7 @@ mod tests {
       font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
+      draw_debug_border: false,
     };
     let ctx = gradient.to_draw_context(100.0, 100.0, &dummy_context);
     let color = gradient.at(50, 50, &ctx);
@@ -956,6 +959,7 @@ mod tests {
       font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
+      draw_debug_border: false,
     };
     let ctx = gradient.to_draw_context(100.0, 100.0, &dummy_context);
     let color = gradient.at(50, 50, &ctx);
@@ -974,6 +978,7 @@ mod tests {
       font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
+      draw_debug_border: false,
     };
     let ctx = gradient.to_draw_context(40.0, 40.0, &dummy_context);
 
@@ -1002,6 +1007,7 @@ mod tests {
       font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
+      draw_debug_border: false,
     };
     let ctx = gradient.to_draw_context(40.0, 40.0, &dummy_context);
 
@@ -1070,6 +1076,7 @@ mod tests {
       font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
+      draw_debug_border: false,
     };
 
     let resolved = gradient.resolve_stops_for_axis_size(ctx.viewport.width as f32, &ctx);
@@ -1100,6 +1107,7 @@ mod tests {
       font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
+      draw_debug_border: false,
     };
 
     let resolved = gradient.resolve_stops_for_axis_size(ctx.viewport.width as f32, &ctx);

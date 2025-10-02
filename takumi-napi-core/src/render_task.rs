@@ -5,12 +5,13 @@ use std::sync::Arc;
 use takumi::{
   GlobalContext,
   layout::{Viewport, node::NodeKind},
-  rendering::{render, write_image},
+  rendering::{RenderOptionsBuilder, render, write_image},
 };
 
 use crate::renderer::OutputFormat;
 
 pub struct RenderTask {
+  pub draw_debug_border: bool,
   pub node: Option<NodeKind>,
   pub context: Arc<GlobalContext>,
   pub viewport: Viewport,
@@ -25,8 +26,16 @@ impl Task for RenderTask {
   fn compute(&mut self) -> Result<Self::Output> {
     let node = self.node.take().unwrap();
 
-    let image = render(self.viewport, &self.context, node)
-      .map_err(|e| napi::Error::from_reason(format!("Failed to render: {e:?}")))?;
+    let image = render(
+      RenderOptionsBuilder::default()
+        .viewport(self.viewport)
+        .node(node)
+        .global(&self.context)
+        .draw_debug_border(self.draw_debug_border)
+        .build()
+        .unwrap(),
+    )
+    .map_err(|e| napi::Error::from_reason(format!("Failed to render: {e:?}")))?;
 
     if self.format == OutputFormat::raw {
       return Ok(image.into_raw());

@@ -210,6 +210,7 @@ mod tests {
       font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
+      draw_debug_border: false,
     };
 
     let resolved = resolve_stops_along_axis(&stops, ctx.viewport.width as f32, &ctx);
@@ -262,6 +263,7 @@ mod tests {
       font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
+      draw_debug_border: false,
     };
 
     let resolved = resolve_stops_along_axis(&stops, ctx.viewport.width as f32, &ctx);
@@ -311,6 +313,7 @@ mod tests {
       font_size: DEFAULT_FONT_SIZE,
       transform: Affine::identity(),
       style: InheritedStyle::default(),
+      draw_debug_border: false,
     };
 
     let resolved = resolve_stops_along_axis(&stops, ctx.viewport.width as f32, &ctx);

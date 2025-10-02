@@ -34,7 +34,7 @@
 //!     Viewport,
 //!     style::Style,
 //!   },
-//!   rendering::render,
+//!   rendering::{render, RenderOptionsBuilder},
 //!   GlobalContext,
 //! };
 //!
@@ -61,8 +61,16 @@
 //! // Create a viewport
 //! let viewport = Viewport::new(1200, 630);
 //!
+//! // Create render options
+//! let options = RenderOptionsBuilder::default()
+//!   .viewport(viewport)
+//!   .node(node)
+//!   .global(&context)
+//!   .build()
+//!   .unwrap();
+//!
 //! // Render the layout to an `RgbaImage`
-//! let image = render(viewport, &context, node).unwrap();
+//! let image = render(options).unwrap();
 //! ```
 //!
 //! # Feature Flags
@@ -107,8 +115,6 @@ use crate::resources::{
 /// font management, image storage, and debug options.
 #[derive(Default)]
 pub struct GlobalContext {
-  /// Whether to draw debug borders around nodes
-  pub draw_debug_border: bool,
   /// The font context for text rendering
   pub font_context: FontContext,
   /// The image store for persisting contents

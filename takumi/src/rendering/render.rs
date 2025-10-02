@@ -1,15 +1,12 @@
 use std::sync::mpsc::channel;
 
+use derive_builder::Builder;
 use image::RgbaImage;
 use taffy::{AvailableSpace, NodeId, Point, TaffyTree, geometry::Size};
 
 use crate::{
   GlobalContext,
-  layout::{
-    Viewport,
-    node::Node,
-    style::{Affine, InheritedStyle},
-  },
+  layout::{Viewport, node::Node, style::Affine},
   rendering::{Canvas, create_blocking_canvas_loop, draw_debug_border},
 };
 
@@ -21,30 +18,34 @@ struct NodeContext<'ctx, N: Node<N>> {
   node: N,
 }
 
+#[derive(Clone, Builder)]
+/// Options for rendering a node. Construct using [`RenderOptionsBuilder`] to avoid breaking changes.
+pub struct RenderOptions<'g, N: Node<N>> {
+  /// The viewport to render the node in.
+  pub(crate) viewport: Viewport,
+  /// The global context.
+  pub(crate) global: &'g GlobalContext,
+  /// The node to render.
+  pub(crate) node: N,
+  /// Whether to draw debug borders.
+  #[builder(default)]
+  pub(crate) draw_debug_border: bool,
+}
+
 /// Renders a node to an image.
-pub fn render<Nodes: Node<Nodes>>(
-  viewport: Viewport,
-  global: &GlobalContext,
-  root_node: Nodes,
-) -> Result<RgbaImage, crate::Error> {
+pub fn render<'g, N: Node<N>>(options: RenderOptions<'g, N>) -> Result<RgbaImage, crate::Error> {
   let mut taffy = TaffyTree::new();
 
   let (tx, rx) = channel();
   let canvas = Canvas::new(tx);
 
-  let render_context = RenderContext {
-    global,
-    viewport,
-    font_size: viewport.font_size,
-    transform: Affine::identity(),
-    style: InheritedStyle::default(),
-  };
+  let render_context = (&options).into();
 
-  let root_node_id = insert_taffy_node(&mut taffy, root_node, &render_context);
+  let root_node_id = insert_taffy_node(&mut taffy, options.node, &render_context);
 
   let available_space = Size {
-    width: AvailableSpace::Definite(viewport.width as f32),
-    height: AvailableSpace::Definite(viewport.height as f32),
+    width: AvailableSpace::Definite(render_context.viewport.width as f32),
+    height: AvailableSpace::Definite(render_context.viewport.height as f32),
   };
 
   taffy
@@ -81,12 +82,13 @@ pub fn render<Nodes: Node<Nodes>>(
 
     drop(canvas);
 
-    create_blocking_canvas_loop(viewport, rx)
+    create_blocking_canvas_loop(render_context.viewport, rx)
   };
 
   #[cfg(not(target_arch = "wasm32"))]
   let canvas = {
-    let handler = std::thread::spawn(move || create_blocking_canvas_loop(viewport, rx));
+    let handler =
+      std::thread::spawn(move || create_blocking_canvas_loop(render_context.viewport, rx));
 
     render_node(
       &mut taffy,
@@ -139,7 +141,7 @@ fn render_node<Nodes: Node<Nodes>>(
     .node
     .draw_on_canvas(&node_context.context, canvas, layout);
 
-  if node_context.context.global.draw_debug_border {
+  if node_context.context.draw_debug_border {
     draw_debug_border(canvas, layout, node_context.context.transform);
   }
 

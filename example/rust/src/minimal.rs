@@ -8,7 +8,7 @@ use takumi::{
     node::{ContainerNode, NodeKind, TextNode},
     style::{CssOption, StyleBuilder},
   },
-  rendering::{ImageOutputFormat, render, write_image},
+  rendering::{ImageOutputFormat, RenderOptionsBuilder, render, write_image},
 };
 
 /// Generates a "Hello, {name}!" image with specified dimensions and styling
@@ -39,13 +39,21 @@ pub fn say_hello_to(name: &str) {
 
   // Create a root container node that will hold the text
   // Set dimensions to 1200x630 pixels (common size for social media images)
-  let root = ContainerNode {
+  let root: ContainerNode<NodeKind> = ContainerNode {
     style: Default::default(),
     children: Some(vec![text.into()]),
   };
 
-  // Create an image renderer from the root node
-  let image = render::<NodeKind>(Viewport::new(1200, 630), &context, root.into()).unwrap();
+  // Create render options
+  let options = RenderOptionsBuilder::<NodeKind>::default()
+    .viewport(Viewport::new(1200, 630))
+    .node(root.into())
+    .global(&context)
+    .build()
+    .unwrap();
+
+  // Create an image from the render options
+  let image = render(options).unwrap();
 
   // Create a new file to save the rendered image
   let mut file = File::create("output.webp").unwrap();

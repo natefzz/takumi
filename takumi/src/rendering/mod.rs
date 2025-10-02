@@ -26,11 +26,12 @@ use crate::{
   GlobalContext,
   layout::{
     Viewport,
+    node::Node,
     style::{Affine, InheritedStyle},
   },
 };
 
-/// The context for the image renderer.
+/// The context for the internal rendering. You should not construct this directly.
 #[derive(Clone)]
 pub struct RenderContext<'g> {
   /// The global context.
@@ -43,4 +44,19 @@ pub struct RenderContext<'g> {
   pub(crate) transform: Affine,
   /// The style after inheritance.
   pub(crate) style: InheritedStyle,
+  /// Whether to draw debug borders.
+  pub(crate) draw_debug_border: bool,
+}
+
+impl<'g, N: Node<N>> From<&RenderOptions<'g, N>> for RenderContext<'g> {
+  fn from(options: &RenderOptions<'g, N>) -> Self {
+    Self {
+      global: options.global,
+      viewport: options.viewport,
+      font_size: options.viewport.font_size,
+      transform: Affine::identity(),
+      style: InheritedStyle::default(),
+      draw_debug_border: options.draw_debug_border,
+    }
+  }
 }

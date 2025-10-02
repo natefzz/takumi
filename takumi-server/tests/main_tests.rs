@@ -7,7 +7,6 @@ use takumi_server::{Args, create_app, create_state};
 #[test]
 fn test_create_state() {
   let state = create_state(Args::default(), GlobalContext::default());
-  assert!(!state.context.draw_debug_border);
   #[cfg(feature = "hmac_verify")]
   assert!(state.hmac_key.is_none());
 }

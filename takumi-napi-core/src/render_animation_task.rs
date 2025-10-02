@@ -4,7 +4,9 @@ use std::{io::Cursor, sync::Arc};
 use takumi::{
   GlobalContext,
   layout::{Viewport, node::NodeKind},
-  rendering::{AnimationFrame, encode_animated_png, encode_animated_webp, render},
+  rendering::{
+    AnimationFrame, RenderOptionsBuilder, encode_animated_png, encode_animated_webp, render,
+  },
 };
 
 use crate::renderer::AnimationOutputFormat;
@@ -14,6 +16,7 @@ pub struct RenderAnimationTask {
   pub context: Arc<GlobalContext>,
   pub viewport: Viewport,
   pub format: AnimationOutputFormat,
+  pub draw_debug_border: bool,
 }
 
 impl Task for RenderAnimationTask {
@@ -27,7 +30,16 @@ impl Task for RenderAnimationTask {
       .into_par_iter()
       .map(|(node, duration_ms)| {
         AnimationFrame::new(
-          render(self.viewport, &self.context, node).unwrap(),
+          render(
+            RenderOptionsBuilder::default()
+              .viewport(self.viewport)
+              .node(node)
+              .global(&self.context)
+              .draw_debug_border(self.draw_debug_border)
+              .build()
+              .unwrap(),
+          )
+          .unwrap(),
           duration_ms,
         )
       })

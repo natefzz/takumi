@@ -89,7 +89,6 @@ test("Renderer initialization with fonts and images", async () => {
         data: localImage,
       },
     ],
-    debug: true,
   });
 });
 

@@ -13,7 +13,7 @@ use takumi::{
     node::{Node, NodeKind},
     style::{CssValue, LengthUnit},
   },
-  rendering::{ImageOutputFormat, render, write_image},
+  rendering::{ImageOutputFormat, RenderOptionsBuilder, render, write_image},
 };
 use tokio::task::spawn_blocking;
 
@@ -24,6 +24,7 @@ pub struct GenerateImageQuery {
   pub format: Option<ImageOutputFormat>,
   pub quality: Option<u8>,
   pub payload: String,
+  pub draw_debug_border: Option<bool>,
 }
 
 pub async fn generate_image_handler(
@@ -61,8 +62,15 @@ pub async fn generate_image_handler(
 
   let buffer = spawn_blocking(move || -> AxumResult<Vec<u8>> {
     let viewport = Viewport::new(width as u32, height as u32);
+    let options = RenderOptionsBuilder::default()
+      .viewport(viewport)
+      .node(root_node)
+      .global(&state.context)
+      .draw_debug_border(query.draw_debug_border.unwrap_or(false))
+      .build()
+      .unwrap();
 
-    let image = render(viewport, &state.context, root_node).map_err(|err| {
+    let image = render(options).map_err(|err| {
       (
         StatusCode::INTERNAL_SERVER_ERROR,
         format!("Failed to render image: {err:?}"),

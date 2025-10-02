@@ -7,8 +7,8 @@ use takumi::{
   GlobalContext,
   layout::{Viewport, node::NodeKind},
   rendering::{
-    AnimationFrame, ImageOutputFormat, encode_animated_png, encode_animated_webp, render,
-    write_image,
+    AnimationFrame, ImageOutputFormat, RenderOptionsBuilder, encode_animated_png,
+    encode_animated_webp, render, write_image,
   },
   resources::image::ImageSource,
 };
@@ -70,7 +70,15 @@ pub fn run_style_width_test(node: NodeKind, fixture_path: &str) {
   let context = create_test_context();
   let viewport = create_test_viewport();
 
-  let image = render(viewport, &context, node).unwrap();
+  let image = render(
+    RenderOptionsBuilder::default()
+      .viewport(viewport)
+      .node(node)
+      .global(&context)
+      .build()
+      .unwrap(),
+  )
+  .unwrap();
 
   let path = Path::new(fixture_path);
 
@@ -96,7 +104,18 @@ pub fn run_webp_animation_test(
   let frames: Vec<_> = nodes
     .into_par_iter()
     .map(|(node, duration_ms)| {
-      AnimationFrame::new(render(viewport, &context, node).unwrap(), duration_ms)
+      AnimationFrame::new(
+        render(
+          RenderOptionsBuilder::default()
+            .viewport(viewport)
+            .node(node)
+            .global(&context)
+            .build()
+            .unwrap(),
+        )
+        .unwrap(),
+        duration_ms,
+      )
     })
     .collect();
 
@@ -118,7 +137,18 @@ pub fn run_png_animation_test(
   let frames: Vec<_> = nodes
     .into_par_iter()
     .map(|(node, duration_ms)| {
-      AnimationFrame::new(render(viewport, &context, node).unwrap(), duration_ms)
+      AnimationFrame::new(
+        render(
+          RenderOptionsBuilder::default()
+            .viewport(viewport)
+            .node(node)
+            .global(&context)
+            .build()
+            .unwrap(),
+        )
+        .unwrap(),
+        duration_ms,
+      )
     })
     .collect();
 

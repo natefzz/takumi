@@ -7,7 +7,10 @@ use takumi::{
   image::load_from_memory,
   layout::{Viewport, node::NodeKind},
   parley::{FontWeight, fontique::FontInfoOverride},
-  rendering::{AnimationFrame, encode_animated_png, encode_animated_webp, render, write_image},
+  rendering::{
+    AnimationFrame, RenderOptionsBuilder, encode_animated_png, encode_animated_webp, render,
+    write_image,
+  },
   resources::image::ImageSource,
 };
 use wasm_bindgen::prelude::*;
@@ -101,6 +104,7 @@ impl From<ImageOutputFormat> for takumi::rendering::ImageOutputFormat {
 }
 
 #[wasm_bindgen]
+#[derive(Default)]
 pub struct Renderer {
   context: GlobalContext,
 }
@@ -108,13 +112,8 @@ pub struct Renderer {
 #[wasm_bindgen]
 impl Renderer {
   #[wasm_bindgen(constructor)]
-  pub fn new(debug: Option<bool>) -> Renderer {
-    Renderer {
-      context: GlobalContext {
-        draw_debug_border: debug.unwrap_or_default(),
-        ..Default::default()
-      },
-    }
+  pub fn new() -> Renderer {
+    Renderer::default()
   }
 
   #[wasm_bindgen(js_name = loadFontWithInfo)]
@@ -170,11 +169,21 @@ impl Renderer {
     height: u32,
     format: Option<ImageOutputFormat>,
     quality: Option<u8>,
+    draw_debug_border: Option<bool>,
   ) -> Vec<u8> {
     let node: NodeKind = from_value(node.into()).unwrap();
 
     let viewport = Viewport::new(width, height);
-    let image = render(viewport, &self.context, node).unwrap();
+    let image = render(
+      RenderOptionsBuilder::default()
+        .viewport(viewport)
+        .draw_debug_border(draw_debug_border.unwrap_or_default())
+        .node(node)
+        .global(&self.context)
+        .build()
+        .unwrap(),
+    )
+    .unwrap();
 
     let mut buffer = Vec::new();
     let mut cursor = Cursor::new(&mut buffer);
@@ -198,8 +207,9 @@ impl Renderer {
     height: u32,
     format: Option<ImageOutputFormat>,
     quality: Option<u8>,
+    draw_debug_border: Option<bool>,
   ) -> String {
-    let buffer = self.render(node, width, height, format, quality);
+    let buffer = self.render(node, width, height, format, quality, draw_debug_border);
     let format: takumi::rendering::ImageOutputFormat =
       format.unwrap_or(ImageOutputFormat::Png).into();
 
@@ -220,6 +230,7 @@ impl Renderer {
     width: u32,
     height: u32,
     format: Option<AnimationOutputFormat>,
+    draw_debug_border: Option<bool>,
   ) -> Vec<u8> {
     let viewport = Viewport::new(width, height);
 
@@ -229,7 +240,16 @@ impl Renderer {
         let node: NodeKind = from_value(frame.node.into()).unwrap();
         let duration_ms = frame.duration_ms;
 
-        let image = render(viewport, &self.context, node).unwrap();
+        let image = render(
+          RenderOptionsBuilder::default()
+            .viewport(viewport)
+            .node(node)
+            .global(&self.context)
+            .draw_debug_border(draw_debug_border.unwrap_or_default())
+            .build()
+            .unwrap(),
+        )
+        .unwrap();
         AnimationFrame::new(image, duration_ms)
       })
       .collect();

@@ -14,13 +14,6 @@ pub struct Args {
   #[arg(short, long, default_value_t = 3000)]
   pub port: u16,
 
-  /// Enables drawing of debug borders around elements.
-  ///
-  /// When enabled, the server will draw borders around all elements
-  /// in the generated image to help with layout debugging.
-  #[arg(long, default_value_t = false)]
-  pub draw_debug_border: bool,
-
   /// Glob pattern of font files to load into the server.
   #[arg(short, long)]
   pub font_glob: Option<String>,
