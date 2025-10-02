@@ -127,27 +127,26 @@ fn create_transform(style: &InheritedStyle, layout: &Layout, context: &RenderCon
   };
 
   // According to https://www.w3.org/TR/css-transforms-2/#ctm
-  // the order is `translate` -> `rotate` -> `scale` -> `transform`
-  if let Some(translate) = *style.translate {
-    transform = transform
-      * Affine::translation(Size {
-        width: translate.x.resolve_to_px(context, layout.size.width),
-        height: translate.y.resolve_to_px(context, layout.size.height),
-      });
-  }
-
-  if let Some(rotate) = *style.rotate {
-    transform = transform * Affine::rotation(rotate, center);
+  // the order is `translate` -> `rotate` -> `scale` -> `transform`.
+  // But we need to invert the order because of matrix multiplication.
+  if let Some(node_transform) = &*style.transform {
+    transform = transform * node_transform.to_affine(context, layout, center);
   }
 
   if let Some(scale) = *style.scale {
     transform = transform * Affine::scale(scale.into(), center);
   }
 
-  if let Some(node_transform) = &*style.transform {
-    let node_transform = node_transform.to_affine(context, layout, center);
+  if let Some(rotate) = *style.rotate {
+    transform = transform * Affine::rotation(rotate, center);
+  }
 
-    transform = transform * node_transform;
+  if let Some(translate) = *style.translate {
+    transform = transform
+      * Affine::translation(Size {
+        width: translate.x.resolve_to_px(context, layout.size.width),
+        height: translate.y.resolve_to_px(context, layout.size.height),
+      });
   }
 
   transform

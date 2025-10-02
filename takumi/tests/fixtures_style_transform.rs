@@ -5,7 +5,7 @@ use takumi::layout::{
     Angle, BackgroundPosition, Color, CssOption, Display,
     LengthUnit::{Percentage, Px},
     Position, PositionComponent, PositionKeywordX, PositionKeywordY, Sides, Style, StyleBuilder,
-    Transform, Transforms,
+    Transform, Transforms, Translate,
   },
 };
 
@@ -74,10 +74,11 @@ fn test_style_transform_origin_top_left() {
 fn create_rotated_container(angle: f32, transform_origin: BackgroundPosition) -> ImageNode {
   ImageNode {
     style: StyleBuilder::default()
-      .transform(CssOption::some(Transforms(smallvec![
-        Transform::Translate(Percentage(-50.0), Percentage(-50.0)),
-        Transform::Rotate(Angle::new(angle)),
-      ])))
+      .translate(CssOption::some(Translate {
+        x: Percentage(-50.0),
+        y: Percentage(-50.0),
+      }))
+      .rotate(CssOption::some(Angle::new(angle)))
       .position(Position::Absolute)
       .inset(Sides([
         Percentage(50.0),
