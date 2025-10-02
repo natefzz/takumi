@@ -264,7 +264,7 @@ jobs:
   test-image-response:
     name: Test @takumi-rs/image-response
     runs-on: ubuntu-latest
-    needs: [build-image-response, test-napi]
+    needs: build-image-response
     steps:
       - uses: actions/checkout@v5
 
