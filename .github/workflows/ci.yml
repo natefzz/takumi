@@ -540,7 +540,7 @@ jobs:
           path: takumi-wasm/pkg
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile && export PATH=$PATH:$(pwd)/node_modules/.bin
+        run: bun install --frozen-lockfile && echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
 
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
