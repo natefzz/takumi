@@ -2,11 +2,15 @@ use std::sync::mpsc::channel;
 
 use derive_builder::Builder;
 use image::RgbaImage;
-use taffy::{AvailableSpace, NodeId, Point, TaffyTree, geometry::Size};
+use taffy::{AvailableSpace, Layout, NodeId, Point, TaffyTree, geometry::Size};
 
 use crate::{
   GlobalContext,
-  layout::{Viewport, node::Node, style::Affine},
+  layout::{
+    Viewport,
+    node::Node,
+    style::{Affine, InheritedStyle},
+  },
   rendering::{Canvas, create_blocking_canvas_loop, draw_debug_border},
 };
 
@@ -106,6 +110,49 @@ pub fn render<'g, N: Node<N>>(options: RenderOptions<'g, N>) -> Result<RgbaImage
   Ok(canvas)
 }
 
+fn create_transform(style: &InheritedStyle, layout: &Layout, context: &RenderContext) -> Affine {
+  let mut transform = Affine::identity();
+
+  let transform_origin = style.transform_origin.0.unwrap_or_default();
+
+  let center = Point {
+    x: transform_origin
+      .x
+      .to_length_unit()
+      .resolve_to_px(context, layout.size.width),
+    y: transform_origin
+      .y
+      .to_length_unit()
+      .resolve_to_px(context, layout.size.height),
+  };
+
+  // According to https://www.w3.org/TR/css-transforms-2/#ctm
+  // the order is `translate` -> `rotate` -> `scale` -> `transform`
+  if let Some(translate) = *style.translate {
+    transform = transform
+      * Affine::translation(Size {
+        width: translate.x.resolve_to_px(context, layout.size.width),
+        height: translate.y.resolve_to_px(context, layout.size.height),
+      });
+  }
+
+  if let Some(rotate) = *style.rotate {
+    transform = transform * Affine::rotation(rotate, center);
+  }
+
+  if let Some(scale) = *style.scale {
+    transform = transform * Affine::scale(scale.into(), center);
+  }
+
+  if let Some(node_transform) = &*style.transform {
+    let node_transform = node_transform.to_affine(context, layout, center);
+
+    transform = transform * node_transform;
+  }
+
+  transform
+}
+
 fn render_node<Nodes: Node<Nodes>>(
   taffy: &mut TaffyTree<NodeContext<Nodes>>,
   node_id: NodeId,
@@ -120,20 +167,8 @@ fn render_node<Nodes: Node<Nodes>>(
 
   let node_context = taffy.get_node_context_mut(node_id).unwrap();
 
-  if let Some(node_transform) = &*node_context.context.style.transform {
-    let node_transform = node_transform.to_affine(
-      &node_context.context,
-      &layout,
-      node_context
-        .context
-        .style
-        .transform_origin
-        .0
-        .unwrap_or_default(),
-    );
-
-    transform = transform * node_transform;
-  }
+  transform =
+    transform * create_transform(&node_context.context.style, &layout, &node_context.context);
 
   node_context.context.transform = transform;
 

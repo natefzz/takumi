@@ -1,6 +1,7 @@
 use cssparser::{Parser, ParserInput, Token, match_ignore_ascii_case};
 use image::RgbaImage;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+use serde_untagged::UntaggedEnumVisitor;
 use smallvec::SmallVec;
 use std::ops::Deref;
 use ts_rs::TS;
@@ -268,9 +269,28 @@ impl<'i> FromCss<'i> for GradientStop {
 }
 
 /// Represents an angle value in degrees.
-#[derive(Debug, Default, Clone, Copy, PartialEq, TS, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, TS, Serialize)]
 #[serde(transparent)]
+#[ts(type = "number | string")]
 pub struct Angle(f32);
+
+impl<'de> Deserialize<'de> for Angle {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: Deserializer<'de>,
+  {
+    UntaggedEnumVisitor::new()
+      .i32(|num| Ok(Angle::new(num as f32)))
+      .f32(|num| Ok(Angle::new(num)))
+      .string(|str| {
+        let mut input = ParserInput::new(str);
+        let mut parser = Parser::new(&mut input);
+
+        Angle::from_css(&mut parser).map_err(|e| serde::de::Error::custom(e.to_string()))
+      })
+      .deserialize(deserializer)
+  }
+}
 
 impl Deref for Angle {
   type Target = f32;

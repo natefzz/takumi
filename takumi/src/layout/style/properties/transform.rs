@@ -8,9 +8,7 @@ use ts_rs::TS;
 use zeno::{Command, Vector};
 
 use crate::{
-  layout::style::{
-    Angle, BackgroundPosition, FromCss, LengthUnit, ParseResult, parse_length_percentage,
-  },
+  layout::style::{Angle, FromCss, LengthUnit, ParseResult, parse_length_percentage},
   rendering::RenderContext,
 };
 
@@ -44,22 +42,8 @@ impl Transforms {
     &self,
     context: &RenderContext,
     layout: &Layout,
-    transform_origin: BackgroundPosition,
+    center: Point<f32>,
   ) -> Affine {
-    let transform_origin_x = transform_origin
-      .x
-      .to_length_unit()
-      .resolve_to_px(context, layout.size.width);
-    let transform_origin_y = transform_origin
-      .y
-      .to_length_unit()
-      .resolve_to_px(context, layout.size.height);
-
-    let center = Point {
-      x: transform_origin_x,
-      y: transform_origin_y,
-    };
-
     let mut instance = Affine::identity();
 
     for transform in self.0.iter().rev() {
