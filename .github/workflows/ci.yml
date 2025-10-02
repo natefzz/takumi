@@ -14,10 +14,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: write
-  id-token: write
-
 # Jobs are grouped by package
 jobs:
   biome-lint:
@@ -159,42 +155,6 @@ jobs:
       - name: Test
         working-directory: takumi-helpers
         run: bun test
-
-  version-check-helpers:
-    name: Check version for @takumi-rs/helpers
-    if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    outputs:
-      exists: ${{ steps.check.outputs.exists }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - uses: ./.github/actions/npm-version-exists-check
-        id: check
-        with:
-          working_directory: takumi-helpers
-
-  publish-helpers:
-    name: Publish @takumi-rs/helpers
-    needs: [build-helpers, test-helpers, version-check-helpers]
-    if: github.ref == 'refs/heads/master' && needs.version-check-helpers.outputs.exists == 'false'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Download artifact
-        uses: actions/download-artifact@v5
-        with:
-          name: helpers-dist
-          path: takumi-helpers/dist
-
-      - name: Publish
-        uses: ./.github/actions/publish-npm
-        with:
-          working_directory: takumi-helpers
-          npm_token: ${{ secrets.NPM_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   build-napi:
     strategy:
@@ -451,21 +411,6 @@ jobs:
           apiToken: ${{ secrets.CF_DOCS_PAGES_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
 
-  version-check-image-response:
-    name: Check version for @takumi-rs/image-response
-    if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    outputs:
-      exists: ${{ steps.check.outputs.exists }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - uses: ./.github/actions/npm-version-exists-check
-        id: check
-        with:
-          working_directory: takumi-image-response
-
   test-napi:
     needs: build-napi
     name: Test @takumi-rs/core for ${{ matrix.settings.target }}
@@ -527,55 +472,6 @@ jobs:
         run: |
           docker run --rm -v $PWD:/workspace -w /workspace/takumi-napi-core \
             oven/bun:alpine bun test
-
-  version-check-napi:
-    name: Check version for @takumi-rs/core
-    if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    outputs:
-      exists: ${{ steps.check.outputs.exists }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - uses: ./.github/actions/npm-version-exists-check
-        id: check
-        with:
-          working_directory: takumi-napi-core
-
-  publish-napi:
-    name: Publish @takumi-rs/core
-    needs: [build-napi, test-napi, version-check-napi]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && needs.version-check-napi.outputs.exists == 'false'
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v5
-        with:
-          path: takumi-napi-core/artifacts
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile --filter ./takumi-napi-core
-
-      - uses: actions/setup-node@v5
-
-      - name: Publish
-        working-directory: takumi-napi-core
-        run: |
-          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-          bun artifacts
-          cp artifacts/bindings-x86_64-unknown-linux-gnu/index.* .
-          npm publish --access public --provenance
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-wasm:
     name: Build @takumi-rs/wasm
@@ -640,42 +536,14 @@ jobs:
         working-directory: takumi-wasm
         run: bun test
 
-  version-check-wasm:
-    name: Check version for @takumi-rs/wasm
-    needs: build-wasm
+  release:
+    name: Release
+    runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    outputs:
-      exists: ${{ steps.check.outputs.exists }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - uses: ./.github/actions/npm-version-exists-check
-        id: check
-        with:
-          working_directory: takumi-wasm
-
-  version-check-template:
-    name: Check version for @takumi-rs/template
-    if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    outputs:
-      exists: ${{ steps.check.outputs.exists }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - uses: ./.github/actions/npm-version-exists-check
-        id: check
-        with:
-          working_directory: takumi-template
-
-  publish-wasm:
-    name: Publish @takumi-rs/wasm
-    needs: [test-wasm, version-check-wasm]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && needs.version-check-wasm.outputs.exists == 'false'
+    needs: [build-helpers, build-napi, build-image-response, build-template, build-wasm, test-helpers, test-napi, test-image-response, test-template, test-wasm]
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v5
 
@@ -684,144 +552,43 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Download artifacts
+      - name: Setup Rust
+        uses: ./.github/actions/setup-rust
+      
+      - name: Download helpers artifact
         uses: actions/download-artifact@v5
         with:
-          name: wasm-package
-          path: takumi-wasm/pkg
+          name: helpers-dist
+          path: takumi-helpers/dist
 
-      - name: Publish
-        uses: ./.github/actions/publish-npm
+      - name: Download all artifacts
+        uses: actions/download-artifact@v5
         with:
-          working_directory: takumi-wasm
-          npm_token: ${{ secrets.NPM_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          path: takumi-napi-core/artifacts
 
-  publish-image-response:
-    name: Publish @takumi-rs/image-response
-    needs: [build-image-response, test-image-response, version-check-image-response]
-    if: github.ref == 'refs/heads/master' && needs.version-check-image-response.outputs.exists == 'false'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Download artifact
+      - name: Download image-response artifact
         uses: actions/download-artifact@v5
         with:
           name: image-response-dist
           path: takumi-image-response/dist
 
-      - name: Publish
-        uses: ./.github/actions/publish-npm
-        with:
-          working_directory: takumi-image-response
-          npm_token: ${{ secrets.NPM_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-  publish-template:
-    name: Publish @takumi-rs/template
-    needs: [build-template, test-template, version-check-template]
-    if: github.ref == 'refs/heads/master' && needs.version-check-template.outputs.exists == 'false'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Download artifact
+      - name: Download template artifact
         uses: actions/download-artifact@v5
         with:
           name: template-dist
           path: takumi-template/dist
 
-      - name: Publish
-        uses: ./.github/actions/publish-npm
+      - name: Download WASM artifact
+        uses: actions/download-artifact@v5
         with:
-          working_directory: takumi-template
-          npm_token: ${{ secrets.NPM_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          name: wasm-package
+          path: takumi-wasm/pkg
 
-  publish-crate:
-    name: Publish takumi to crate.io
-    runs-on: ubuntu-latest
-    needs: [test-rust, version-check-helpers]
-    if: github.ref == 'refs/heads/master'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Setup Rust
-        uses: ./.github/actions/setup-rust
+      - name: Create Release Pull Request or Publish
+        uses: changesets/action@v1
         with:
-          stage: publish
-
-      - name: Publish to crates.io (dry-run)
-        if: needs.version-check-helpers.outputs.exists == 'true'
-        run: cargo publish -p takumi --dry-run
-
-      - name: Publish to crates.io
-        if: needs.version-check-helpers.outputs.exists == 'false'
-        run: cargo publish -p takumi
+          version: changeset version && bun --filter '*' version 
+          publish: bun --filter '*' run publish
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-
-  create-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    needs: [publish-helpers, publish-napi, publish-wasm, publish-template, publish-crate]
-    if: github.ref == 'refs/heads/master'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - name: Get version
-        id: get_version
-        run: |
-          version=$(jq -r '.version' takumi-helpers/package.json)
-          echo "version=$version" >> $GITHUB_OUTPUT
-
-      - name: Skip tag creation (moved to release-pr.yml)
-        run: |
-          echo "Tag creation has been moved to release-pr.yml workflow"
-
-      - name: Generate release notes
-        id: release_notes
-        run: |
-          VERSION="v${{ steps.get_version.outputs.version }}"
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
-
-          if [ -z "$PREVIOUS_TAG" ]; then
-            COMMITS=$(git log --oneline --pretty=format:"- [%h](https://github.com/${{ github.repository }}/commit/%H) %s" | head -20)
-          else
-            COMMITS=$(git log --oneline --pretty=format:"- [%h](https://github.com/${{ github.repository }}/commit/%H) %s" ${PREVIOUS_TAG}..HEAD~1)
-          fi
-
-          # Set multiline output
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          echo "## What's Changed" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "$COMMITS" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          if [ -n "$PREVIOUS_TAG" ]; then
-            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${VERSION}" >> $GITHUB_OUTPUT
-          fi
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.get_version.outputs.version }}
-          name: Release v${{ steps.get_version.outputs.version }}
-          body: ${{ steps.release_notes.outputs.notes }}
-          draft: false
-          prerelease: false
-
-  pass-test:
-    name: Pass Test
-    runs-on: ubuntu-latest
-    needs: [biome-lint, test-rust, test-napi, test-wasm, test-helpers, test-template, test-image-response, deploy-docs]
-    if: always()
-    steps:
-      - run: echo "Pass test"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -2,10 +2,24 @@
   "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
-  "fixed": [],
+  "fixed": [
+    [
+      "@takumi-rs/core",
+      "@takumi-rs/image-response",
+      "@takumi-rs/template",
+      "@takumi-rs/wasm",
+      "@takumi-rs/helpers",
+      "takumi"
+    ]
+  ],
   "linked": [],
-  "access": "restricted",
+  "access": "public",
   "baseBranch": "master",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "privatePackages": {
+    "version": true,
+    "tag": true
+  },
+  "bumpVersionsWithWorkspaceProtocolOnly": true,
+  "ignore": ["docs", "example-*"]
 }

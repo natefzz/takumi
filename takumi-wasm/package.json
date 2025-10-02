@@ -10,7 +10,8 @@
     "webassembly"
   ],
   "scripts": {
-    "build": "wasm-pack build --no-pack --release --out-dir pkg --target web"
+    "build": "wasm-pack build --no-pack --release --out-dir pkg --target web",
+    "publish": "npm publish --provenance"
   },
   "author": {
     "email": "me@kane.tw",

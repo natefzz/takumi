@@ -1,7 +1,9 @@
 {
   "name": "takumi",
+  "private": true,
   "workspaces": {
     "packages": [
+      "takumi",
       "takumi-helpers",
       "takumi-napi-core",
       "takumi-wasm",
@@ -16,8 +18,7 @@
     }
   },
   "scripts": {
-    "lint": "biome ci .",
-    "version": "changeset version"
+    "lint": "biome ci ."
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",

@@ -42,15 +42,16 @@
       "x86_64-unknown-linux-musl",
       "x86_64-pc-windows-msvc"
     ],
-    "dtsHeaderFile": "./src/dts-header.d.ts"
+    "dtsHeaderFile": "./src/dts-header.d.ts",
+    "constEnum": true
   },
   "scripts": {
-    "build": "napi build --release --platform --esm --strip --no-const-enum",
+    "build": "napi build --release --platform --esm --strip",
     "build:debug": "napi build",
-    "prepublishOnly": "bunx napi prepublish -t npm --no-gh-release",
-    "artifacts": "napi create-npm-dirs && napi artifacts",
-    "version": "napi version",
-    "bench": "bun tests/bench/index.ts"
+    "prepublishOnly": "bun artifacts && cp artifacts/bindings-x86_64-unknown-linux-gnu/index.* . && napi prepublish -t npm --no-gh-release",
+    "artifacts": "napi create-npm-dirs && napi artifacts && napi version",
+    "bench": "bun tests/bench/index.ts",
+    "publish": "npm publish --provenance"
   },
   "type": "module",
   "types": "index.d.ts"

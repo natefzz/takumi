@@ -1,5 +1,5 @@
 {
-  "name": "twitter-images",
+  "name": "example-twitter-images",
   "module": "index.ts",
   "type": "module",
   "private": true,
