@@ -19,8 +19,7 @@
     "typescript": "catalog:"
   },
   "scripts": {
-    "build": "tsup-node src/templates/*.tsx --minify --dts --format esm,cjs --no-splitting",
-    "release": "npm publish --provenance"
+    "build": "tsup-node src/templates/*.tsx --minify --dts --format esm,cjs --no-splitting"
   },
   "files": [
     "dist",

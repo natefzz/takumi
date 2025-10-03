@@ -25,8 +25,7 @@
   },
   "scripts": {
     "version": "jq '.peerDependencies[\"@takumi-rs/core\"] = .version | .peerDependencies[\"@takumi-rs/helpers\"] = .version' package.json > tmp.json && mv tmp.json package.json",
-    "build": "tsup-node src/index.ts --minify --dts --format esm,cjs --no-splitting",
-    "release": "npm publish --provenance"
+    "build": "tsup-node src/index.ts --minify --dts --format esm,cjs --no-splitting"
   },
   "files": [
     "dist",
