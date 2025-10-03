@@ -4,6 +4,6 @@
   "private": true,
   "scripts": {
     "version": "cargo set-version -p takumi $(jq -r '.version' package.json)",
-    "release": "cargo publish"
+    "release": "VERSION=$(jq -r '.version' package.json) && if curl -s https://crates.io/api/v1/crates/takumi/versions | jq -e \".versions[] | select(.num == \\\"$VERSION\\\")\" > /dev/null; then echo \"Version $VERSION already exists on crates.io. Skipping publish.\"; else echo \"Version $VERSION not found. Proceeding with publish...\"; cargo publish; fi"
   }
 }
