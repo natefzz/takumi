@@ -130,4 +130,10 @@ export const stylePresets: Partial<
   span: {
     display: "inline",
   },
+  img: {
+    display: "inline",
+  },
+  svg: {
+    display: "inline",
+  },
 };
