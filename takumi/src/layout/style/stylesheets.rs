@@ -1,4 +1,7 @@
+use std::borrow::Cow;
+
 use derive_builder::Builder;
+use parley::{FontSettings, FontStack, TextStyle};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use taffy::{Size, prelude::FromLength};
@@ -35,14 +38,14 @@ macro_rules! define_style {
 
     impl Style {
       /// Inherits the style from the parent element.
-      pub(crate) fn inherit(&self, parent: &InheritedStyle) -> InheritedStyle {
+      pub(crate) fn inherit(self, parent: &InheritedStyle) -> InheritedStyle {
         InheritedStyle {
           $( $property: self.$property.inherit_value(&parent.$property, $initial_value), )*
         }
       }
     }
 
-    #[derive(Clone)]
+    #[derive(Clone, Debug)]
     pub(crate) struct InheritedStyle {
       $( pub $property: $type, )*
     }
@@ -171,6 +174,40 @@ pub(crate) struct SizedFontStyle<'s> {
   pub color: Color,
   pub text_stroke_color: Color,
   pub text_decoration_color: Color,
+}
+
+impl<'s> From<&'s SizedFontStyle<'s>> for TextStyle<'s, Color> {
+  fn from(style: &'s SizedFontStyle<'s>) -> Self {
+    TextStyle {
+      font_size: style.font_size,
+      line_height: style.line_height,
+      font_weight: style.parent.font_weight.into(),
+      font_style: style.parent.font_style.into(),
+      font_variations: style
+        .parent
+        .font_variation_settings
+        .as_ref()
+        .map(|var| FontSettings::List(Cow::Borrowed(&var.0)))
+        .unwrap_or(FontSettings::List(Cow::Borrowed(&[]))),
+      font_features: style
+        .parent
+        .font_feature_settings
+        .as_ref()
+        .map(|var| FontSettings::List(Cow::Borrowed(&var.0)))
+        .unwrap_or(FontSettings::List(Cow::Borrowed(&[]))),
+      font_stack: style
+        .parent
+        .font_family
+        .as_ref()
+        .map(Into::into)
+        .unwrap_or(FontStack::Source(Cow::Borrowed("sans-serif"))),
+      letter_spacing: style.letter_spacing.unwrap_or_default(),
+      word_spacing: style.word_spacing.unwrap_or_default(),
+      word_break: style.parent.word_break.into(),
+      overflow_wrap: style.parent.overflow_wrap.into(),
+      ..Default::default()
+    }
+  }
 }
 
 impl<'s> SizedFontStyle<'s> {

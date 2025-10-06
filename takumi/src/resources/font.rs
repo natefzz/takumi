@@ -8,7 +8,7 @@ use std::{
 use lru::LruCache;
 
 use parley::{
-  GenericFamily, Layout, LayoutContext, RangedBuilder, Run,
+  GenericFamily, Layout, LayoutContext, Run, TextStyle, TreeBuilder,
   fontique::{Blob, FallbackKey, FontInfoOverride, Script},
 };
 use swash::{
@@ -262,21 +262,20 @@ impl FontContext {
       .map(|(_, glyph)| glyph)
   }
 
-  /// Access the inner context, then return the result of the function
-  /// The inner lock will be released after the function is executed
-  pub fn create_layout(
+  /// Create an inline layout with the given root style and function
+  pub fn create_inline_layout(
     &self,
-    text: &str,
-    func: impl FnOnce(&mut RangedBuilder<'_, Color>),
+    root_style: TextStyle<'_, Color>,
+    func: impl FnOnce(&mut TreeBuilder<'_, Color>),
   ) -> Layout<Color> {
     let mut lock = self.layout.lock().unwrap();
     let (fcx, lcx) = &mut *lock;
 
-    let mut builder = lcx.ranged_builder(fcx, text, 1.0, true);
+    let mut builder = lcx.tree_builder(fcx, 1.0, true, &root_style);
 
     func(&mut builder);
 
-    builder.build(text)
+    builder.build().0
   }
 
   /// Purge the rasterization cache.

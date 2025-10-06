@@ -2,15 +2,18 @@ use std::borrow::Cow;
 use std::sync::Arc;
 
 use image::RgbaImage;
-use parley::{Glyph, GlyphRun, PositionedLayoutItem, StyleProperty};
+use parley::{Glyph, GlyphRun, PositionedLayoutItem};
 use taffy::{Layout, Point, Size};
 use zeno::{Command, Join, Mask, PathData, Placement, Stroke};
 
 use crate::{
   GlobalContext,
-  layout::style::{
-    Affine, Color, ImageScalingAlgorithm, SizedFontStyle, TextDecorationLine, TextOverflow,
-    TextTransform,
+  layout::{
+    inline::break_lines,
+    style::{
+      Affine, Color, ImageScalingAlgorithm, SizedFontStyle, TextDecorationLine, TextOverflow,
+      TextTransform,
+    },
   },
   rendering::{
     BorderProperties, Canvas, RenderContext, apply_mask_alpha_to_pixel, overlay_image,
@@ -35,13 +38,15 @@ pub fn draw_text(text: &str, context: &RenderContext, canvas: &Canvas, layout: L
     None => Some(MaxHeight::Absolute(content_box.height)),
   };
 
-  let mut buffer = create_text_layout(
-    &render_text,
-    &font_style,
-    context.global,
-    content_box.width,
-    max_height,
-  );
+  let mut buffer =
+    context
+      .global
+      .font_context
+      .create_inline_layout((&font_style).into(), |builder| {
+        builder.push_text(&render_text);
+      });
+
+  break_lines(&mut buffer, content_box.width, max_height);
 
   let Some(last_line) = buffer.lines().last() else {
     return;
@@ -63,13 +68,14 @@ pub fn draw_text(text: &str, context: &RenderContext, canvas: &Canvas, layout: L
       font_style.ellipsis_char(),
     );
 
-    buffer = create_text_layout(
-      &text_with_ellipsis,
-      &font_style,
-      context.global,
-      content_box.width,
-      max_height,
-    );
+    let mut buffer = context
+      .global
+      .font_context
+      .create_inline_layout((&font_style).into(), |builder| {
+        builder.push_text(&text_with_ellipsis)
+      });
+
+    break_lines(&mut buffer, content_box.width, max_height);
   }
 
   // If we have a mask image on the style, render it using the background tiling logic into a
@@ -113,7 +119,7 @@ pub fn draw_text(text: &str, context: &RenderContext, canvas: &Canvas, layout: L
   draw_buffer(context, &buffer, canvas, font_style, layout, None);
 }
 
-fn draw_buffer(
+pub(crate) fn draw_buffer(
   context: &RenderContext,
   buffer: &parley::Layout<Color>,
   canvas: &Canvas,
@@ -409,136 +415,6 @@ pub(crate) enum MaxHeight {
   Both(f32, u32),
 }
 
-pub(crate) fn create_text_layout(
-  text: &str,
-  font_style: &SizedFontStyle,
-  global: &GlobalContext,
-  max_width: f32,
-  max_height: Option<MaxHeight>,
-) -> parley::Layout<Color> {
-  let mut layout = global.font_context.create_layout(text, |builder| {
-    let font_weight = font_style.parent.font_weight.into();
-
-    builder.push_default(StyleProperty::FontSize(font_style.font_size));
-    builder.push_default(StyleProperty::LineHeight(font_style.line_height));
-    builder.push_default(StyleProperty::FontWeight(font_weight));
-    builder.push_default(StyleProperty::FontStyle(
-      font_style.parent.font_style.into(),
-    ));
-
-    if let Some(font_variation_settings) = font_style.parent.font_variation_settings.as_ref()
-      && !font_variation_settings.0.is_empty()
-    {
-      builder.push_default(StyleProperty::FontVariations(parley::FontSettings::List(
-        Cow::Borrowed(&font_variation_settings.0),
-      )));
-    }
-
-    if let Some(font_feature_settings) = font_style.parent.font_feature_settings.as_ref()
-      && !font_feature_settings.0.is_empty()
-    {
-      builder.push_default(StyleProperty::FontFeatures(parley::FontSettings::List(
-        Cow::Borrowed(&font_feature_settings.0),
-      )));
-    }
-
-    if let Some(font_family) = font_style.parent.font_family.as_ref() {
-      builder.push_default(StyleProperty::FontStack(font_family.into()));
-    }
-
-    if let Some(letter_spacing) = font_style.letter_spacing {
-      builder.push_default(StyleProperty::LetterSpacing(letter_spacing));
-    }
-
-    if let Some(word_spacing) = font_style.word_spacing {
-      builder.push_default(StyleProperty::WordSpacing(word_spacing));
-    }
-
-    builder.push_default(StyleProperty::WordBreak(
-      font_style.parent.word_break.into(),
-    ));
-    builder.push_default(StyleProperty::OverflowWrap(
-      font_style.parent.overflow_wrap.into(),
-    ));
-  });
-
-  break_lines(&mut layout, max_width, max_height);
-
-  layout.align(
-    Some(max_width),
-    font_style.parent.text_align.into(),
-    Default::default(),
-  );
-
-  layout
-}
-
-fn break_lines(layout: &mut parley::Layout<Color>, max_width: f32, max_height: Option<MaxHeight>) {
-  let Some(max_height) = max_height else {
-    return layout.break_all_lines(Some(max_width));
-  };
-
-  match max_height {
-    MaxHeight::Lines(lines) => {
-      let mut breaker = layout.break_lines();
-
-      for _ in 0..lines {
-        if breaker.break_next(max_width).is_none() {
-          // no more lines to break
-          break;
-        };
-      }
-
-      breaker.finish();
-    }
-    MaxHeight::Absolute(max_height) => {
-      let mut total_height = 0.0;
-      let mut breaker = layout.break_lines();
-
-      while total_height < max_height {
-        let Some((_, height)) = breaker.break_next(max_width) else {
-          // no more lines to break
-          break;
-        };
-
-        total_height += height;
-      }
-
-      // if its over the max height after last break, revert the break
-      if total_height > max_height {
-        breaker.revert();
-      }
-
-      breaker.finish();
-    }
-    MaxHeight::Both(max_height, max_lines) => {
-      let mut total_height = 0.0;
-      let mut line_count = 0;
-      let mut breaker = layout.break_lines();
-
-      while total_height < max_height {
-        if line_count >= max_lines {
-          break;
-        }
-
-        let Some((_, height)) = breaker.break_next(max_width) else {
-          // no more lines to break
-          break;
-        };
-
-        line_count += 1;
-        total_height += height;
-      }
-
-      if total_height > max_height {
-        breaker.revert();
-      }
-
-      breaker.finish();
-    }
-  }
-}
-
 /// Applies text transform to the input text.
 pub fn apply_text_transform<'a>(input: &'a str, transform: TextTransform) -> Cow<'a, str> {
   match transform {
@@ -585,7 +461,13 @@ fn make_ellipsis_text<'s>(
     text_with_ellipsis.push_str(truncated_text);
     text_with_ellipsis.push_str(ellipsis_char);
 
-    let buffer = create_text_layout(&text_with_ellipsis, font_style, global, max_width, None);
+    let mut buffer = global
+      .font_context
+      .create_inline_layout(font_style.into(), |builder| {
+        builder.push_text(render_text);
+      });
+
+    break_lines(&mut buffer, max_width, None);
 
     // if the text fits, return the text with ellipsis character
     if buffer.lines().count() == 1 {

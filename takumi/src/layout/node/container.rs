@@ -16,18 +16,17 @@ use crate::layout::{node::Node, style::Style};
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ContainerNode<Nodes: Node<Nodes>> {
   /// The styling properties for this container
-  #[serde(default)]
-  pub style: Style,
+  pub style: Option<Style>,
   /// The child nodes contained within this container
   pub children: Option<Vec<Nodes>>,
 }
 
 impl<Nodes: Node<Nodes>> Node<Nodes> for ContainerNode<Nodes> {
-  fn take_children(&mut self) -> Option<Vec<Nodes>> {
-    self.children.take()
+  fn take_style(&mut self) -> Style {
+    self.style.take().unwrap_or_default()
   }
 
-  fn get_style(&self) -> &Style {
-    &self.style
+  fn take_children(&mut self) -> Option<Vec<Nodes>> {
+    self.children.take()
   }
 }

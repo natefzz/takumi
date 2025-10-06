@@ -158,44 +158,48 @@ fn test_style_transform_translate_and_scale() {
   };
 
   let scaled = ContainerNode {
-    style: StyleBuilder::default()
-      .transform(CssOption::some(Transforms(smallvec![
-        Transform::Translate(Px(0.0), Px(200.0)),
-        Transform::Scale(2.0, 2.0),
-      ])))
-      .background_color(ColorInput::Value(Color([0, 255, 0, 255])))
-      .width(Px(100.0))
-      .height(Px(100.0))
-      .border_width(CssOption::some(Sides([Px(1.0); 4])))
-      .font_size(CssOption::some(Px(12.0)))
-      .build()
-      .unwrap(),
+    style: Some(
+      StyleBuilder::default()
+        .transform(CssOption::some(Transforms(smallvec![
+          Transform::Translate(Px(0.0), Px(200.0)),
+          Transform::Scale(2.0, 2.0),
+        ])))
+        .background_color(ColorInput::Value(Color([0, 255, 0, 255])))
+        .width(Px(100.0))
+        .height(Px(100.0))
+        .border_width(CssOption::some(Sides([Px(1.0); 4])))
+        .font_size(CssOption::some(Px(12.0)))
+        .build()
+        .unwrap(),
+    ),
     children: Some(vec![
       TextNode {
         text: "100px x 100px, translate(0px, 200px), scale(2.0, 2.0)".to_string(),
-        style: Style::default(),
+        style: None,
       }
       .into(),
     ]),
   };
 
   let rotated = ContainerNode {
-    style: StyleBuilder::default()
-      .transform(CssOption::some(Transforms(smallvec![Transform::Rotate(
-        Angle::new(45.0)
-      )])))
-      .background_color(ColorInput::Value(Color([0, 0, 255, 255])))
-      .width(Px(200.0))
-      .height(Px(200.0))
-      .border_width(CssOption::some(Sides([Px(1.0); 4])))
-      .color(ColorInput::Value(Color::white()))
-      .border_color(CssOption::some(ColorInput::Value(Color::black())))
-      .build()
-      .unwrap(),
+    style: Some(
+      StyleBuilder::default()
+        .transform(CssOption::some(Transforms(smallvec![Transform::Rotate(
+          Angle::new(45.0)
+        )])))
+        .background_color(ColorInput::Value(Color([0, 0, 255, 255])))
+        .width(Px(200.0))
+        .height(Px(200.0))
+        .border_width(CssOption::some(Sides([Px(1.0); 4])))
+        .color(ColorInput::Value(Color::white()))
+        .border_color(CssOption::some(ColorInput::Value(Color::black())))
+        .build()
+        .unwrap(),
+    ),
     children: Some(vec![
       TextNode {
         text: "200px x 200px, rotate(45deg)".to_string(),
-        style: Style::default(),
+        style: None,
       }
       .into(),
     ]),

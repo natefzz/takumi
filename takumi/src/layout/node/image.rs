@@ -10,7 +10,7 @@ use taffy::{AvailableSpace, Layout, Size};
 use crate::resources::image::ImageResult;
 use crate::{
   GlobalContext,
-  layout::{node::Node, style::Style},
+  layout::{inline::InlineContentKind, node::Node, style::Style},
   rendering::{Canvas, RenderContext, draw_image},
   resources::image::{ImageResourceError, ImageSource, is_svg},
 };
@@ -22,8 +22,7 @@ use crate::{
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ImageNode {
   /// The styling properties for this image node
-  #[serde(default)]
-  pub style: Style,
+  pub style: Option<Style>,
   /// The source URL or path to the image
   pub src: String,
   /// The width of the image
@@ -33,8 +32,12 @@ pub struct ImageNode {
 }
 
 impl<Nodes: Node<Nodes>> Node<Nodes> for ImageNode {
-  fn get_style(&self) -> &Style {
-    &self.style
+  fn take_style(&mut self) -> Style {
+    self.style.take().unwrap_or_default()
+  }
+
+  fn inline_content(&self, _context: &RenderContext) -> Option<InlineContentKind> {
+    Some(InlineContentKind::Box)
   }
 
   fn measure(
@@ -72,10 +75,6 @@ impl<Nodes: Node<Nodes>> Node<Nodes> for ImageNode {
     };
 
     draw_image(&image, context, canvas, layout);
-  }
-
-  fn has_draw_content(&self) -> bool {
-    true
   }
 }
 

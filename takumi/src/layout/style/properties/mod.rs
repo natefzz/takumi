@@ -278,9 +278,35 @@ pub enum Display {
   Flex,
   /// The element generates a grid container and its children follow the CSS Grid layout algorithm
   Grid,
+  /// The element generates an inline container and its children follow the inline layout algorithm
+  Inline,
 }
 
-impl_from_taffy_enum!(Display, taffy::Display, Flex, Grid);
+impl Display {
+  /// Returns true if the display is inline.
+  pub fn is_inline(&self) -> bool {
+    *self == Display::Inline
+  }
+
+  /// Cast the display to block level.
+  pub fn to_block(self) -> Self {
+    match self {
+      Display::Inline => Display::Flex,
+      _ => self,
+    }
+  }
+}
+
+impl From<Display> for taffy::Display {
+  fn from(value: Display) -> Self {
+    match value {
+      Display::Flex => taffy::Display::Flex,
+      Display::Grid => taffy::Display::Grid,
+      // inline nodes should not be passed to taffy for block level layout.
+      _ => unreachable!(),
+    }
+  }
+}
 
 /// Defines how flex items are aligned along the cross axis.
 ///

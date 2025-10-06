@@ -78,41 +78,56 @@ export const stylePresets: Partial<
   },
   u: {
     textDecoration: "underline",
+    display: "inline",
   },
   strong: {
     fontWeight: "bold",
+    display: "inline",
   },
   b: {
     fontWeight: "bold",
+    display: "inline",
   },
   i: {
     fontStyle: "italic",
+    display: "inline",
   },
   em: {
     fontStyle: "italic",
+    display: "inline",
   },
   code: {
     fontFamily: "monospace",
+    display: "inline",
   },
   kbd: {
     fontFamily: "monospace",
+    display: "inline",
   },
   pre: {
     fontFamily: "monospace",
     marginTop: "1em",
     marginBottom: "1em",
+    display: "inline",
   },
   mark: {
     backgroundColor: 0xffff00,
     color: 0,
+    display: "inline",
   },
   big: {
     fontSize: "1.2em",
+    display: "inline",
   },
   small: {
     fontSize: "0.8em",
+    display: "inline",
   },
   s: {
     textDecoration: "line-through",
+    display: "inline",
+  },
+  span: {
+    display: "inline",
   },
 };

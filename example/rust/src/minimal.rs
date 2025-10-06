@@ -30,10 +30,12 @@ pub fn say_hello_to(name: &str) {
   // Create a text node with custom styling
   // Font size is set to 48.0 and other styles use default values
   let text = TextNode {
-    style: StyleBuilder::default()
-      .font_size(CssOption::some(48.0.into()))
-      .build()
-      .unwrap(),
+    style: Some(
+      StyleBuilder::default()
+        .font_size(CssOption::some(48.0.into()))
+        .build()
+        .unwrap(),
+    ),
     text: format!("Hello, {name}!"),
   };
 

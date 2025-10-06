@@ -158,12 +158,12 @@ impl<T: TS> From<T> for CssValue<T> {
 
 impl<T: TS> CssValue<T> {
   /// Resolves this CssValue to a concrete value based on inheritance rules
-  pub(crate) fn inherit_value(&self, parent: &T, initial_value: T) -> T
+  pub(crate) fn inherit_value(self, parent: &T, initial_value: T) -> T
   where
     T: Clone,
   {
     match self {
-      Self::Value(v) => v.clone(),
+      Self::Value(v) => v,
       Self::Global(CssGlobalKeyword::Inherit) => parent.clone(),
       Self::Global(CssGlobalKeyword::Initial) => initial_value,
     }

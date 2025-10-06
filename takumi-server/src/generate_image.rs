@@ -8,11 +8,7 @@ use axum::{
 use serde::Deserialize;
 use serde_json::from_str;
 use takumi::{
-  layout::{
-    Viewport,
-    node::{Node, NodeKind},
-    style::{CssValue, LengthUnit},
-  },
+  layout::{Viewport, node::NodeKind},
   rendering::{ImageOutputFormat, RenderOptionsBuilder, render, write_image},
 };
 use tokio::task::spawn_blocking;
@@ -25,6 +21,8 @@ pub struct GenerateImageQuery {
   pub quality: Option<u8>,
   pub payload: String,
   pub draw_debug_border: Option<bool>,
+  pub width: u32,
+  pub height: u32,
 }
 
 pub async fn generate_image_handler(
@@ -38,30 +36,10 @@ pub async fn generate_image_handler(
     )
   })?;
 
-  let width = match root_node.get_style().width {
-    CssValue::Value(LengthUnit::Px(px)) => px,
-    _ => {
-      return Err((
-        StatusCode::BAD_REQUEST,
-        "Width must be specified in pixels".to_string(),
-      ));
-    }
-  };
-
-  let height = match root_node.get_style().height {
-    CssValue::Value(LengthUnit::Px(px)) => px,
-    _ => {
-      return Err((
-        StatusCode::BAD_REQUEST,
-        "Height must be specified in pixels".to_string(),
-      ));
-    }
-  };
-
   let format = query.format.unwrap_or(ImageOutputFormat::WebP);
 
   let buffer = spawn_blocking(move || -> AxumResult<Vec<u8>> {
-    let viewport = Viewport::new(width as u32, height as u32);
+    let viewport = Viewport::new(query.width, query.height);
     let options = RenderOptionsBuilder::default()
       .viewport(viewport)
       .node(root_node)

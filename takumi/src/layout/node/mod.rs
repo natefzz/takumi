@@ -11,7 +11,7 @@ use taffy::{AvailableSpace, Layout, Point, Size};
 use zeno::Mask;
 
 use crate::{
-  layout::style::Style,
+  layout::{inline::InlineContentKind, style::Style},
   rendering::{
     BorderProperties, Canvas, RenderContext, SizedShadow, draw_background_layers, draw_border,
     resolve_layers_tiles,
@@ -28,9 +28,15 @@ macro_rules! impl_node_enum {
         }
       }
 
-      fn get_style(&self) -> &$crate::layout::style::Style {
+      fn take_style(&mut self) -> $crate::layout::style::Style {
         match self {
-          $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::get_style(inner), )*
+          $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::take_style(inner), )*
+        }
+      }
+
+      fn inline_content(&self, context: &$crate::rendering::RenderContext) -> Option<$crate::layout::inline::InlineContentKind> {
+        match self {
+          $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::inline_content(inner, context), )*
         }
       }
 
@@ -80,12 +86,6 @@ macro_rules! impl_node_enum {
           $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::draw_inset_box_shadow(inner, context, canvas, layout), )*
         }
       }
-
-      fn has_draw_content(&self) -> bool {
-        match self {
-          $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::has_draw_content(inner), )*
-        }
-      }
     }
 
     $(
@@ -108,8 +108,13 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
     None
   }
 
-  /// Returns a reference to the node's style properties.
-  fn get_style(&self) -> &Style;
+  /// Returns a owned Style instance.
+  fn take_style(&mut self) -> Style;
+
+  /// Retrieve content for inline layout.
+  fn inline_content(&self, _context: &RenderContext) -> Option<InlineContentKind> {
+    None
+  }
 
   /// Measures the intrinsic size of the node.
   ///
@@ -227,11 +232,6 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
   /// Draws the main content of the node.
   fn draw_content(&self, _context: &RenderContext, _canvas: &Canvas, _layout: Layout) {
     // Default implementation does nothing
-  }
-
-  /// Returns true if `draw_content` is needed to be called.
-  fn has_draw_content(&self) -> bool {
-    false
   }
 
   /// Draws the border of the node.
