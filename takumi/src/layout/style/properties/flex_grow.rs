@@ -17,8 +17,8 @@ impl<'de> Deserialize<'de> for FlexGrow {
     D: Deserializer<'de>,
   {
     UntaggedEnumVisitor::new()
+      .i32(|num| Ok(FlexGrow(num as f32)))
       .f32(|num| Ok(FlexGrow(num)))
-      .f64(|num| Ok(FlexGrow(num as f32)))
       .string(|str| {
         Ok(FlexGrow(str.parse::<f32>().map_err(|_| {
           serde_untagged::de::Error::invalid_value(Unexpected::Str(str), &"a number")

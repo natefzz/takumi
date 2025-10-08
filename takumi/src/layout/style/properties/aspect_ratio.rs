@@ -33,6 +33,7 @@ impl<'de> Deserialize<'de> for AspectRatio {
     D: Deserializer<'de>,
   {
     UntaggedEnumVisitor::new()
+      .i32(|num| Ok(AspectRatio::Ratio(num as f32)))
       .f32(|num| Ok(AspectRatio::Ratio(num)))
       .string(|str| {
         let mut input = ParserInput::new(str);
