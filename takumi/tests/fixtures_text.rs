@@ -210,7 +210,6 @@ Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliqu
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
         .font_size(CssOption::some(Px(48.0)))
-        .line_height(LineHeight(Px(26.0)))
         .text_align(TextAlign::Justify)
         .text_overflow(TextOverflow::Clip)
         .build()
