@@ -4,8 +4,9 @@ import { fromJsx } from "@takumi-rs/helpers/jsx";
 import { file, write } from "bun";
 import * as FiveHundredStars from "./components/500-stars";
 import * as OgImage from "./components/og-image";
+import * as XPostImage from "./components/x-post-image";
 
-const components = [OgImage, FiveHundredStars];
+const components = [OgImage, FiveHundredStars, XPostImage];
 
 type Component = (typeof components)[number];
 
@@ -14,11 +15,14 @@ async function render(module: Component) {
 
   const renderer = new Renderer({
     persistentImages: module.persistentImages,
-    fonts: await Promise.all(
-      module.fonts.map((font) =>
-        file(join("../../assets/fonts", font)).arrayBuffer(),
-      ),
-    ),
+    fonts:
+      module.fonts.length > 0
+        ? await Promise.all(
+            module.fonts.map((font) =>
+              file(join("../../assets/fonts", font)).arrayBuffer(),
+            ),
+          )
+        : undefined,
   });
 
   const start = performance.now();
