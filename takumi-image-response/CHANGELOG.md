@@ -1,5 +1,13 @@
 # @takumi-rs/image-response
 
+## 0.35.1
+
+### Patch Changes
+
+- Updated dependencies [f18e9c5]
+  - @takumi-rs/core@0.35.1
+  - @takumi-rs/helpers@0.35.1
+
 ## 0.35.0
 
 ### Patch Changes

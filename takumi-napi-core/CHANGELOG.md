@@ -1,5 +1,11 @@
 # @takumi-rs/core
 
+## 0.35.1
+
+### Patch Changes
+
+- f18e9c5: enable `@takumi-rs/core-darwin-x64` target support
+
 ## 0.35.0
 
 ### Patch Changes
