@@ -218,7 +218,7 @@ impl Display for DrawCommand {
 
 impl DrawCommand {
   /// Executes the drawing command on the provided canvas.
-  pub fn draw(self, canvas: &mut RgbaImage) {
+  fn draw(self, canvas: &mut RgbaImage) {
     match self {
       DrawCommand::OverlayImage {
         ref image,
@@ -257,7 +257,7 @@ impl DrawCommand {
 ///
 /// If the color is fully transparent (alpha = 0), no operation is performed.
 /// Otherwise, the pixel is blended with the existing canvas pixel using alpha blending.
-pub fn draw_pixel(canvas: &mut RgbaImage, x: u32, y: u32, color: Rgba<u8>) {
+pub(crate) fn draw_pixel(canvas: &mut RgbaImage, x: u32, y: u32, color: Rgba<u8>) {
   if color.0[3] == 0 {
     return;
   }

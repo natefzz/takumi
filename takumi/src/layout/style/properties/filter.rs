@@ -93,7 +93,7 @@ impl Filters {
           }
         }
         Filter::Opacity(value) => {
-          for alpha in image.as_mut().iter_mut().step_by(4) {
+          for alpha in image.as_mut().iter_mut().skip(3).step_by(4) {
             *alpha = ((*alpha) as f32 * value).clamp(0.0, 255.0) as u8;
           }
         }

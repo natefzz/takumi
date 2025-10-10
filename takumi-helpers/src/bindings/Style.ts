@@ -14,6 +14,7 @@ import type { ColorInput } from "./ColorInput";
 import type { CssOption } from "./CssOption";
 import type { CssValue } from "./CssValue";
 import type { Display } from "./Display";
+import type { Filters } from "./Filters";
 import type { Flex } from "./Flex";
 import type { FlexDirection } from "./FlexDirection";
 import type { FlexGrow } from "./FlexGrow";
@@ -133,6 +134,7 @@ export type Style = {
   fontStyle: CssValue<FontStyle>;
   borderColor: CssValue<CssOption<ColorInput>>;
   color: CssValue<ColorInput>;
+  filter: CssValue<CssOption<Filters>>;
   fontSize: CssValue<CssOption<LengthUnit>>;
   fontFamily: CssValue<CssOption<FontFamily>>;
   lineHeight: CssValue<LineHeight>;
