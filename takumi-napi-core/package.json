@@ -20,7 +20,7 @@
   },
   "main": "index.js",
   "devDependencies": {
-    "@napi-rs/cli": "3.3.0",
+    "@napi-rs/cli": "3.3.1",
     "@takumi-rs/helpers": "workspace:*",
     "@takumi-rs/template": "workspace:*",
     "@types/bun": "catalog:",

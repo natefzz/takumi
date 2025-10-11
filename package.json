@@ -13,7 +13,7 @@
       "example/*"
     ],
     "catalog": {
-      "@types/bun": "^1.2.23",
+      "@types/bun": "^1.3.0",
       "typescript": "^5.9.3"
     }
   },
@@ -26,12 +26,6 @@
     "@biomejs/biome": "^2.2.5",
     "@changesets/cli": "^2.29.7",
     "@takumi-rs/core": "workspace:*",
-    "simple-git-hooks": "^2.13.1"
-  },
-  "trustedDependencies": [
-    "simple-git-hooks"
-  ],
-  "simple-git-hooks": {
-    "pre-commit": "bunx biome check --write --staged --no-errors-on-unmatched && cargo fmt --all -- --check && cargo check && git update-index --again"
+    "lefthook": "^1.13.6"
   }
 }

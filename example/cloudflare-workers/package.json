@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "typescript": "catalog:",
-    "wrangler": "^4.42.1"
+    "wrangler": "^4.42.2"
   },
   "dependencies": {
     "@takumi-rs/helpers": "workspace:*",
