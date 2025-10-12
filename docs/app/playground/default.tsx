@@ -4,7 +4,7 @@ export default function Image() {
   return (
     <DocsTemplateV1
       title="Takumi Playground"
-      description="Welcome to the playground of Takumi! You can experiment and make quick prototypes here."
+      description="You can try out and make quick prototypes here."
       site="Takumi"
       icon={
         <div

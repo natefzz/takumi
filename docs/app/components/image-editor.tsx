@@ -3,10 +3,12 @@ import { fromJsx } from "@takumi-rs/helpers/jsx";
 import DocsTemplateV1 from "@takumi-rs/template/docs-template-v1";
 import type { AnyNode } from "@takumi-rs/wasm";
 import * as React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { PanelGroupProps } from "react-resizable-panels";
+import { useSearchParams } from "react-router";
 import { transform } from "sucrase";
 import defaultTemplate from "~/playground/default?raw";
+import { compressCode, decompressCode } from "~/playground/share";
 import TakumiWorker from "~/playground/worker?worker";
 import {
   ResizableHandle,
@@ -19,6 +21,26 @@ function transformCode(code: string) {
     transforms: ["jsx", "typescript", "imports"],
     production: true,
   }).code;
+}
+
+function componentFromCode(code: string) {
+  const exports = {};
+
+  try {
+    new Function("exports", "require", "React", transformCode(code))(
+      exports,
+      require,
+      React,
+    );
+
+    if (!("default" in exports) || typeof exports.default !== "function")
+      throw new Error("Default export should be a React component.");
+
+    return exports.default as React.JSXElementConstructor<unknown>;
+  } catch (e) {
+    console.error(e);
+    return () => <></>;
+  }
 }
 
 function require(module: string) {
@@ -50,31 +72,38 @@ function useDirection() {
 
 export default function ImageEditor() {
   const [code, setCode] = useState(defaultTemplate);
-  const direction = useDirection();
-  const Component = React.useMemo(() => {
-    const exports = {};
-
-    try {
-      new Function("exports", "require", "React", transformCode(code))(
-        exports,
-        require,
-        React,
-      );
-
-      if (!("default" in exports) || typeof exports.default !== "function")
-        throw new Error("Default export should be a React component.");
-
-      return exports.default as React.JSXElementConstructor<unknown>;
-    } catch (e) {
-      console.error(e);
-      return () => <></>;
-    }
-  }, [code]);
-
   const [node, setNode] = useState<AnyNode>();
   const [rendered, setRendered] = useState<string>();
   const [isReady, setIsReady] = useState(false);
+  const Component = useMemo(() => componentFromCode(code), [code]);
+
   const workerRef = useRef<Worker | undefined>(undefined);
+  const direction = useDirection();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const codeQuery = searchParams.get("code");
+
+  useEffect(() => {
+    if (codeQuery) decompressCode(codeQuery).then(setCode);
+  }, [codeQuery]);
+
+  useEffect(() => {
+    if (code === defaultTemplate) {
+      return setSearchParams((prev) => {
+        prev.delete("code");
+
+        return prev;
+      });
+    }
+
+    compressCode(code).then((base64) => {
+      setSearchParams((prev) => {
+        prev.set("code", base64);
+
+        return prev;
+      });
+    });
+  }, [code, setSearchParams]);
 
   useEffect(() => {
     const worker = new TakumiWorker();
@@ -142,6 +171,7 @@ export default function ImageEditor() {
                 useShadows: false,
               },
               fontSize: 16,
+              scrollBeyondLastLine: false,
             }}
             loading="Launching editor..."
             defaultValue={code}
@@ -155,7 +185,13 @@ export default function ImageEditor() {
               defaultSize={50}
               className="flex justify-center items-center"
             >
-              {rendered && <img src={rendered} alt="Takumi rendered result" />}
+              {rendered && (
+                <img
+                  className="w-full h-full object-contain"
+                  src={rendered}
+                  alt="Takumi rendered result"
+                />
+              )}
             </ResizablePanel>
             <ResizableHandle withHandle />
             <ResizablePanel defaultSize={50}>

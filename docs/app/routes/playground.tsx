@@ -8,6 +8,15 @@ const ImageEditor = lazy(() => import("~/components/image-editor"));
 export default function Playground() {
   return (
     <HomeLayout {...baseOptions}>
+      <title>Playground</title>
+      <meta
+        name="description"
+        content="You can try out Takumi and make quick prototypes here."
+      />
+      <meta
+        name="og:description"
+        content="You can try out Takumi and make quick prototypes here."
+      />
       <Suspense fallback={<LoadingScreen />}>
         <ImageEditor />
       </Suspense>
