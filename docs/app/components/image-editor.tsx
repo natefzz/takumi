@@ -1,12 +1,12 @@
 import { Editor } from "@monaco-editor/react";
 import { fromJsx } from "@takumi-rs/helpers/jsx";
 import DocsTemplateV1 from "@takumi-rs/template/docs-template-v1";
-import initWasm, { type AnyNode, Renderer } from "@takumi-rs/wasm";
-import wasmUrl from "@takumi-rs/wasm/takumi_wasm_bg.wasm?url";
+import type { AnyNode } from "@takumi-rs/wasm";
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { transform } from "sucrase";
 import defaultTemplate from "~/playground/default?raw";
+import TakumiWorker from "~/playground/worker?worker";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -46,31 +46,45 @@ export default function ImageEditor() {
     }
   }, [code]);
 
-  const [renderer, setRenderer] = useState<Renderer>();
   const [node, setNode] = useState<AnyNode>();
-  const rendered = React.useMemo(() => {
-    if (!renderer || !node) return;
-
-    return renderer?.renderAsDataUrl(node, 1200, 630, "png");
-  }, [renderer, node]);
+  const [rendered, setRendered] = useState<string>();
+  const [isReady, setIsReady] = useState(false);
+  const workerRef = useRef<Worker | undefined>(undefined);
 
   useEffect(() => {
-    initWasm({ module_or_path: wasmUrl }).then(async () => {
-      const font = await fetch("/fonts/Geist.woff2").then((r) =>
-        r.arrayBuffer(),
-      );
+    const worker = new TakumiWorker();
 
-      const renderer = new Renderer();
+    worker.onmessage = (event: MessageEvent) => {
+      if (event.data.type === "ready") {
+        setIsReady(true);
+      } else if (event.data.type === "render_complete") {
+        setRendered(event.data.dataUrl);
+      } else if (event.data.type === "render_error") {
+        console.error("Worker render error:", event.data.error);
+      }
+    };
 
-      renderer.loadFont(new Uint8Array(font));
+    workerRef.current = worker;
 
-      setRenderer(renderer);
-    });
+    return () => {
+      worker.terminate();
+      workerRef.current = undefined;
+      setIsReady(false);
+    };
   }, []);
 
   useEffect(() => {
-    fromJsx(<Component />).then(setNode);
-  }, [Component]);
+    fromJsx(<Component />).then((node) => {
+      setNode(node);
+
+      if (isReady) {
+        workerRef.current?.postMessage({
+          type: "render",
+          node,
+        });
+      }
+    });
+  }, [Component, isReady]);
 
   return (
     <div className="h-[calc(100dvh-3.5rem)]">
