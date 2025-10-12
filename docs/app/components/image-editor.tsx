@@ -4,6 +4,7 @@ import DocsTemplateV1 from "@takumi-rs/template/docs-template-v1";
 import type { AnyNode } from "@takumi-rs/wasm";
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
+import type { PanelGroupProps } from "react-resizable-panels";
 import { transform } from "sucrase";
 import defaultTemplate from "~/playground/default?raw";
 import TakumiWorker from "~/playground/worker?worker";
@@ -24,8 +25,32 @@ function require(module: string) {
   if (module === "@takumi-rs/template/docs-template-v1") return DocsTemplateV1;
 }
 
+const mobileViewportWidth = 640;
+
+function useDirection() {
+  const [direction, setDirection] =
+    useState<PanelGroupProps["direction"]>("horizontal");
+
+  const resize = () => {
+    setDirection(
+      window.innerWidth < mobileViewportWidth ? "vertical" : "horizontal",
+    );
+  };
+
+  useEffect(() => {
+    resize();
+
+    addEventListener("resize", resize);
+
+    return () => removeEventListener("resize", resize);
+  });
+
+  return direction;
+}
+
 export default function ImageEditor() {
   const [code, setCode] = useState(defaultTemplate);
+  const direction = useDirection();
   const Component = React.useMemo(() => {
     const exports = {};
 
@@ -88,7 +113,7 @@ export default function ImageEditor() {
 
   return (
     <div className="h-[calc(100dvh-3.5rem)]">
-      <ResizablePanelGroup direction="horizontal">
+      <ResizablePanelGroup direction={direction}>
         <ResizablePanel defaultSize={50}>
           <Editor
             onMount={(_, monaco) => {
