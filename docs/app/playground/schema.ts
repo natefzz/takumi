@@ -45,3 +45,5 @@ export const messageSchema = z.discriminatedUnion("type", [
   renderResultSchema,
   readySchema,
 ]);
+
+export type RenderMessageInput = z.input<typeof messageSchema>;

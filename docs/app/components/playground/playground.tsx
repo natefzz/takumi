@@ -3,7 +3,11 @@ import type { PanelGroupProps } from "react-resizable-panels";
 import { useSearchParams } from "react-router";
 import type { z } from "zod/mini";
 import defaultTemplate from "~/playground/default?raw";
-import { messageSchema, type renderResultSchema } from "~/playground/schema";
+import {
+  messageSchema,
+  type RenderMessageInput,
+  type renderResultSchema,
+} from "~/playground/schema";
 import { compressCode, decompressCode } from "~/playground/share";
 import TakumiWorker from "~/playground/worker?worker";
 import {
@@ -95,14 +99,6 @@ export default function Playground() {
           message satisfies never;
         }
       }
-
-      if (event.data.type === "ready") {
-        setIsReady(true);
-      } else if (event.data.type === "render_complete") {
-        setRendered(event.data.dataUrl);
-      } else if (event.data.type === "render_error") {
-        console.error("Worker render error:", event.data.error);
-      }
     };
 
     workerRef.current = worker;
@@ -115,11 +111,11 @@ export default function Playground() {
   }, []);
 
   useEffect(() => {
-    if (isReady) {
+    if (isReady && code) {
       workerRef.current?.postMessage({
-        type: "render",
+        type: "render-request",
         code,
-      });
+      } satisfies RenderMessageInput);
     }
   }, [isReady, code]);
 

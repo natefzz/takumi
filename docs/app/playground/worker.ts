@@ -5,9 +5,13 @@ import wasmUrl from "@takumi-rs/wasm/takumi_wasm_bg.wasm?url";
 import * as React from "react";
 import { transform } from "sucrase";
 import * as z from "zod/mini";
-import { type messageSchema, optionsSchema } from "./schema";
+import {
+  messageSchema,
+  optionsSchema,
+  type RenderMessageInput,
+} from "./schema";
 
-function postMessage(message: z.input<typeof messageSchema>) {
+function postMessage(message: RenderMessageInput) {
   return self.postMessage(message);
 }
 
@@ -54,43 +58,60 @@ function evaluateCodeExports(code: string) {
 }
 
 self.onmessage = async (event: MessageEvent) => {
-  const { type, code } = event.data;
+  const payload = messageSchema.parse(event.data);
 
-  if (type === "render" && renderer) {
-    try {
-      const { default: component, options } = evaluateCodeExports(code);
-      const node = await fromJsx(
-        React.createElement(component as React.JSXElementConstructor<unknown>),
-      );
+  switch (payload.type) {
+    case "render-request": {
+      if (!renderer) throw new Error("WASM is not ready yet!");
 
-      const start = performance.now();
-      const dataUrl = renderer.renderAsDataUrl(
-        node,
-        options.width,
-        options.height,
-        options.format,
-        options.quality,
-      );
-      const duration = performance.now() - start;
+      try {
+        const { default: component, options } = evaluateCodeExports(
+          payload.code,
+        );
+        const node = await fromJsx(
+          React.createElement(
+            component as React.JSXElementConstructor<unknown>,
+          ),
+        );
 
-      postMessage({
-        type: "render-result",
-        result: {
-          status: "success",
-          dataUrl,
-          duration,
+        const start = performance.now();
+        const dataUrl = renderer.renderAsDataUrl(
           node,
-          options,
-        },
-      });
-    } catch (error) {
-      postMessage({
-        type: "render-result",
-        result: {
-          status: "error",
-          message: error instanceof Error ? error.message : "Unknown error",
-        },
-      });
+          options.width,
+          options.height,
+          options.format,
+          options.quality,
+        );
+        const duration = performance.now() - start;
+
+        postMessage({
+          type: "render-result",
+          result: {
+            status: "success",
+            dataUrl,
+            duration,
+            node,
+            options,
+          },
+        });
+      } catch (error) {
+        postMessage({
+          type: "render-result",
+          result: {
+            status: "error",
+            message: error instanceof Error ? error.message : "Unknown error",
+          },
+        });
+      }
+
+      break;
+    }
+    case "ready":
+    case "render-result": {
+      throw new Error("Respond message should not be sent from main window.");
+    }
+    default: {
+      payload satisfies never;
     }
   }
 };
