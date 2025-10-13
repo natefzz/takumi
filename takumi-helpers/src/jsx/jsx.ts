@@ -57,7 +57,11 @@ async function fromJsxInternal(
     return Array.isArray(result) ? result : result ? [result] : [];
   }
 
-  return [text(String(element))];
+  return [
+    text(String(element), {
+      display: "inline",
+    }),
+  ];
 }
 
 function tryHandleComponentWrapper(
