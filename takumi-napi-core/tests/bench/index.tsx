@@ -1,6 +1,6 @@
-import { writeFile } from "node:fs/promises";
 import { fromJsx } from "@takumi-rs/helpers/jsx";
 import DocsTemplateV1 from "@takumi-rs/template/docs-template-v1";
+import { write } from "bun";
 import { Globe2 } from "lucide-react";
 import { bench, run, summary } from "mitata";
 import { Renderer } from "../../index.js";
@@ -109,12 +109,12 @@ summary(() => {
   });
 });
 
-await writeFile(
+await write(
   "tests/bench/bench.png",
-  await renderer.render(await createNode(), {
+  renderer.renderSync(await createNode(), {
     width: 1200,
     height: 630,
-  }),
+  }).buffer,
 );
 
 await run();

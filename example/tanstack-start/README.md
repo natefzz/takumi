@@ -1,6 +1,6 @@
-# Next.js Example
+# TanStack Start Example
 
-This is a simple example of how to use `@takumi-rs/image-response` in Next.js.
+This is a simple example of how to use `@takumi-rs/image-response` in TanStack Start.
 
 Before running the example, you need to build the native binary.
 
@@ -13,8 +13,8 @@ bun --filter '*' run build
 Then, run the development server.
 
 ```bash
-cd example/nextjs
+cd example/tanstack-start
 bun dev
 ```
 
-Visit http://localhost:3000/hello?name=Kane to see the result.
+Visit http://localhost:3000/ to see the result.

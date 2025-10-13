@@ -23,7 +23,7 @@
     "release": "changeset publish && bun --filter '*' release"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.5",
+    "@biomejs/biome": "^2.2.6",
     "@changesets/cli": "^2.29.7",
     "@takumi-rs/core": "workspace:*",
     "lefthook": "^1.13.6"
