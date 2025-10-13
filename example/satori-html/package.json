@@ -1,5 +1,5 @@
 {
-  "name": "satori-html",
+  "name": "example-satori-html",
   "module": "index.ts",
   "type": "module",
   "private": true,
