@@ -12,13 +12,7 @@ import {
   DocsPage,
   DocsTitle,
 } from "fumadocs-ui/page";
-import {
-  ArrowBigRight,
-  BookOpen,
-  Hand,
-  Shovel,
-  ShovelIcon,
-} from "lucide-react";
+import { ArrowBigRight, BookOpen, Hand, Shovel } from "lucide-react";
 import { redirect } from "react-router";
 import { baseOptions } from "~/layout-config";
 import { source } from "~/source";
@@ -29,7 +23,7 @@ const components = {
   Hand,
   BookOpen,
   ArrowBigRight,
-  ShovelIcon,
+  Shovel,
   DocsCategory,
   Tabs,
   Tab,
