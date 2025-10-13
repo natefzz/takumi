@@ -37,7 +37,7 @@ For newcomers, you can try out Takumi in [playground](https://takumi.kane.tw/pla
 
   ![Shiki Image Example](https://github.com/pi0/shiki-image/blob/main/test/.snapshot/image.webp)
 
-- [Takumi Playground](https://takumi-playground.kapadiya.net/) In‑browser playground for designing and rendering Open Graph style images.
+- [(Unofficial) Takumi Playground](https://takumi-playground.kapadiya.net/) In‑browser playground for designing and rendering Open Graph style images.
 
 ## License
 
