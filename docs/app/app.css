@@ -22,6 +22,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  --color-fd-primary: #ff3535;
+  --color-fd-primary-foreground: white;
 }
 
 .dark {
@@ -49,9 +52,9 @@
   --color-card-foreground: var(--color-fd-card-foreground);
   --color-popover: var(--color-fd-popover);
   --color-popover-foreground: var(--color-fd-popover-foreground);
-  --color-primary: #ff3535;
-  --color-primary-foreground: white;
-  --color-secondary: var(--color-secondary);
+  --color-primary: var(--color-fd-primary);
+  --color-primary-foreground: var(--color-fd-primary-foreground);
+  --color-secondary: var(--color-fd-secondary);
   --color-secondary-foreground: var(--color-fd-secondary-foreground);
   --color-muted: var(--color-fd-muted);
   --color-muted-foreground: var(--color-fd-muted-foreground);
