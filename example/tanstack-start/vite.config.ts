@@ -8,6 +8,9 @@ const config = defineConfig({
   ssr: {
     external: ["@takumi-rs/core"],
   },
+  optimizeDeps: {
+    exclude: ["@takumi-rs/core"],
+  },
 });
 
 export default config;
