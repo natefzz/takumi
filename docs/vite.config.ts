@@ -1,8 +1,9 @@
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
+import mdx from "fumadocs-mdx/vite";
 import { defineConfig } from "vite";
-import topLevelAwait from "vite-plugin-top-level-await";
 import tsconfigPaths from "vite-tsconfig-paths";
+import * as MdxConfig from "./source.config";
 
 export default defineConfig({
   build: {
@@ -13,5 +14,5 @@ export default defineConfig({
   ssr: {
     external: ["@takumi-rs/core"],
   },
-  plugins: [tailwindcss(), reactRouter(), tsconfigPaths(), topLevelAwait()],
+  plugins: [mdx(MdxConfig), tailwindcss(), reactRouter(), tsconfigPaths()],
 });

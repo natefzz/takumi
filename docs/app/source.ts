@@ -1,12 +1,4 @@
-import * as path from "node:path";
-import {
-  loader,
-  type MetaData,
-  type PageData,
-  type Source,
-  type VirtualFile,
-} from "fumadocs-core/source";
-import matter from "gray-matter";
+import { loader } from "fumadocs-core/source";
 import defaultAttributes from "lucide-react/dist/esm/defaultAttributes";
 import { __iconNode as arrowBigRightIconNode } from "lucide-react/dist/esm/icons/arrow-big-right";
 import { __iconNode as axeIconNode } from "lucide-react/dist/esm/icons/axe";
@@ -15,45 +7,7 @@ import { __iconNode as brainIconNode } from "lucide-react/dist/esm/icons/brain";
 import { __iconNode as flaskConicalIconNode } from "lucide-react/dist/esm/icons/flask-conical";
 import { __iconNode as leafIconNode } from "lucide-react/dist/esm/icons/leaf";
 import { createElement } from "react";
-
-const files = Object.entries(
-  import.meta.glob<true, "raw">("/content/docs/**/*", {
-    eager: true,
-    query: "?raw",
-    import: "default",
-  }),
-);
-
-const virtualFiles: VirtualFile[] = files.flatMap(([file, content]) => {
-  const ext = path.extname(file);
-  const virtualPath = path.relative(
-    "content/docs",
-    path.join(process.cwd(), file),
-  );
-
-  if (ext === ".mdx" || ext === ".md") {
-    const parsed = matter(content);
-
-    return {
-      type: "page",
-      path: virtualPath,
-      data: {
-        ...parsed.data,
-        content: parsed.content,
-      },
-    };
-  }
-
-  if (ext === ".json") {
-    return {
-      type: "meta",
-      path: virtualPath,
-      data: JSON.parse(content),
-    };
-  }
-
-  return [];
-});
+import { create, docs } from "source.generated";
 
 const iconProps = {
   ...defaultAttributes,
@@ -84,14 +38,6 @@ export const source = loader({
       );
     }
   },
-  source: {
-    files: virtualFiles,
-  } as Source<{
-    pageData: PageData & {
-      index?: boolean;
-      content: string;
-    };
-    metaData: MetaData;
-  }>,
+  source: await create.sourceAsync(docs.doc, docs.meta),
   baseUrl: "/docs",
 });

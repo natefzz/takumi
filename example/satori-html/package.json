@@ -4,10 +4,8 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
   },
   "dependencies": {
     "@takumi-rs/core": "workspace:*",

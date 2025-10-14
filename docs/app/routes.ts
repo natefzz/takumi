@@ -8,4 +8,5 @@ export default [
   route("docs/*", "docs/page.tsx"),
   route("/og/docs/*", "docs/og.tsx"),
   route("api/search", "docs/search.ts"),
+  route("/sitemap.xml", "routes/sitemap.ts"),
 ] satisfies RouteConfig;

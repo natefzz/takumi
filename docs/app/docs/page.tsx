@@ -1,7 +1,9 @@
-import * as path from "node:path";
-import { createCompiler } from "@fumadocs/mdx-remote";
-import { executeMdxSync } from "@fumadocs/mdx-remote/client";
-import { getPageTreePeers, type PageTree } from "fumadocs-core/server";
+import {
+  getPageTreePeers,
+  type PageTree,
+  type TOCItemType,
+} from "fumadocs-core/server";
+import { toClientRenderer } from "fumadocs-mdx/runtime/vite";
 import { Card, Cards } from "fumadocs-ui/components/card";
 import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
@@ -14,6 +16,7 @@ import {
 } from "fumadocs-ui/page";
 import { ArrowBigRight, BookOpen, Hand, Shovel } from "lucide-react";
 import { redirect } from "react-router";
+import { docs } from "source.generated";
 import { baseOptions } from "~/layout-config";
 import { source } from "~/source";
 import type { Route } from "./+types/page";
@@ -29,38 +32,33 @@ const components = {
   Tab,
 };
 
-const compiler = createCompiler({
-  development: false,
-});
-
-export async function loader({ params }: Route.LoaderArgs) {
+export function loader({ params }: Route.LoaderArgs) {
   const slugs = params["*"].split("/").filter((v) => v.length > 0);
   const page = source.getPage(slugs);
 
   if (!page) throw redirect("/docs");
 
-  const compiled = await compiler.compileFile({
-    path: path.resolve("content/docs", page.path),
-    value: page.data.content,
-  });
-
   return {
+    tree: source.pageTree,
     page,
-    compiled: compiled.toString(),
-    tree: source.getPageTree(),
     slugs,
   };
 }
 
+const clientLoader = toClientRenderer(docs.doc, ({ default: Mdx }) => (
+  <Mdx components={components} />
+));
+
 export default function Page(props: Route.ComponentProps) {
-  const { page, compiled, tree, slugs } = props.loaderData;
-  const { default: Mdx, toc } = executeMdxSync(compiled);
+  const { page, slugs, tree } = props.loaderData;
 
   const title = `${page.data.title} - Takumi`;
 
   const og = ["https://takumi.kane.tw/og", "docs", ...slugs, "image.webp"].join(
     "/",
   );
+
+  const Content = clientLoader[page.path];
 
   return (
     <DocsLayout
@@ -74,7 +72,16 @@ export default function Page(props: Route.ComponentProps) {
       ]}
       tree={tree as PageTree.Root}
     >
-      <DocsPage toc={toc}>
+      <DocsPage
+        toc={page.data.toc as TOCItemType[]}
+        lastUpdate={page.data.lastModified}
+        editOnGithub={{
+          owner: "kane50613",
+          repo: "takumi",
+          sha: "master",
+          path: `/docs/content/docs/${page.path}?plain=1`,
+        }}
+      >
         <title>{title}</title>
         <meta name="description" content={page.data.description} />
         <meta name="og:title" content={title} />
@@ -84,7 +91,7 @@ export default function Page(props: Route.ComponentProps) {
         <DocsTitle>{page.data.title}</DocsTitle>
         <DocsDescription>{page.data.description}</DocsDescription>
         <DocsBody>
-          <Mdx components={components} />
+          <Content />
           {page.data.index ? (
             <DocsCategory tree={tree as PageTree.Root} url={page.url} />
           ) : null}
