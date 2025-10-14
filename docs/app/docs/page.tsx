@@ -39,8 +39,16 @@ export function loader({ params }: Route.LoaderArgs) {
   if (!page) throw redirect("/docs");
 
   return {
+    path: page.path,
+    data: {
+      title: page.data.title,
+      description: page.data.description,
+      lastModified: page.data.lastModified,
+      toc: page.data.toc,
+      isIndex: page.data.index,
+    },
+    url: page.url,
     tree: source.pageTree,
-    page,
     slugs,
   };
 }
@@ -50,15 +58,15 @@ const clientLoader = toClientRenderer(docs.doc, ({ default: Mdx }) => (
 ));
 
 export default function Page(props: Route.ComponentProps) {
-  const { page, slugs, tree } = props.loaderData;
+  const { slugs, tree, data, path, url } = props.loaderData;
 
-  const title = `${page.data.title} - Takumi`;
+  const title = `${data.title} - Takumi`;
 
   const og = ["https://takumi.kane.tw/og", "docs", ...slugs, "image.webp"].join(
     "/",
   );
 
-  const Content = clientLoader[page.path];
+  const Content = clientLoader[path];
 
   return (
     <DocsLayout
@@ -73,27 +81,27 @@ export default function Page(props: Route.ComponentProps) {
       tree={tree as PageTree.Root}
     >
       <DocsPage
-        toc={page.data.toc as TOCItemType[]}
-        lastUpdate={page.data.lastModified}
+        toc={data.toc as TOCItemType[]}
+        lastUpdate={data.lastModified}
         editOnGithub={{
           owner: "kane50613",
           repo: "takumi",
           sha: "master",
-          path: `/docs/content/docs/${page.path}?plain=1`,
+          path: `/docs/content/docs/${path}?plain=1`,
         }}
       >
         <title>{title}</title>
-        <meta name="description" content={page.data.description} />
+        <meta name="description" content={data.description} />
         <meta name="og:title" content={title} />
-        <meta name="og:description" content={page.data.description} />
+        <meta name="og:description" content={data.description} />
         <meta name="og:image" content={og} />
         <meta name="twitter:image" content={og} />
-        <DocsTitle>{page.data.title}</DocsTitle>
-        <DocsDescription>{page.data.description}</DocsDescription>
+        <DocsTitle>{data.title}</DocsTitle>
+        <DocsDescription>{data.description}</DocsDescription>
         <DocsBody>
           <Content />
-          {page.data.index ? (
-            <DocsCategory tree={tree as PageTree.Root} url={page.url} />
+          {data.isIndex ? (
+            <DocsCategory tree={tree as PageTree.Root} url={url} />
           ) : null}
         </DocsBody>
       </DocsPage>
