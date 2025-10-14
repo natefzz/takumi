@@ -58,7 +58,7 @@ export default function Page(props: Route.ComponentProps) {
 
   const title = `${page.data.title} - Takumi`;
 
-  const og = ["/og", "docs", ...slugs, "image.webp"].join("/");
+  const og = ["https://takumi.kane.tw/og", "docs", ...slugs, "image.webp"].join("/");
 
   return (
     <DocsLayout
