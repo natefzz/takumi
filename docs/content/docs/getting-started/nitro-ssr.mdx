@@ -1,11 +1,11 @@
 ---
 title: Nitro SSR (TanStack Start)
-description: Integrate Takumi with Nitro-based full‑stack frameworks (e.g., TanStack Start) for server‑side image generation.
+description: Integrate Takumi with Nitro-based full-stack frameworks (e.g., TanStack Start) for server-side image generation.
 ---
 
 Takumi provides [N-API bindings](https://napi.rs/) for Node.js and Bun, leveraging Node.js's libuv thread pool for multi-threaded image generation.
 
-Check out the [TanStack Start example](https://github.com/kane50613/takumi/blob/master/example/tanstack-start) for a full‑functioning example of using Takumi in SSR.
+Check out the [TanStack Start example](https://github.com/kane50613/takumi/blob/master/example/tanstack-start) for a full-functioning example of using Takumi in SSR.
 
 <Callout>
 If you are considering using Takumi in any framework or as an endpoint, see the **From Next.js ImageResponse** guide for usage of the `@takumi-rs/image-response` package.
@@ -19,7 +19,7 @@ npm i @takumi-rs/core @takumi-rs/helpers
 
 ## Vite/Nitro (TanStack Start) configuration
 
-When using **Vite‑based full‑stack frameworks built on Nitro** (e.g., TanStack Start) **with Takumi Core (N‑API, _not_ WASM)**, add the following to your `vite.config.ts`. This makes sure the native @takumi-rs binaries are traced and not prebundled, and that SSR resolves them at runtime (works great on Vercel with the Nitro preset).
+When using **Vite-based full-stack frameworks built on Nitro** (e.g., TanStack Start) **with Takumi Core (N-API, _not_ WASM)**, add the following to your `vite.config.ts`. This makes sure the native @takumi-rs binaries are traced and not prebundled, and that SSR resolves them at runtime (works great on Vercel with the Nitro preset).
 
 ```ts
 // vite.config.ts
