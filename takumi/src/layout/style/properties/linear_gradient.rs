@@ -486,14 +486,7 @@ impl<'i> FromCss<'i> for Angle {
 
 #[cfg(test)]
 mod tests {
-  use crate::{
-    GlobalContext,
-    layout::{
-      Viewport,
-      style::{Affine, InheritedStyle},
-      viewport::DEFAULT_FONT_SIZE,
-    },
-  };
+  use crate::{GlobalContext, layout::Viewport};
   use smallvec::smallvec;
 
   use super::*;
@@ -881,15 +874,8 @@ mod tests {
     };
 
     // Test at the top (should be red)
-    let dummy_context = RenderContext {
-      global: &GlobalContext::default(),
-      viewport: Viewport::new(100, 100),
-      font_size: DEFAULT_FONT_SIZE,
-      transform: Affine::identity(),
-      style: InheritedStyle::default(),
-      draw_debug_border: false,
-      current_color: Color::black(),
-    };
+    let context = GlobalContext::default();
+    let dummy_context = RenderContext::new(&context, Viewport::new(100, 100));
     let ctx = gradient.to_draw_context(100.0, 100.0, &dummy_context);
     let color_top = gradient.at(50, 0, &ctx);
     assert_eq!(color_top, Color([255, 0, 0, 255]));
@@ -925,15 +911,8 @@ mod tests {
     };
 
     // Test at the left (should be red)
-    let dummy_context = RenderContext {
-      global: &GlobalContext::default(),
-      viewport: Viewport::new(100, 100),
-      font_size: DEFAULT_FONT_SIZE,
-      transform: Affine::identity(),
-      style: InheritedStyle::default(),
-      draw_debug_border: false,
-      current_color: Color::black(),
-    };
+    let context = GlobalContext::default();
+    let dummy_context = RenderContext::new(&context, Viewport::new(100, 100));
     let ctx = gradient.to_draw_context(100.0, 100.0, &dummy_context);
     let color_left = gradient.at(0, 50, &ctx);
     assert_eq!(color_left, Color([255, 0, 0, 255]));
@@ -954,15 +933,8 @@ mod tests {
     };
 
     // Should always return the same color
-    let dummy_context = RenderContext {
-      global: &GlobalContext::default(),
-      viewport: Viewport::new(100, 100),
-      font_size: DEFAULT_FONT_SIZE,
-      transform: Affine::identity(),
-      style: InheritedStyle::default(),
-      draw_debug_border: false,
-      current_color: Color::black(),
-    };
+    let context = GlobalContext::default();
+    let dummy_context = RenderContext::new(&context, Viewport::new(100, 100));
     let ctx = gradient.to_draw_context(100.0, 100.0, &dummy_context);
     let color = gradient.at(50, 50, &ctx);
     assert_eq!(color, Color([255, 0, 0, 255]));
@@ -976,15 +948,8 @@ mod tests {
     };
 
     // Should return transparent
-    let dummy_context = RenderContext {
-      global: &GlobalContext::default(),
-      viewport: Viewport::new(100, 100),
-      font_size: DEFAULT_FONT_SIZE,
-      transform: Affine::identity(),
-      style: InheritedStyle::default(),
-      draw_debug_border: false,
-      current_color: Color::black(),
-    };
+    let context = GlobalContext::default();
+    let dummy_context = RenderContext::new(&context, Viewport::new(100, 100));
     let ctx = gradient.to_draw_context(100.0, 100.0, &dummy_context);
     let color = gradient.at(50, 50, &ctx);
     assert_eq!(color, Color([0, 0, 0, 0]));
@@ -996,15 +961,8 @@ mod tests {
     let mut parser = Parser::new(&mut input);
     let gradient = LinearGradient::from_css(&mut parser).unwrap();
 
-    let dummy_context = RenderContext {
-      global: &GlobalContext::default(),
-      viewport: Viewport::new(40, 40),
-      font_size: DEFAULT_FONT_SIZE,
-      transform: Affine::identity(),
-      style: InheritedStyle::default(),
-      draw_debug_border: false,
-      current_color: Color::black(),
-    };
+    let context = GlobalContext::default();
+    let dummy_context = RenderContext::new(&context, Viewport::new(40, 40));
     let ctx = gradient.to_draw_context(40.0, 40.0, &dummy_context);
 
     // grey at 0,0
@@ -1026,15 +984,8 @@ mod tests {
     let mut parser = Parser::new(&mut input);
     let gradient = LinearGradient::from_css(&mut parser).unwrap();
 
-    let dummy_context = RenderContext {
-      global: &GlobalContext::default(),
-      viewport: Viewport::new(40, 40),
-      font_size: DEFAULT_FONT_SIZE,
-      transform: Affine::identity(),
-      style: InheritedStyle::default(),
-      draw_debug_border: false,
-      current_color: Color::black(),
-    };
+    let context = GlobalContext::default();
+    let dummy_context = RenderContext::new(&context, Viewport::new(40, 40));
     let ctx = gradient.to_draw_context(40.0, 40.0, &dummy_context);
 
     // color at top-left (0, 0) should be grey (1px hard stop)
@@ -1096,15 +1047,8 @@ mod tests {
       ],
     };
 
-    let ctx = RenderContext {
-      global: &GlobalContext::default(),
-      viewport: Viewport::new(200, 100),
-      font_size: DEFAULT_FONT_SIZE,
-      transform: Affine::identity(),
-      style: InheritedStyle::default(),
-      draw_debug_border: false,
-      current_color: Color::black(),
-    };
+    let context = GlobalContext::default();
+    let ctx = RenderContext::new(&context, Viewport::new(200, 100));
 
     let resolved = gradient.resolve_stops_for_axis_size(ctx.viewport.width as f32, &ctx);
     assert_eq!(resolved.len(), 3);
@@ -1128,15 +1072,8 @@ mod tests {
         },
       ],
     };
-    let ctx = RenderContext {
-      global: &GlobalContext::default(),
-      viewport: Viewport::new(200, 100),
-      font_size: DEFAULT_FONT_SIZE,
-      transform: Affine::identity(),
-      style: InheritedStyle::default(),
-      draw_debug_border: false,
-      current_color: Color::black(),
-    };
+    let context = GlobalContext::default();
+    let ctx = RenderContext::new(&context, Viewport::new(200, 100));
 
     let resolved = gradient.resolve_stops_for_axis_size(ctx.viewport.width as f32, &ctx);
     assert_eq!(resolved.len(), 2);

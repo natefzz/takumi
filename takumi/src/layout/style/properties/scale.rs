@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use taffy::Size;
 use ts_rs::TS;
 
-use crate::layout::style::{FromCss, ParseResult, parse_length_percentage};
+use crate::layout::style::{FromCss, ParseResult, PercentageNumber};
 
 /// Represents a 2D scale for CSS scale property
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq)]
@@ -56,8 +56,8 @@ impl Default for Scale {
 
 impl<'i> FromCss<'i> for Scale {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
-    let first = parse_length_percentage(input)?;
-    if let Ok(y) = parse_length_percentage(input) {
+    let PercentageNumber(first) = PercentageNumber::from_css(input)?;
+    if let Ok(PercentageNumber(y)) = PercentageNumber::from_css(input) {
       Ok(Self { x: first, y })
     } else {
       Ok(Self { x: first, y: first })

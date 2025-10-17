@@ -8,7 +8,7 @@ use ts_rs::TS;
 use zeno::{Command, Vector};
 
 use crate::{
-  layout::style::{Angle, FromCss, LengthUnit, ParseResult, parse_length_percentage},
+  layout::style::{Angle, FromCss, LengthUnit, ParseResult, PercentageNumber},
   rendering::RenderContext,
 };
 
@@ -152,21 +152,21 @@ impl<'i> FromCss<'i> for Transform {
         LengthUnit::from_css(input)?,
       ))),
       "scale" => parser.parse_nested_block(|input| {
-        let x = parse_length_percentage(input)?;
+        let PercentageNumber(x) = PercentageNumber::from_css(input)?;
         if input.try_parse(Parser::expect_comma).is_ok() {
-          let y = parse_length_percentage(input)?;
+          let PercentageNumber(y) = PercentageNumber::from_css(input)?;
           Ok(Transform::Scale(x, y))
         } else {
           Ok(Transform::Scale(x, x))
         }
       }),
       "scalex" => parser.parse_nested_block(|input| Ok(Transform::Scale(
-        parse_length_percentage(input)?,
+        PercentageNumber::from_css(input)?.0,
         DEFAULT_SCALE,
       ))),
       "scaley" => parser.parse_nested_block(|input| Ok(Transform::Scale(
         DEFAULT_SCALE,
-        parse_length_percentage(input)?,
+        PercentageNumber::from_css(input)?.0,
       ))),
       "skew" => parser.parse_nested_block(|input| {
         let x = Angle::from_css(input)?;

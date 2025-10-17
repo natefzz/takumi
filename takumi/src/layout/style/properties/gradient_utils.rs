@@ -179,10 +179,7 @@ mod tests {
 
   use crate::{
     GlobalContext,
-    layout::{
-      DEFAULT_FONT_SIZE, Viewport,
-      style::{Affine, InheritedStyle, StopPosition},
-    },
+    layout::{Viewport, style::StopPosition},
   };
 
   use super::*;
@@ -204,17 +201,14 @@ mod tests {
       },
     ];
 
-    let ctx = RenderContext {
-      global: &GlobalContext::default(),
-      viewport: Viewport::new(40, 40),
-      font_size: DEFAULT_FONT_SIZE,
-      transform: Affine::identity(),
-      style: InheritedStyle::default(),
-      draw_debug_border: false,
-      current_color: Color::black(),
-    };
+    let context = GlobalContext::default();
+    let render_context = RenderContext::new(&context, Viewport::new(40, 40));
 
-    let resolved = resolve_stops_along_axis(&stops, ctx.viewport.width as f32, &ctx);
+    let resolved = resolve_stops_along_axis(
+      &stops,
+      render_context.viewport.width as f32,
+      &render_context,
+    );
 
     assert_eq!(
       resolved[0],
@@ -236,7 +230,7 @@ mod tests {
       resolved[2],
       ResolvedGradientStop {
         color: Color([0, 0, 255, 255]),
-        position: ctx.viewport.width as f32 * 0.3,
+        position: render_context.viewport.width as f32 * 0.3,
       },
     );
   }
@@ -258,17 +252,14 @@ mod tests {
       },
     ];
 
-    let ctx = RenderContext {
-      global: &GlobalContext::default(),
-      viewport: Viewport::new(40, 40),
-      font_size: DEFAULT_FONT_SIZE,
-      transform: Affine::identity(),
-      style: InheritedStyle::default(),
-      draw_debug_border: false,
-      current_color: Color::black(),
-    };
+    let context = GlobalContext::default();
+    let render_context = RenderContext::new(&context, Viewport::new(40, 40));
 
-    let resolved = resolve_stops_along_axis(&stops, ctx.viewport.width as f32, &ctx);
+    let resolved = resolve_stops_along_axis(
+      &stops,
+      render_context.viewport.width as f32,
+      &render_context,
+    );
 
     assert_eq!(
       resolved[0],
@@ -282,7 +273,7 @@ mod tests {
       resolved[1],
       ResolvedGradientStop {
         color: Color([0, 255, 0, 255]),
-        position: ctx.viewport.width as f32 / 2.0,
+        position: render_context.viewport.width as f32 / 2.0,
       },
     );
 
@@ -290,7 +281,7 @@ mod tests {
       resolved[2],
       ResolvedGradientStop {
         color: Color([0, 0, 255, 255]),
-        position: ctx.viewport.width as f32,
+        position: render_context.viewport.width as f32,
       },
     );
   }
@@ -309,17 +300,14 @@ mod tests {
       },
     ];
 
-    let ctx = RenderContext {
-      global: &GlobalContext::default(),
-      viewport: Viewport::new(100, 40),
-      font_size: DEFAULT_FONT_SIZE,
-      transform: Affine::identity(),
-      style: InheritedStyle::default(),
-      draw_debug_border: false,
-      current_color: Color::black(),
-    };
+    let context = GlobalContext::default();
+    let render_context = RenderContext::new(&context, Viewport::new(40, 40));
 
-    let resolved = resolve_stops_along_axis(&stops, ctx.viewport.width as f32, &ctx);
+    let resolved = resolve_stops_along_axis(
+      &stops,
+      render_context.viewport.width as f32,
+      &render_context,
+    );
 
     assert_eq!(
       resolved[0],
@@ -334,7 +322,7 @@ mod tests {
       resolved[1],
       ResolvedGradientStop {
         color: interpolate_rgba(Color([255, 0, 0, 255]), Color([0, 0, 255, 255]), 0.5),
-        position: ctx.viewport.width as f32 * 0.1,
+        position: render_context.viewport.width as f32 * 0.1,
       },
     );
 
@@ -342,7 +330,7 @@ mod tests {
       resolved[2],
       ResolvedGradientStop {
         color: Color([0, 0, 255, 255]),
-        position: ctx.viewport.width as f32,
+        position: render_context.viewport.width as f32,
       },
     );
   }

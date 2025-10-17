@@ -54,10 +54,13 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
 
     let current_color = style.color.resolve(parent_context.current_color);
 
+    let opacity = style.opacity.0 * parent_context.opacity;
+
     let mut context = RenderContext {
       style,
       font_size,
       current_color,
+      opacity,
       ..*parent_context
     };
 

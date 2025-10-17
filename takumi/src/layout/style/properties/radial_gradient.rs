@@ -6,8 +6,7 @@ use ts_rs::TS;
 use super::gradient_utils::{color_from_stops, resolve_stops_along_axis};
 use crate::{
   layout::style::{
-    Color, FromCss, Gradient, GradientStop, ParseResult, ResolvedGradientStop,
-    parse_length_percentage,
+    Color, FromCss, Gradient, GradientStop, ParseResult, PercentageNumber, ResolvedGradientStop,
   },
   rendering::RenderContext,
 };
@@ -336,8 +335,12 @@ impl RadialPosition {
     }
 
     // Numeric/percentage path: parse one or two length/percentage values
-    if let Ok(px) = input.try_parse(parse_length_percentage) {
-      let py = input.try_parse(parse_length_percentage).ok().unwrap_or(0.5);
+    if let Ok(PercentageNumber(px)) = input.try_parse(PercentageNumber::from_css) {
+      let py = input
+        .try_parse(PercentageNumber::from_css)
+        .map(|p| p.0)
+        .ok()
+        .unwrap_or(0.5);
       return Ok((px, py));
     }
 
@@ -394,8 +397,7 @@ impl TryFrom<RadialGradientValue> for RadialGradient {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::layout::DEFAULT_FONT_SIZE;
-  use crate::layout::style::{Affine, InheritedStyle, LengthUnit, StopPosition};
+  use crate::layout::style::{LengthUnit, StopPosition};
   use crate::{GlobalContext, layout::Viewport, rendering::RenderContext};
 
   #[test]
@@ -556,16 +558,10 @@ mod tests {
       ],
     };
 
-    let ctx = RenderContext {
-      global: &GlobalContext::default(),
-      viewport: Viewport::new(200, 100),
-      font_size: DEFAULT_FONT_SIZE,
-      transform: Affine::identity(),
-      style: InheritedStyle::default(),
-      draw_debug_border: false,
-      current_color: Color::black(),
-    };
-    let resolved = gradient.resolve_stops_for_radius(ctx.viewport.width as f32, &ctx);
+    let context = GlobalContext::default();
+    let render_context = RenderContext::new(&context, Viewport::new(200, 100));
+    let resolved =
+      gradient.resolve_stops_for_radius(render_context.viewport.width as f32, &render_context);
 
     assert_eq!(resolved.len(), 3);
     assert!((resolved[0].position - 0.0).abs() < 1e-3);
@@ -594,16 +590,10 @@ mod tests {
       ],
     };
 
-    let ctx = RenderContext {
-      global: &GlobalContext::default(),
-      viewport: Viewport::new(200, 100),
-      font_size: DEFAULT_FONT_SIZE,
-      transform: Affine::identity(),
-      style: InheritedStyle::default(),
-      draw_debug_border: false,
-      current_color: Color::black(),
-    };
-    let resolved = gradient.resolve_stops_for_radius(ctx.viewport.width as f32, &ctx);
+    let context = GlobalContext::default();
+    let render_context = RenderContext::new(&context, Viewport::new(200, 100));
+    let resolved =
+      gradient.resolve_stops_for_radius(render_context.viewport.width as f32, &render_context);
 
     assert_eq!(resolved.len(), 3);
     assert!(resolved[0].position >= 0.0);

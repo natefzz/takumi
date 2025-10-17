@@ -37,6 +37,7 @@ import type { LineClamp } from "./LineClamp";
 import type { LineHeight } from "./LineHeight";
 import type { ObjectFit } from "./ObjectFit";
 import type { OverflowWrap } from "./OverflowWrap";
+import type { PercentageNumber } from "./PercentageNumber";
 import type { Position } from "./Position";
 import type { Scale } from "./Scale";
 import type { Sides } from "./Sides";
@@ -56,6 +57,7 @@ import type { WordBreak } from "./WordBreak";
  */
 export type Style = {
   boxSizing: CssValue<BoxSizing>;
+  opacity: CssValue<PercentageNumber>;
   display: CssValue<Display>;
   width: CssValue<LengthUnit>;
   height: CssValue<LengthUnit>;

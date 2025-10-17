@@ -45,22 +45,35 @@ pub struct RenderContext<'g> {
   pub(crate) transform: Affine,
   /// What the `currentColor` value is resolved to.
   pub(crate) current_color: Color,
+  /// The opacity to apply to all colors.
+  pub(crate) opacity: f32,
   /// The style after inheritance.
   pub(crate) style: InheritedStyle,
   /// Whether to draw debug borders.
   pub(crate) draw_debug_border: bool,
 }
 
-impl<'g, N: Node<N>> From<&RenderOptions<'g, N>> for RenderContext<'g> {
-  fn from(options: &RenderOptions<'g, N>) -> Self {
+impl<'g> RenderContext<'g> {
+  pub(crate) fn new(global: &'g GlobalContext, viewport: Viewport) -> Self {
     Self {
-      global: options.global,
-      viewport: options.viewport,
-      font_size: options.viewport.font_size,
+      global,
+      viewport,
+      font_size: viewport.font_size,
       transform: Affine::identity(),
       current_color: Color::black(),
+      opacity: 1.0,
       style: InheritedStyle::default(),
-      draw_debug_border: options.draw_debug_border,
+      draw_debug_border: false,
     }
+  }
+}
+
+impl<'g, N: Node<N>> From<&RenderOptions<'g, N>> for RenderContext<'g> {
+  fn from(options: &RenderOptions<'g, N>) -> Self {
+    let mut context = RenderContext::new(options.global, options.viewport);
+
+    context.draw_debug_border = options.draw_debug_border;
+
+    context
   }
 }

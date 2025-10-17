@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use ts_rs::TS;
 
-use crate::layout::style::{Angle, FromCss, ParseResult, parse_length_percentage};
+use crate::layout::style::{Angle, FromCss, ParseResult, PercentageNumber};
 
 /// Represents a single CSS filter operation
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, TS)]
@@ -140,30 +140,30 @@ impl<'i> FromCss<'i> for Filter {
 
     match_ignore_ascii_case! {function,
       "brightness" => parser.parse_nested_block(|input| {
-        let value = parse_length_percentage(input)?;
+        let PercentageNumber(value) = PercentageNumber::from_css(input)?;
         Ok(Filter::Brightness(value))
       }),
       "opacity" => parser.parse_nested_block(|input| {
-        let value = parse_length_percentage(input)?;
+        let PercentageNumber(value) = PercentageNumber::from_css(input)?;
         Ok(Filter::Opacity(value))
       }),
       "contrast" => parser.parse_nested_block(|input| {
-        let value = parse_length_percentage(input)?;
+        let PercentageNumber(value) = PercentageNumber::from_css(input)?;
         Ok(Filter::Contrast(value))
       }),
       "grayscale" => parser.parse_nested_block(|input| {
-        let value = parse_length_percentage(input)?;
+        let PercentageNumber(value) = PercentageNumber::from_css(input)?;
         Ok(Filter::Grayscale(value))
       }),
       "hue-rotate" => parser.parse_nested_block(|input| {
         Ok(Filter::HueRotate(Angle::from_css(input)?))
       }),
       "invert" => parser.parse_nested_block(|input| {
-        let value = parse_length_percentage(input)?;
+        let PercentageNumber(value) = PercentageNumber::from_css(input)?;
         Ok(Filter::Invert(value))
       }),
       "saturate" => parser.parse_nested_block(|input| {
-        let value = parse_length_percentage(input)?;
+        let PercentageNumber(value) = PercentageNumber::from_css(input)?;
         Ok(Filter::Saturate(value))
       }),
       _ => Err(location.new_basic_unexpected_token_error(Token::Function(function.clone())).into()),

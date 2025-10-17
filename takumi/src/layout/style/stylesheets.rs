@@ -66,6 +66,7 @@ macro_rules! define_style {
 define_style!(
   // For convenience, we default to border-box
   box_sizing: BoxSizing = CssValue::inherit() => BoxSizing::BorderBox,
+  opacity: PercentageNumber = PercentageNumber(1.0) => PercentageNumber(1.0),
   display: Display = Display::Flex => Display::Flex,
   width: LengthUnit = LengthUnit::Auto => LengthUnit::Auto,
   height: LengthUnit = LengthUnit::Auto => LengthUnit::Auto,
