@@ -315,7 +315,7 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
         });
 
     let max_height = match font_style.parent.line_clamp.as_ref() {
-      Some(clamp) => Some(MaxHeight::Both(size.height, clamp.count)),
+      Some(clamp) => Some(MaxHeight::HeightAndLines(size.height, clamp.count)),
       None => Some(MaxHeight::Absolute(size.height)),
     };
 

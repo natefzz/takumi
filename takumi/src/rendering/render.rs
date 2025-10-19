@@ -1,4 +1,4 @@
-use std::sync::mpsc::channel;
+use std::sync::{Arc, mpsc::channel};
 
 use derive_builder::Builder;
 use image::RgbaImage;
@@ -9,11 +9,12 @@ use crate::{
   layout::{
     Viewport,
     node::Node,
-    style::{Affine, InheritedStyle},
+    style::{Affine, InheritedStyle, Overflow, Overflows},
     tree::NodeTree,
   },
   rendering::{
-    Canvas, create_blocking_canvas_loop, draw_debug_border, inline_drawing::draw_inline_layout,
+    BorderProperties, Canvas, create_blocking_canvas_loop, draw_debug_border,
+    inline_drawing::draw_inline_layout,
   },
 };
 
@@ -89,7 +90,7 @@ pub fn render<'g, N: Node<N>>(options: RenderOptions<'g, N>) -> Result<RgbaImage
   #[cfg(not(target_arch = "wasm32"))]
   let canvas = {
     let handler =
-      std::thread::spawn(move || create_blocking_canvas_loop(render_context.viewport, rx));
+      std::thread::spawn(move || create_blocking_canvas_loop(render_context.viewport.into(), rx));
 
     render_node(
       &mut taffy,
@@ -218,6 +219,89 @@ fn render_node<'g, Nodes: Node<Nodes>>(
 
   if node_context.context.draw_debug_border {
     draw_debug_border(canvas, layout, node_context.context.transform);
+  }
+
+  let overflow = Overflows(
+    node_context
+      .context
+      .style
+      .overflow_x
+      .unwrap_or(node_context.context.style.overflow.0),
+    node_context
+      .context
+      .style
+      .overflow_y
+      .unwrap_or(node_context.context.style.overflow.1),
+  );
+
+  if overflow != Overflows(Overflow::Visible, Overflow::Visible) {
+    let inner_size = Size {
+      width: if overflow.0 == Overflow::Visible {
+        node_context.context.viewport.width
+      } else {
+        (layout.size.width - layout.padding.right - layout.border.right) as u32
+      },
+      height: if overflow.1 == Overflow::Visible {
+        node_context.context.viewport.height
+      } else {
+        (layout.size.height - layout.padding.bottom - layout.border.bottom) as u32
+      },
+    };
+
+    if inner_size.width == 0 || inner_size.height == 0 {
+      return;
+    }
+
+    let image_rendering = node_context.context.style.image_rendering;
+    let filters = node_context.context.style.filter.0.clone();
+
+    let (inner_tx, inner_rx) = channel();
+    let inner_canvas = Canvas::new(inner_tx);
+
+    for child_id in taffy.children(node_id).unwrap() {
+      render_node(
+        taffy,
+        child_id,
+        &inner_canvas,
+        Point {
+          x: if overflow.0 == Overflow::Visible {
+            layout.location.x
+          } else {
+            0.0
+          },
+          y: if overflow.1 == Overflow::Visible {
+            layout.location.y
+          } else {
+            0.0
+          },
+        },
+        transform,
+      );
+    }
+
+    drop(inner_canvas);
+
+    let inner_image = create_blocking_canvas_loop(inner_size, inner_rx);
+
+    return canvas.overlay_image(
+      Arc::new(inner_image),
+      Point {
+        x: if overflow.0 == Overflow::Visible {
+          0
+        } else {
+          layout.location.x as i32
+        },
+        y: if overflow.1 == Overflow::Visible {
+          0
+        } else {
+          layout.location.y as i32
+        },
+      },
+      BorderProperties::zero(),
+      transform,
+      image_rendering,
+      filters,
+    );
   }
 
   for child_id in taffy.children(node_id).unwrap() {

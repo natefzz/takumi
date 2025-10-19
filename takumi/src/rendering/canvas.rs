@@ -20,10 +20,7 @@ use taffy::{Point, Size};
 use zeno::{Mask, Placement};
 
 use crate::{
-  layout::{
-    Viewport,
-    style::{Affine, Angle, Color, Filters, ImageScalingAlgorithm},
-  },
+  layout::style::{Affine, Angle, Color, Filters, ImageScalingAlgorithm},
   rendering::BorderProperties,
 };
 
@@ -109,10 +106,10 @@ impl Canvas {
 
 /// A canvas that receives draw tasks from the main rendering thread and draws them to the canvas.
 pub(crate) fn create_blocking_canvas_loop(
-  viewport: Viewport,
+  size: Size<u32>,
   receiver: Receiver<DrawCommand>,
 ) -> RgbaImage {
-  let mut canvas = RgbaImage::new(viewport.width, viewport.height);
+  let mut canvas = RgbaImage::new(size.width, size.height);
 
   while let Ok(task) = receiver.recv() {
     #[cfg(debug_assertions)]

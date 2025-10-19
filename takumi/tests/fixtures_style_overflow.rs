@@ -1,14 +1,13 @@
 use takumi::layout::{
-  node::{ContainerNode, TextNode},
+  node::{ContainerNode, ImageNode, NodeKind, TextNode},
   style::{LengthUnit::*, *},
 };
 
 mod test_utils;
 use test_utils::run_style_width_test;
 
-#[test]
-fn test_overflow_visible() {
-  let container = ContainerNode {
+fn create_overflow_fixture(overflows: Overflows) -> NodeKind {
+  ContainerNode {
     style: Some(
       StyleBuilder::default()
         .width(Percentage(100.0))
@@ -28,122 +27,118 @@ fn test_overflow_visible() {
             .height(Px(200.0))
             .border_width(CssOption::some(Sides([Px(4.0); 4])))
             .border_color(CssOption::some(Color([255, 0, 0, 255]).into()))
-            .overflow(Overflows(Overflow::Visible, Overflow::Visible))
+            .overflow(overflows)
             .build()
             .unwrap(),
         ),
         children: Some(vec![
-          ContainerNode {
+          ImageNode {
             style: Some(
               StyleBuilder::default()
                 .width(Px(300.0))
                 .height(Px(300.0))
                 .border_width(CssOption::some(Sides([Px(4.0); 4])))
                 .border_color(CssOption::some(Color([0, 255, 0, 255]).into()))
-                .overflow(Overflows(Overflow::Visible, Overflow::Visible))
                 .build()
                 .unwrap(),
             ),
-            children: None,
+            width: None,
+            height: None,
+            src: "assets/images/yeecord.png".to_string(),
           }
           .into(),
         ]),
       }
       .into(),
     ]),
-  };
+  }
+  .into()
+}
 
-  run_style_width_test(container.into(), "tests/fixtures/overflow_visible.png");
+fn create_text_overflow_fixture(overflows: Overflows) -> NodeKind {
+  ContainerNode {
+    style: Some(
+      StyleBuilder::default()
+        .width(Percentage(100.0))
+        .height(Percentage(100.0))
+        .background_color(ColorInput::Value(Color::white()))
+        .align_items(AlignItems::Center)
+        .justify_content(JustifyContent::Center)
+        .build()
+        .unwrap(),
+    ),
+    children: Some(vec![
+      ContainerNode {
+        style: Some(
+          StyleBuilder::default()
+            .display(Display::Block)
+            .width(Px(400.0))
+            .height(Px(200.0))
+            .border_width(CssOption::some(Sides([Px(4.0); 4])))
+            .border_color(CssOption::some(Color([0, 0, 0, 255]).into()))
+            .overflow(overflows)
+            .build()
+            .unwrap(),
+        ),
+        children: Some(vec![
+          TextNode {
+            style: Some(
+              StyleBuilder::default()
+              .font_size(CssOption::some(Rem(4.0)))
+              .color(ColorInput::Value(Color([0, 0, 0, 255])))
+              .border_width(CssOption::some(Sides([Px(2.0); 4])))
+              .border_color(CssOption::some(Color([255, 0, 0, 255]).into()))
+              .build()
+              .unwrap(),
+          ),
+          text: "This is a very long text that should overflow the container and demonstrate text overflow behavior with a large font size of 4rem.".to_string(),
+        }.into(),
+        ]),
+      }
+      .into(),
+    ]),
+  }
+  .into()
+}
+
+#[test]
+fn test_overflow_visible() {
+  let container = create_overflow_fixture(Overflows(Overflow::Visible, Overflow::Visible));
+
+  run_style_width_test(container, "tests/fixtures/overflow_visible.png");
 }
 
 #[test]
 fn test_overflow_hidden() {
-  let container = ContainerNode {
-    style: Some(
-      StyleBuilder::default()
-        .width(Px(200.0))
-        .height(Px(200.0))
-        .background_color(ColorInput::Value(Color::white()))
-        .overflow(Overflows(Overflow::Hidden, Overflow::Hidden))
-        .build()
-        .unwrap(),
-    ),
-    children: Some(vec![
-      ContainerNode {
-        style: Some(
-          StyleBuilder::default()
-            .width(Px(300.0))
-            .height(Px(300.0))
-            .background_color(ColorInput::Value(Color([0, 255, 0, 255])))
-            .build()
-            .unwrap(),
-        ),
-        children: None,
-      }
-      .into(),
-    ]),
-  };
+  let container = create_overflow_fixture(Overflows(Overflow::Hidden, Overflow::Hidden));
 
-  run_style_width_test(container.into(), "tests/fixtures/overflow_hidden.png");
+  run_style_width_test(container, "tests/fixtures/overflow_hidden.png");
 }
 
 #[test]
 fn test_overflow_mixed_axes() {
-  let container = ContainerNode {
-    style: Some(
-      StyleBuilder::default()
-        .width(Px(200.0))
-        .height(Px(200.0))
-        .background_color(ColorInput::Value(Color::white()))
-        .overflow_x(CssOption::some(Overflow::Visible))
-        .overflow_y(CssOption::some(Overflow::Hidden))
-        .build()
-        .unwrap(),
-    ),
-    children: Some(vec![
-      ContainerNode {
-        style: Some(
-          StyleBuilder::default()
-            .width(Px(300.0))
-            .height(Px(300.0))
-            .background_color(ColorInput::Value(Color([255, 0, 255, 255])))
-            .build()
-            .unwrap(),
-        ),
-        children: None,
-      }
-      .into(),
-    ]),
-  };
+  let container = create_overflow_fixture(Overflows(Overflow::Hidden, Overflow::Visible));
 
-  run_style_width_test(container.into(), "tests/fixtures/overflow_mixed_axes.png");
+  run_style_width_test(container, "tests/fixtures/overflow_mixed_axes.png");
 }
 
 #[test]
-fn test_overflow_with_text() {
-  let container = ContainerNode {
-    style: Some(
-      StyleBuilder::default()
-        .width(Px(200.0))
-        .height(Px(200.0))
-        .background_color(ColorInput::Value(Color::white()))
-        .overflow(Overflows(Overflow::Hidden, Overflow::Hidden))
-        .build()
-        .unwrap(),
-    ),
-    children: Some(vec![
-      TextNode {
-        text: "This is a very long text that should overflow the container and demonstrate how overflow hidden works with text content. The text should be clipped when it exceeds the container boundaries.".to_string(),
-        style: Some(
-          StyleBuilder::default()
-            .font_size(CssOption::some(Px(16.0)))
-            .color(ColorInput::Value(Color::black()))
-            .build()
-            .unwrap(),
-        ),
-      }.into()
-    ]),
-  };
+fn test_text_overflow_visible() {
+  let container = create_text_overflow_fixture(Overflows(Overflow::Visible, Overflow::Visible));
 
-  run_style_width_test(container.into(), "tests/fixtures/overflow_text.png");
+  run_style_width_test(container, "tests/fixtures/text_overflow_visible.png");
+}
+
+#[test]
+fn test_text_overflow_hidden() {
+  let container = create_text_overflow_fixture(Overflows(Overflow::Hidden, Overflow::Hidden));
+
+  run_style_width_test(container, "tests/fixtures/text_overflow_hidden.png");
+}
+
+#[test]
+fn test_text_overflow_mixed_axes() {
+  let container = create_text_overflow_fixture(Overflows(Overflow::Hidden, Overflow::Visible));
+
+  run_style_width_test(container, "tests/fixtures/text_overflow_mixed_axes.png");
 }

@@ -222,7 +222,7 @@ pub(crate) fn draw_glyph(
 pub(crate) enum MaxHeight {
   Absolute(f32),
   Lines(u32),
-  Both(f32, u32),
+  HeightAndLines(f32, u32),
 }
 
 /// Applies text transform to the input text.
