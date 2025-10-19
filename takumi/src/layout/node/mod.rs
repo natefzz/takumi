@@ -45,9 +45,10 @@ macro_rules! impl_node_enum {
         context: &$crate::rendering::RenderContext,
         available_space: $crate::taffy::Size<$crate::taffy::AvailableSpace>,
         known_dimensions: $crate::taffy::Size<Option<f32>>,
+        style: &taffy::Style,
       ) -> $crate::taffy::Size<f32> {
         match self {
-          $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::measure(inner, context, available_space, known_dimensions), )*
+          $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::measure(inner, context, available_space, known_dimensions, style), )*
         }
       }
 
@@ -116,15 +117,13 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
     None
   }
 
-  /// Measures the intrinsic size of the node.
-  ///
-  /// This method calculates the size the node would prefer given
-  /// the available space and any known dimensions.
+  /// Measures content size of this node.
   fn measure(
     &self,
     _context: &RenderContext,
     _available_space: Size<AvailableSpace>,
     _known_dimensions: Size<Option<f32>>,
+    _style: &taffy::Style,
   ) -> Size<f32> {
     Size::ZERO
   }

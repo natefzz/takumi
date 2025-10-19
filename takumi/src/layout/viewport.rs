@@ -1,3 +1,5 @@
+use taffy::Size;
+
 /// The default font size in pixels.
 pub const DEFAULT_FONT_SIZE: f32 = 16.0;
 
@@ -13,6 +15,15 @@ pub struct Viewport {
   pub height: u32,
   /// The font size in pixels, used for em and rem units.
   pub font_size: f32,
+}
+
+impl From<Viewport> for Size<u32> {
+  fn from(value: Viewport) -> Self {
+    Self {
+      width: value.width,
+      height: value.height,
+    }
+  }
 }
 
 impl Viewport {

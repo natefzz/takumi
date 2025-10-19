@@ -4,7 +4,7 @@ use derive_builder::Builder;
 use parley::{FontSettings, FontStack, TextStyle};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
-use taffy::{Size, prelude::FromLength};
+use taffy::{Point, Size, prelude::FromLength};
 use ts_rs::TS;
 
 use crate::{
@@ -125,6 +125,9 @@ define_style!(
   border_left_width: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
   border: Border = Border::default() => Border::default(),
   object_fit: ObjectFit = CssValue::inherit() => Default::default(),
+  overflow: Overflows = Overflows::default() => Overflows::default(),
+  overflow_x: CssOption<Overflow> = CssOption::none() => CssOption::none(),
+  overflow_y: CssOption<Overflow> = CssOption::none() => CssOption::none(),
   object_position: BackgroundPosition = CssValue::inherit() => BackgroundPosition::default(),
   background_image: CssOption<BackgroundImages> = CssOption::none() => CssOption::none(),
   background_position: CssOption<BackgroundPositions> = CssOption::none() => CssOption::none(),
@@ -512,6 +515,10 @@ impl InheritedStyle {
       aspect_ratio: self.aspect_ratio.into(),
       align_self: self.align_self.into(),
       justify_self: self.justify_self.into(),
+      overflow: Point {
+        x: self.overflow_x.unwrap_or(self.overflow.0).into(),
+        y: self.overflow_y.unwrap_or(self.overflow.1).into(),
+      },
       ..Default::default()
     }
   }

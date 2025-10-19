@@ -36,6 +36,8 @@ import type { LengthUnit } from "./LengthUnit";
 import type { LineClamp } from "./LineClamp";
 import type { LineHeight } from "./LineHeight";
 import type { ObjectFit } from "./ObjectFit";
+import type { Overflow } from "./Overflow";
+import type { Overflows } from "./Overflows";
 import type { OverflowWrap } from "./OverflowWrap";
 import type { PercentageNumber } from "./PercentageNumber";
 import type { Position } from "./Position";
@@ -116,6 +118,9 @@ export type Style = {
   borderLeftWidth: CssValue<CssOption<LengthUnit>>;
   border: CssValue<Border>;
   objectFit: CssValue<ObjectFit>;
+  overflow: CssValue<Overflows>;
+  overflowX: CssValue<CssOption<Overflow>>;
+  overflowY: CssValue<CssOption<Overflow>>;
   objectPosition: CssValue<BackgroundPosition>;
   backgroundImage: CssValue<CssOption<BackgroundImages>>;
   backgroundPosition: CssValue<CssOption<BackgroundPositions>>;

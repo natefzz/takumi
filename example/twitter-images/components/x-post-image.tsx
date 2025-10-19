@@ -14,15 +14,11 @@ export const persistentImages = [
   },
   {
     src: "fuma.jpg",
-    data: await fetch(
-      "https://pbs.twimg.com/profile_images/1908492682470780928/0DQPZ7YR.jpg",
-    ).then((r) => r.arrayBuffer()),
+    data: await file("../../assets/images/fuma.jpg").arrayBuffer(),
   },
   {
     src: "large.jpg",
-    data: await fetch(
-      "https://pbs.twimg.com/media/G2okqu5bEAABOHF?format=jpg&name=large",
-    ).then((r) => r.arrayBuffer()),
+    data: await file("../../assets/images/fumadocs-core-v16.jpg").arrayBuffer(),
   },
 ];
 

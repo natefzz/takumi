@@ -12,21 +12,8 @@ use crate::{
 pub fn draw_debug_border(canvas: &Canvas, layout: Layout, transform: Affine) {
   let x = layout.content_box_x();
   let y = layout.content_box_y();
-  let size = layout.content_box_size();
 
-  draw_border(
-    canvas,
-    Point { x, y },
-    BorderProperties {
-      width: Sides([1.0; 4]).into(),
-      offset: Point::ZERO,
-      size,
-      color: Color([255, 0, 0, 255]),
-      radius: Sides([0.0; 4]),
-      transform,
-    },
-  );
-
+  // border-box
   draw_border(
     canvas,
     layout.location,
@@ -34,7 +21,21 @@ pub fn draw_debug_border(canvas: &Canvas, layout: Layout, transform: Affine) {
       width: Sides([1.0; 4]).into(),
       offset: Point::ZERO,
       size: layout.size,
-      color: Color([0, 255, 0, 255]),
+      color: Color([255, 0, 0, 255]), // red
+      radius: Sides([0.0; 4]),
+      transform,
+    },
+  );
+
+  // content-box
+  draw_border(
+    canvas,
+    Point { x, y },
+    BorderProperties {
+      width: Sides([1.0; 4]).into(),
+      offset: Point::ZERO,
+      size: layout.content_box_size(),
+      color: Color([0, 255, 0, 255]), // green
       radius: Sides([0.0; 4]),
       transform,
     },

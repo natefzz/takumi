@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use image::RgbaImage;
 use image::imageops::crop_imm;
-use taffy::{Layout, Point, Size};
+use taffy::{Layout, Point, Rect, Size};
 
 use crate::{
   layout::style::{Affine, ObjectFit},
@@ -216,9 +216,7 @@ pub fn process_image_for_object_fit<'i>(
 /// The image will be resized and positioned according to the object_fit style property.
 /// Border radius will be applied if specified in the style.
 pub fn draw_image(image: &ImageSource, context: &RenderContext, canvas: &Canvas, layout: Layout) {
-  let content_box = layout.content_box_size();
-
-  let (image, offset) = process_image_for_object_fit(image, context, content_box);
+  let (image, offset) = process_image_for_object_fit(image, context, layout.content_box_size());
 
   // manually apply the border and padding to ensure rotation with origin is applied correctly
   let transform_offset_x = layout.border.left + layout.padding.left;
@@ -233,6 +231,7 @@ pub fn draw_image(image: &ImageSource, context: &RenderContext, canvas: &Canvas,
   // Since we already applied the border width to `transform_with_content_offset`, we have to avoid double-applying it.
   let mut border = BorderProperties::from_context(context, &layout).inset_by_border_width();
   border.offset = Point::zero();
+  border.width = Rect::zero();
 
   canvas.overlay_image(
     Arc::new(image.into_owned()),

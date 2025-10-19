@@ -45,7 +45,7 @@ impl<Nodes: Node<Nodes>> Node<Nodes> for TextNode {
     }
 
     let max_height = match font_style.parent.line_clamp.as_ref() {
-      Some(clamp) => Some(MaxHeight::Both(size.height, clamp.count)),
+      Some(clamp) => Some(MaxHeight::HeightAndLines(size.height, clamp.count)),
       None => Some(MaxHeight::Absolute(size.height)),
     };
 
@@ -66,6 +66,7 @@ impl<Nodes: Node<Nodes>> Node<Nodes> for TextNode {
     context: &RenderContext,
     available_space: Size<AvailableSpace>,
     known_dimensions: Size<Option<f32>>,
+    _style: &taffy::Style,
   ) -> Size<f32> {
     let (max_width, max_height) =
       create_inline_constraint(context, available_space, known_dimensions);

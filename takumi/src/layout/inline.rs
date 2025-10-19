@@ -47,22 +47,15 @@ pub(crate) fn create_inline_constraint(
     AvailableSpace::Definite(width) => Some(width),
   });
 
-  let height_constraint = known_dimensions.height.or(match available_space.height {
-    AvailableSpace::MaxContent | AvailableSpace::MinContent => None,
-    AvailableSpace::Definite(height) => Some(height),
-  });
-
-  let height_constraint_with_max_lines =
-    match (context.style.line_clamp.as_ref(), height_constraint) {
-      (Some(clamp), Some(height)) => Some(MaxHeight::Both(height, clamp.count)),
-      (Some(clamp), None) => Some(MaxHeight::Lines(clamp.count)),
-      (None, Some(height)) => Some(MaxHeight::Absolute(height)),
-      (None, None) => None,
-    };
-
   (
     width_constraint.unwrap_or(f32::MAX),
-    height_constraint_with_max_lines,
+    // applies a maximum height to reduce unnecessary calculation.
+    context
+      .style
+      .line_clamp
+      .as_ref()
+      .map(|lines| MaxHeight::HeightAndLines(context.viewport.height as f32, lines.count))
+      .or(Some(MaxHeight::Absolute(context.viewport.height as f32))),
   )
 }
 
@@ -108,7 +101,7 @@ pub(crate) fn break_lines(
 
       breaker.finish();
     }
-    MaxHeight::Both(max_height, max_lines) => {
+    MaxHeight::HeightAndLines(max_height, max_lines) => {
       let mut total_height = 0.0;
       let mut line_count = 0;
       let mut breaker = layout.break_lines();

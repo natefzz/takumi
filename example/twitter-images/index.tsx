@@ -30,6 +30,7 @@ async function render(module: Component) {
   const buffer = await renderer.render(component, {
     width: module.width,
     height: module.height,
+    drawDebugBorder: process.argv.includes("--debug"),
   });
 
   const end = performance.now();
