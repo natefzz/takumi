@@ -1,5 +1,13 @@
 # takumi
 
+## 0.37.0
+
+### Minor Changes
+
+- 92f4dd8: support `opacity` property
+- e6a1c39: refactor internal image/text measuring to match browser overflow behavior
+- 0dfb76b: support overflow `hidden`, `visible`
+
 ## 0.36.2
 
 ### Patch Changes
