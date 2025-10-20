@@ -44,7 +44,7 @@ fn create_overflow_fixture(overflows: Overflows) -> NodeKind {
             ),
             width: None,
             height: None,
-            src: "assets/images/yeecord.png".to_string(),
+            src: "assets/images/yeecord.png".into(),
           }
           .into(),
         ]),

@@ -102,7 +102,7 @@ fn create_rotated_container(angle: f32, transform_origin: BackgroundPosition) ->
     ),
     width: None,
     height: None,
-    src: "assets/images/yeecord.png".to_string(),
+    src: "assets/images/yeecord.png".into(),
   }
 }
 
@@ -156,7 +156,7 @@ fn test_style_transform_translate_and_scale() {
     ),
     children: Some(vec![
       ImageNode {
-        src: "assets/images/yeecord.png".to_string(),
+        src: "assets/images/yeecord.png".into(),
         style: Some(
           StyleBuilder::default()
             .width(Percentage(100.0))

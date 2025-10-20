@@ -6,4 +6,8 @@ import type { RadialGradient } from "./RadialGradient";
 /**
  * Background image variants supported by Takumi.
  */
-export type BackgroundImage = LinearGradient | RadialGradient | NoiseV1;
+export type BackgroundImage =
+  | LinearGradient
+  | RadialGradient
+  | NoiseV1
+  | string;

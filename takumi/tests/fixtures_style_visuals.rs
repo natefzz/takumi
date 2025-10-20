@@ -349,7 +349,7 @@ fn test_style_border_radius_circle_avatar() {
                 .build()
                 .unwrap(),
             ),
-            src: "assets/images/yeecord.png".to_string(),
+            src: "assets/images/yeecord.png".into(),
             width: None,
             height: None,
           }

@@ -97,7 +97,7 @@ fn fixtures_inline_image() {
           .build()
           .unwrap(),
       ),
-      src: "assets/images/yeecord.png".to_string(),
+      src: "assets/images/yeecord.png".into(),
       width: Some(64.0),
       height: Some(64.0),
     }

@@ -26,7 +26,7 @@ fn test_style_object_position_contain_center() {
     ),
     width: None,
     height: None,
-    src: "assets/images/yeecord.png".to_string(),
+    src: "assets/images/yeecord.png".into(),
   };
 
   run_style_width_test(
@@ -52,7 +52,7 @@ fn test_style_object_position_contain_top_left() {
     ),
     width: None,
     height: None,
-    src: "assets/images/yeecord.png".to_string(),
+    src: "assets/images/yeecord.png".into(),
   };
 
   run_style_width_test(
@@ -78,7 +78,7 @@ fn test_style_object_position_contain_bottom_right() {
     ),
     width: None,
     height: None,
-    src: "assets/images/yeecord.png".to_string(),
+    src: "assets/images/yeecord.png".into(),
   };
 
   run_style_width_test(
@@ -104,7 +104,7 @@ fn test_style_object_position_cover_center() {
     ),
     width: None,
     height: None,
-    src: "assets/images/yeecord.png".to_string(),
+    src: "assets/images/yeecord.png".into(),
   };
 
   run_style_width_test(
@@ -130,7 +130,7 @@ fn test_style_object_position_cover_top_left() {
     ),
     width: None,
     height: None,
-    src: "assets/images/yeecord.png".to_string(),
+    src: "assets/images/yeecord.png".into(),
   };
 
   run_style_width_test(
@@ -156,7 +156,7 @@ fn test_style_object_position_none_center() {
     ),
     width: None,
     height: None,
-    src: "assets/images/yeecord.png".to_string(),
+    src: "assets/images/yeecord.png".into(),
   };
 
   run_style_width_test(
@@ -182,7 +182,7 @@ fn test_style_object_position_none_top_left() {
     ),
     width: None,
     height: None,
-    src: "assets/images/yeecord.png".to_string(),
+    src: "assets/images/yeecord.png".into(),
   };
 
   run_style_width_test(
@@ -208,7 +208,7 @@ fn test_style_object_position_percentage_25_75() {
     ),
     width: None,
     height: None,
-    src: "assets/images/yeecord.png".to_string(),
+    src: "assets/images/yeecord.png".into(),
   };
 
   run_style_width_test(

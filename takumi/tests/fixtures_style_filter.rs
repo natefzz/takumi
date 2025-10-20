@@ -47,7 +47,7 @@ fn test_style_filter_on_image_node() {
             ),
             children: Some(vec![
               ImageNode {
-                src: "assets/images/yeecord.png".to_string(),
+                src: "assets/images/yeecord.png".into(),
                 style: Some(
                   StyleBuilder::default()
                     .width(Px(128.0))
