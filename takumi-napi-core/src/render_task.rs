@@ -1,9 +1,7 @@
 use std::{
   collections::HashMap,
   io::Cursor,
-  iter::from_fn,
   sync::mpsc::{Receiver, channel},
-  time::Duration,
 };
 
 use napi::bindgen_prelude::*;
@@ -116,8 +114,7 @@ impl Task for RenderTask {
   fn compute(&mut self) -> Result<Self::Output> {
     let node = self.node.take().unwrap();
 
-    let resources: Vec<_> =
-      from_fn(|| self.tasks_rx.recv_timeout(Duration::from_secs(3)).ok()).collect();
+    let resources: Vec<_> = self.tasks_rx.iter().collect();
 
     let fetched_resources: HashMap<_, _> = resources
       .into_par_iter()
