@@ -1,9 +1,6 @@
-use std::{
-  collections::HashMap,
-  io::Cursor,
-  sync::mpsc::{Receiver, channel},
-};
+use std::{collections::HashMap, io::Cursor};
 
+use crossbeam_channel::{Receiver, bounded};
 use napi::bindgen_prelude::*;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::sync::Arc;
@@ -61,7 +58,7 @@ impl RenderTask {
         )
     });
 
-    let (tx, rx) = channel();
+    let (tx, rx) = bounded(1);
 
     for task in collection {
       if let Some(resources_cache) = resources_cache.as_ref() {

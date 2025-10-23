@@ -1,8 +1,6 @@
-use std::{
-  collections::HashMap,
-  sync::{Arc, mpsc::channel},
-};
+use std::{collections::HashMap, sync::Arc};
 
+use crossbeam_channel::unbounded;
 use derive_builder::Builder;
 use image::RgbaImage;
 use taffy::{AvailableSpace, Layout, NodeId, Point, TaffyTree, geometry::Size};
@@ -45,7 +43,7 @@ pub struct RenderOptions<'g, N: Node<N>> {
 pub fn render<'g, N: Node<N>>(options: RenderOptions<'g, N>) -> Result<RgbaImage, crate::Error> {
   let mut taffy = TaffyTree::new();
 
-  let (tx, rx) = channel();
+  let (tx, rx) = unbounded();
   let canvas = Canvas::new(tx);
 
   let render_context = RenderContext {
@@ -265,7 +263,7 @@ fn render_node<'g, Nodes: Node<Nodes>>(
     let image_rendering = node_context.context.style.image_rendering;
     let filters = node_context.context.style.filter.0.clone();
 
-    let (inner_tx, inner_rx) = channel();
+    let (inner_tx, inner_rx) = unbounded();
     let inner_canvas = Canvas::new(inner_tx);
 
     for child_id in taffy.children(node_id).unwrap() {

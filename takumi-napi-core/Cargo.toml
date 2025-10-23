@@ -12,6 +12,7 @@ crate-type = ["cdylib"]
 lru = "0.16.2"
 rayon = "1.10"
 serde = "1.0"
+crossbeam-channel = "0.5"
 
 [dependencies.takumi]
 path = "../takumi"

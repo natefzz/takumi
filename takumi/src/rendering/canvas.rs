@@ -3,15 +3,9 @@
 //! This module provides performance-optimized canvas operations including
 //! fast image blending and pixel manipulation operations.
 
-use std::{
-  borrow::Cow,
-  fmt::Display,
-  sync::{
-    Arc,
-    mpsc::{Receiver, Sender},
-  },
-};
+use std::{borrow::Cow, fmt::Display, sync::Arc};
 
+use crossbeam_channel::{Receiver, Sender};
 use image::{
   Pixel, Rgba, RgbaImage,
   imageops::{interpolate_bilinear, interpolate_nearest},
