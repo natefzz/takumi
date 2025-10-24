@@ -66,7 +66,6 @@ let image = render(options).unwrap();
 
 - `woff2`: Enable WOFF2 font support.
 - `woff`: Enable WOFF font support.
-- `image_data_uri`: Enable image data URI support.
 - `svg`: Enable SVG support.
 - `rayon`: Enable rayon support.
 - `avif`: Enable AVIF support.

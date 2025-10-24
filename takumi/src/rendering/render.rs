@@ -1,6 +1,5 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crossbeam_channel::unbounded;
 use derive_builder::Builder;
 use image::RgbaImage;
 use taffy::{AvailableSpace, Layout, NodeId, Point, TaffyTree, geometry::Size};
@@ -13,10 +12,7 @@ use crate::{
     style::{Affine, InheritedStyle, Overflow, Overflows},
     tree::NodeTree,
   },
-  rendering::{
-    BorderProperties, Canvas, create_blocking_canvas_loop, draw_debug_border,
-    inline_drawing::draw_inline_layout,
-  },
+  rendering::{BorderProperties, Canvas, draw_debug_border, inline_drawing::draw_inline_layout},
   resources::image::ImageSource,
 };
 
@@ -43,8 +39,7 @@ pub struct RenderOptions<'g, N: Node<N>> {
 pub fn render<'g, N: Node<N>>(options: RenderOptions<'g, N>) -> Result<RgbaImage, crate::Error> {
   let mut taffy = TaffyTree::new();
 
-  let (tx, rx) = unbounded();
-  let canvas = Canvas::new(tx);
+  let canvas = Canvas::new(options.viewport.into());
 
   let render_context = RenderContext {
     draw_debug_border: options.draw_debug_border,
@@ -80,40 +75,15 @@ pub fn render<'g, N: Node<N>>(options: RenderOptions<'g, N>) -> Result<RgbaImage
     )
     .unwrap();
 
-  #[cfg(target_arch = "wasm32")]
-  let canvas = {
-    render_node(
-      &mut taffy,
-      root_node_id,
-      &canvas,
-      Point::ZERO,
-      Affine::identity(),
-    );
+  render_node(
+    &mut taffy,
+    root_node_id,
+    &canvas,
+    Point::ZERO,
+    Affine::identity(),
+  );
 
-    drop(canvas);
-
-    create_blocking_canvas_loop(render_context.viewport.into(), rx)
-  };
-
-  #[cfg(not(target_arch = "wasm32"))]
-  let canvas = {
-    let handler =
-      std::thread::spawn(move || create_blocking_canvas_loop(render_context.viewport.into(), rx));
-
-    render_node(
-      &mut taffy,
-      root_node_id,
-      &canvas,
-      Point::ZERO,
-      Affine::identity(),
-    );
-
-    drop(canvas);
-
-    handler.join().unwrap()
-  };
-
-  Ok(canvas)
+  Ok(canvas.into_inner())
 }
 
 fn create_transform(style: &InheritedStyle, layout: &Layout, context: &RenderContext) -> Affine {
@@ -263,8 +233,7 @@ fn render_node<'g, Nodes: Node<Nodes>>(
     let image_rendering = node_context.context.style.image_rendering;
     let filters = node_context.context.style.filter.0.clone();
 
-    let (inner_tx, inner_rx) = unbounded();
-    let inner_canvas = Canvas::new(inner_tx);
+    let inner_canvas = Canvas::new(inner_size);
 
     for child_id in taffy.children(node_id).unwrap() {
       render_node(
@@ -287,12 +256,8 @@ fn render_node<'g, Nodes: Node<Nodes>>(
       );
     }
 
-    drop(inner_canvas);
-
-    let inner_image = create_blocking_canvas_loop(inner_size, inner_rx);
-
     return canvas.overlay_image(
-      Arc::new(inner_image),
+      &inner_canvas.into_inner(),
       Point {
         x: if overflow.0 == Overflow::Visible {
           0
@@ -308,7 +273,7 @@ fn render_node<'g, Nodes: Node<Nodes>>(
       BorderProperties::zero(),
       transform,
       image_rendering,
-      filters,
+      filters.as_ref(),
     );
   }
 

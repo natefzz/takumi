@@ -13,6 +13,7 @@ type Component = (typeof components)[number];
 async function render(module: Component) {
   const component = await fromJsx(<module.default />);
 
+  const prepareStart = performance.now();
   const renderer = new Renderer({
     persistentImages: module.persistentImages,
     fonts:
@@ -25,7 +26,7 @@ async function render(module: Component) {
         : undefined,
   });
 
-  const start = performance.now();
+  const renderStart = performance.now();
 
   const buffer = await renderer.render(component, {
     width: module.width,
@@ -35,9 +36,11 @@ async function render(module: Component) {
 
   const end = performance.now();
 
-  await write(join("output", `${module.name}.png`), buffer.buffer);
+  console.log(
+    `Rendered ${module.name} in ${Math.round(end - prepareStart)}ms (prepare: ${Math.round(renderStart - prepareStart)}ms, render: ${Math.round(end - renderStart)}ms)`,
+  );
 
-  console.log(`Rendered ${module.name} in ${Math.round(end - start)}ms`);
+  await write(join("output", `${module.name}.png`), buffer.buffer);
 }
 
 for (const component of components) {

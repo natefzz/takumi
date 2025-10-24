@@ -3,9 +3,8 @@
 //! This module provides performance-optimized canvas operations including
 //! fast image blending and pixel manipulation operations.
 
-use std::{borrow::Cow, fmt::Display, sync::Arc};
+use std::{borrow::Cow, sync::Mutex};
 
-use crossbeam_channel::{Receiver, Sender};
 use image::{
   Pixel, Rgba, RgbaImage,
   imageops::{interpolate_bilinear, interpolate_nearest},
@@ -22,43 +21,42 @@ use crate::{
 ///
 /// This struct wraps a channel sender that can be cloned and used to send
 /// drawing commands to a canvas rendering loop without blocking the main thread.
-#[derive(Clone)]
-pub struct Canvas(Sender<DrawCommand>);
+pub struct Canvas(Mutex<RgbaImage>);
 
 impl Canvas {
   /// Creates a new canvas handle from a draw command sender.
-  pub(crate) fn new(sender: Sender<DrawCommand>) -> Self {
-    Self(sender)
+  pub(crate) fn new(size: Size<u32>) -> Self {
+    Self(Mutex::new(RgbaImage::new(size.width, size.height)))
+  }
+
+  pub(crate) fn into_inner(self) -> RgbaImage {
+    self.0.into_inner().unwrap()
   }
 
   /// Overlays an image onto the canvas with optional border radius.
   pub(crate) fn overlay_image(
     &self,
-    image: Arc<RgbaImage>,
+    image: &RgbaImage,
     offset: Point<i32>,
     border: BorderProperties,
     transform: Affine,
     algorithm: ImageScalingAlgorithm,
-    filters: Option<Filters>,
+    filters: Option<&Filters>,
   ) {
     if image.is_empty() {
       return;
     }
 
-    let _ = self.0.send(DrawCommand::OverlayImage {
-      image,
-      offset,
-      border,
-      transform,
-      algorithm,
-      filters,
-    });
+    let mut lock = self.0.lock().unwrap();
+    overlay_image(
+      &mut lock, image, offset, border, transform, algorithm, filters,
+    );
   }
 
   /// Draws a mask with the specified color onto the canvas.
   pub(crate) fn draw_mask(
     &self,
-    mask: Vec<u8>,
+    mask: &[u8],
     placement: Placement,
     color: Color,
     image: Option<RgbaImage>,
@@ -67,12 +65,8 @@ impl Canvas {
       return;
     }
 
-    let _ = self.0.send(DrawCommand::DrawMask {
-      mask,
-      placement,
-      color,
-      image,
-    });
+    let mut lock = self.0.lock().unwrap();
+    draw_mask(&mut lock, mask, placement, color, image.as_ref());
   }
 
   /// Fills a rectangular area with the specified color and optional border radius.
@@ -88,159 +82,8 @@ impl Canvas {
       return;
     }
 
-    let _ = self.0.send(DrawCommand::FillColor {
-      offset,
-      size,
-      color,
-      border,
-      transform,
-    });
-  }
-}
-
-/// A canvas that receives draw tasks from the main rendering thread and draws them to the canvas.
-pub(crate) fn create_blocking_canvas_loop(
-  size: Size<u32>,
-  receiver: Receiver<DrawCommand>,
-) -> RgbaImage {
-  let mut canvas = RgbaImage::new(size.width, size.height);
-
-  while let Ok(task) = receiver.recv() {
-    #[cfg(debug_assertions)]
-    println!("{task}");
-
-    task.draw(&mut canvas);
-  }
-
-  canvas
-}
-
-/// Drawing commands that can be sent to a canvas for rendering.
-///
-/// These commands represent different types of drawing operations that can be
-/// performed on a canvas, such as overlaying images, drawing masks, or filling areas.
-pub(crate) enum DrawCommand {
-  /// Overlay an image onto the canvas with optional border radius.
-  OverlayImage {
-    /// The image to overlay on the canvas
-    image: Arc<RgbaImage>,
-    /// The position offset where to place the image
-    offset: Point<i32>,
-    /// Border properties (including radii) to apply to the image
-    border: BorderProperties,
-    /// Transform to apply when drawing
-    transform: Affine,
-    /// The algorithm to use when transforming the image
-    algorithm: ImageScalingAlgorithm,
-    /// Filters to apply when overlaying
-    filters: Option<Filters>,
-  },
-  /// Draw a mask with the specified color onto the canvas.
-  DrawMask {
-    /// The mask data as a vector of alpha values (0-255)
-    mask: Vec<u8>,
-    /// The placement of the mask
-    placement: Placement,
-    /// The color to apply to the mask
-    color: Color,
-    /// The image to sample colors from
-    image: Option<RgbaImage>,
-  },
-  /// Fill a rectangular area with the specified color and optional border radius.
-  FillColor {
-    /// The position offset where to start filling
-    offset: Point<i32>,
-    /// The size of the area to fill
-    size: Size<u32>,
-    /// The color to fill the area with
-    color: Color,
-    /// Border properties (including radii) to apply to the filled area
-    border: BorderProperties,
-    /// Transform to apply when drawing
-    transform: Affine,
-  },
-}
-
-impl Display for DrawCommand {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match *self {
-      DrawCommand::OverlayImage {
-        ref image,
-        offset,
-        border: radius,
-        transform,
-        algorithm,
-        ref filters,
-      } => write!(
-        f,
-        "OverlayImage(width={}, height={}, offset={offset:?}, radius={radius:?}, transform={}, algorithm={algorithm:?}), filters={filters:?}",
-        image.width(),
-        image.height(),
-        transform.decompose()
-      ),
-      DrawCommand::FillColor {
-        size,
-        color,
-        border: radius,
-        transform,
-        ..
-      } => write!(
-        f,
-        "FillColor(size={size:?}, color={color}, radius={radius:?}, transform={})",
-        transform.decompose()
-      ),
-      DrawCommand::DrawMask {
-        placement,
-        color,
-        ref image,
-        ..
-      } => {
-        write!(f, "DrawMask(placement={placement:?}, color={color}")?;
-
-        if let Some(image) = image {
-          write!(f, ", image={}x{}", image.width(), image.height())?;
-        }
-
-        write!(f, ")")
-      }
-    }
-  }
-}
-
-impl DrawCommand {
-  /// Executes the drawing command on the provided canvas.
-  fn draw(self, canvas: &mut RgbaImage) {
-    match self {
-      DrawCommand::OverlayImage {
-        ref image,
-        offset,
-        border: radius,
-        transform,
-        algorithm,
-        ref filters,
-      } => overlay_image(
-        canvas,
-        image,
-        offset,
-        radius,
-        transform,
-        algorithm,
-        filters.as_ref(),
-      ),
-      DrawCommand::FillColor {
-        offset,
-        size,
-        color,
-        border: radius,
-        transform,
-      } => fill_color(canvas, size, offset, color, radius, transform),
-      DrawCommand::DrawMask {
-        ref mask,
-        placement,
-        color,
-        ref image,
-      } => draw_mask(canvas, mask, placement, color, image.as_ref()),
-    }
+    let mut lock = self.0.lock().unwrap();
+    fill_color(&mut lock, size, offset, color, border, transform);
   }
 }
 

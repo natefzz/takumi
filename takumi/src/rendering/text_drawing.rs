@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::{borrow::Cow, ops::Range};
 
 use image::RgbaImage;
@@ -118,7 +117,7 @@ pub(crate) fn draw_glyph(
       }
 
       return canvas.overlay_image(
-        Arc::new(bottom),
+        &bottom,
         offset,
         border,
         transform,
@@ -135,7 +134,7 @@ pub(crate) fn draw_glyph(
     .unwrap();
 
     return canvas.overlay_image(
-      Arc::new(image),
+      &image,
       offset,
       border,
       transform,
@@ -201,7 +200,7 @@ pub(crate) fn draw_glyph(
     placement.left += layout.location.x as i32;
     placement.top += layout.location.y as i32;
 
-    canvas.draw_mask(mask, placement, text_style.brush.color, cropped_fill_image);
+    canvas.draw_mask(&mask, placement, text_style.brush.color, cropped_fill_image);
 
     if style.stroke_width > 0.0 {
       let mut stroke = Stroke::new(style.stroke_width);
@@ -213,7 +212,12 @@ pub(crate) fn draw_glyph(
       stroke_placement.left += layout.location.x as i32;
       stroke_placement.top += layout.location.y as i32;
 
-      canvas.draw_mask(stroke_mask, stroke_placement, style.text_stroke_color, None);
+      canvas.draw_mask(
+        &stroke_mask,
+        stroke_placement,
+        style.text_stroke_color,
+        None,
+      );
     }
   }
 }

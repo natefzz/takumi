@@ -20,8 +20,8 @@ derive_builder = "0.20"
 image-webp = "0.2"
 png = "0.18.0"
 serde-untagged = "0.1"
-crossbeam-channel = "0.5"
-fastnoise-lite = "1.1.1"
+fastnoise-lite = "1.1"
+data-url = "0.3"
 
 [dependencies.smallvec]
 version = "1.15"
@@ -44,10 +44,6 @@ optional = true
 [dependencies.ts-rs]
 version = "11.0"
 features = ["no-serde-warnings"]
-
-[dependencies.base64]
-version = "0.22"
-optional = true
 
 [dependencies.bytes]
 version = "1.10"
@@ -90,9 +86,8 @@ default-features = false
 features = ["std", "simd"]
 
 [features]
-default = ["woff2", "woff", "image_data_uri", "svg", "rayon", "avif"]
+default = ["woff2", "woff", "svg", "rayon", "avif"]
 avif = ["image/avif"]
-image_data_uri = ["dep:base64"]
 svg = ["dep:resvg"]
 woff2 = ["dep:wuff", "wuff/brotli"]
 woff = ["dep:wuff", "wuff/z"]

@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
+use data_url::DataUrl;
 use serde::{Deserialize, Serialize};
 use taffy::{AvailableSpace, Layout, Size};
 
-#[cfg(feature = "image_data_uri")]
-use crate::resources::image::ImageResult;
+use crate::resources::image::{ImageResult, load_image_source_from_bytes};
 use crate::{
   layout::{
     inline::InlineContentKind,
@@ -104,39 +104,18 @@ impl<Nodes: Node<Nodes>> Node<Nodes> for ImageNode {
 
 const DATA_URI_PREFIX: &str = "data:";
 
-fn is_data_uri(src: &str) -> bool {
-  src.starts_with(DATA_URI_PREFIX)
-}
-
-#[cfg(feature = "image_data_uri")]
 fn parse_data_uri_image(src: &str) -> ImageResult {
-  use crate::resources::image::load_image_source_from_bytes;
-  use base64::{Engine as _, engine::general_purpose};
+  let url = DataUrl::process(src).map_err(|_| ImageResourceError::InvalidDataUriFormat)?;
+  let (data, _) = url
+    .decode_to_vec()
+    .map_err(|_| ImageResourceError::InvalidDataUriFormat)?;
 
-  let comma_pos = src
-    .find(',')
-    .ok_or(ImageResourceError::InvalidDataUriFormat)?;
-
-  let metadata = &src[DATA_URI_PREFIX.len()..comma_pos];
-  let data = &src[comma_pos + 1..];
-
-  if !metadata.contains("base64") {
-    return Err(ImageResourceError::InvalidDataUriFormat);
-  }
-
-  let image_bytes = general_purpose::STANDARD
-    .decode(data)
-    .map_err(|_| ImageResourceError::MalformedDataUri)?;
-
-  load_image_source_from_bytes(&image_bytes)
+  load_image_source_from_bytes(&data)
 }
 
 fn resolve_image(src: &str, context: &RenderContext) -> ImageResult {
-  if is_data_uri(src) {
-    #[cfg(feature = "image_data_uri")]
+  if src.starts_with(DATA_URI_PREFIX) {
     return parse_data_uri_image(src);
-    #[cfg(not(feature = "image_data_uri"))]
-    return Err(ImageResourceError::DataUriParseNotSupported);
   }
 
   if is_svg(src) {

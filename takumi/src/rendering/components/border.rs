@@ -211,5 +211,5 @@ pub(crate) fn draw_border(canvas: &Canvas, canvas_offset: Point<f32>, border: Bo
   placement.left += border.offset.x as i32 + canvas_offset.x as i32;
   placement.top += border.offset.y as i32 + canvas_offset.y as i32;
 
-  canvas.draw_mask(mask, placement, border.color, None);
+  canvas.draw_mask(&mask, placement, border.color, None);
 }

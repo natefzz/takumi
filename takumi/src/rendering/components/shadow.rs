@@ -1,4 +1,4 @@
-use std::{borrow::Cow, sync::Arc};
+use std::borrow::Cow;
 
 use image::{RgbaImage, imageops::fast_blur};
 use taffy::{Layout, Point, Size};
@@ -89,7 +89,7 @@ impl SizedShadow {
         height: spread_placement.height,
       };
 
-      return canvas.draw_mask(spread_mask.into_owned(), placement, self.color, None);
+      return canvas.draw_mask(&spread_mask, placement, self.color, None);
     }
 
     // Create a new image with the spread mask on, blurred by the blur radius
@@ -114,7 +114,7 @@ impl SizedShadow {
     apply_fast_blur(&mut image, self.blur_radius);
 
     canvas.overlay_image(
-      Arc::new(image),
+      &image,
       offset_with_radius,
       BorderProperties::zero(),
       Affine::identity(),
@@ -133,7 +133,7 @@ impl SizedShadow {
     let image = draw_inset_shadow(self, border_radius, layout);
 
     canvas.overlay_image(
-      Arc::new(image),
+      &image,
       Point {
         x: layout.location.x as i32,
         y: layout.location.y as i32,

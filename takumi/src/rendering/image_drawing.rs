@@ -1,5 +1,4 @@
 use std::borrow::Cow;
-use std::sync::Arc;
 
 use image::RgbaImage;
 use image::imageops::crop_imm;
@@ -234,7 +233,7 @@ pub fn draw_image(image: &ImageSource, context: &RenderContext, canvas: &Canvas,
   border.width = Rect::zero();
 
   canvas.overlay_image(
-    Arc::new(image.into_owned()),
+    &image,
     Point {
       x: (offset.x + layout.location.x) as i32,
       y: (offset.y + layout.location.y) as i32,
@@ -242,6 +241,6 @@ pub fn draw_image(image: &ImageSource, context: &RenderContext, canvas: &Canvas,
     border,
     transform_with_content_offset,
     context.style.image_rendering,
-    context.style.filter.0.to_owned(),
+    context.style.filter.0.as_ref(),
   );
 }

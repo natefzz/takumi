@@ -140,13 +140,9 @@ pub enum ImageResourceError {
   /// An error occurred while decoding the image data
   DecodeError(image::ImageError),
   /// The image data URI is in an invalid format
-  #[cfg(feature = "image_data_uri")]
   InvalidDataUriFormat,
   /// The image data URI is malformed and cannot be parsed
   MalformedDataUri,
-  /// The image data URI feature is not enabled, so parsing is not supported
-  #[cfg(not(feature = "image_data_uri"))]
-  DataUriParseNotSupported,
   #[cfg(feature = "svg")]
   /// An error occurred while parsing an SVG image
   SvgParseError(resvg::usvg::Error),
