@@ -296,7 +296,7 @@ pub(crate) fn resolve_layers_tiles(
   }
 
   #[cfg(not(feature = "rayon"))]
-  images.0.par_iter().enumerate().filter_map(map_fn).collect()
+  images.0.iter().enumerate().filter_map(map_fn).collect()
 }
 
 /// Draw layered backgrounds (gradients) with support for background-size, -position, and -repeat.
