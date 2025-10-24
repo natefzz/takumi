@@ -10,6 +10,7 @@ import type { BackgroundSizes } from "./BackgroundSizes";
 import type { Border } from "./Border";
 import type { BoxShadows } from "./BoxShadows";
 import type { BoxSizing } from "./BoxSizing";
+import type { ClipPath } from "./ClipPath";
 import type { ColorInput } from "./ColorInput";
 import type { CssOption } from "./CssOption";
 import type { CssValue } from "./CssValue";
@@ -162,4 +163,5 @@ export type Style = {
   imageRendering: CssValue<ImageScalingAlgorithm>;
   overflowWrap: CssValue<OverflowWrap>;
   wordBreak: CssValue<WordBreak>;
+  clipPath: CssValue<ClipPath>;
 };
