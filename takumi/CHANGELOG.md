@@ -1,5 +1,15 @@
 # takumi
 
+## 0.39.0
+
+### Minor Changes
+
+- 71ae4a5: use `data-url` crate, **remove `image_data_uri` feature**
+
+### Patch Changes
+
+- 71ae4a5: parallelize background image layers rendering
+
 ## 0.38.1
 
 ### Patch Changes

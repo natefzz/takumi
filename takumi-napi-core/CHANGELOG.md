@@ -1,5 +1,11 @@
 # @takumi-rs/core
 
+## 0.39.0
+
+### Patch Changes
+
+- 71ae4a5: parallelize background image layers rendering
+
 ## 0.38.1
 
 ## 0.38.0
