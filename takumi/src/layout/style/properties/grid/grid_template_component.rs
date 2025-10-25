@@ -19,7 +19,7 @@ pub struct GridTemplateComponents(pub Vec<GridTemplateComponent>);
 /// pre-parsed component list or a CSS string to be parsed at runtime.
 #[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
 #[serde(untagged)]
-pub enum GridTemplateComponentsValue {
+pub(crate) enum GridTemplateComponentsValue {
   /// Explicit list of template components.
   Components(Vec<GridTemplateComponent>),
   /// CSS value to parse (e.g. "\[a\] 1fr \[b\] 2fr" or "repeat(3, 1fr)").

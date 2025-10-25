@@ -23,7 +23,7 @@ pub struct Gap(pub LengthUnit, pub LengthUnit);
 /// for horizontal and vertical spacing.
 #[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
 #[serde(untagged)]
-pub enum GapValue {
+pub(crate) enum GapValue {
   /// Same gap value for both horizontal and vertical spacing
   SingleValue(LengthUnit),
   /// Separate values for horizontal and vertical spacing (horizontal, vertical)

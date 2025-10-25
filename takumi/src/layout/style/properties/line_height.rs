@@ -25,7 +25,7 @@ impl Default for LineHeight {
 /// Proxy type for `LineHeight` Css deserialization.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize, TS)]
 #[serde(untagged)]
-pub enum LineHeightValue {
+pub(crate) enum LineHeightValue {
   /// A number value.
   Number(f32),
   /// A CSS string value.

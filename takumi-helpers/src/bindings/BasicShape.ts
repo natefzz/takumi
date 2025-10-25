@@ -13,4 +13,5 @@ export type BasicShape =
   | { circle: CircleShape }
   | { ellipse: EllipseShape }
   | { polygon: PolygonShape }
-  | { path: PathShape };
+  | { path: PathShape }
+  | string;

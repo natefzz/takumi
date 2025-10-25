@@ -39,7 +39,7 @@ impl<'i> FromCss<'i> for PercentageNumber {
 /// Represents a percentage value that can be used in stylesheets.
 #[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
 #[serde(untagged)]
-pub enum PercentageNumberValue {
+pub(crate) enum PercentageNumberValue {
   /// A CSS string value (e.g., "50%", "inherit")
   Css(String),
   /// A numeric value (0.0-1.0)

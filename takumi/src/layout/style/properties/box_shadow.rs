@@ -35,7 +35,7 @@ pub struct BoxShadow {
 /// Proxy type for `BoxShadow` Css deserialization.
 #[derive(Debug, Clone, PartialEq, TS, Deserialize)]
 #[serde(untagged)]
-pub enum BoxShadowValue {
+pub(crate) enum BoxShadowValue {
   /// Represents a structured box shadow.
   #[serde(rename_all = "camelCase")]
   Structured {

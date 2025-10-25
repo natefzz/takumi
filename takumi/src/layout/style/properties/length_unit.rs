@@ -48,7 +48,7 @@ pub enum LengthUnit {
 /// Proxy type for CSS `LengthUnit` serialization/deserialization.
 #[derive(Debug, Deserialize, Serialize, TS)]
 #[serde(rename_all = "kebab-case")]
-pub enum LengthUnitValue {
+pub(crate) enum LengthUnitValue {
   /// Automatic sizing based on content
   Auto,
   /// Percentage value relative to parent container (0-100)

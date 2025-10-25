@@ -11,7 +11,7 @@ use crate::layout::style::{FromCss, ParseResult};
 /// `Color` proxy type for deserializing CSS color values.
 #[derive(Debug, Clone, Deserialize, TS)]
 #[serde(untagged)]
-pub enum ColorInputValue {
+pub(crate) enum ColorInputValue {
   /// RGB color with 8-bit components
   Rgb(u8, u8, u8),
   /// RGBA color with 8-bit RGB components and 32-bit float alpha (alpha is between 0.0 and 1.0)

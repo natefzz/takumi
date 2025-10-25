@@ -63,7 +63,7 @@ impl<'i> FromCss<'i> for BackgroundSize {
 /// A value representing either a list of parsed sizes or a raw CSS string.
 #[derive(Debug, Clone, PartialEq, TS, Deserialize)]
 #[serde(untagged)]
-pub enum BackgroundSizesValue {
+pub(crate) enum BackgroundSizesValue {
   /// Parsed sizes for one or more layers.
   Sizes(Vec<BackgroundSize>),
   /// Raw CSS to be parsed at runtime.

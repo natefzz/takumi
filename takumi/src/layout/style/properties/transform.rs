@@ -91,7 +91,7 @@ impl Transforms {
 /// Represents transform values that can be either a structured list or raw CSS
 #[derive(Debug, Clone, Deserialize, TS)]
 #[serde(untagged)]
-pub enum TransformsValue {
+pub(crate) enum TransformsValue {
   /// A structured list of transform operations
   #[ts(as = "Vec<Transform>")]
   Transforms(SmallVec<[Transform; 4]>),

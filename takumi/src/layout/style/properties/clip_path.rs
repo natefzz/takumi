@@ -70,6 +70,18 @@ pub struct InsetShape {
   pub border_radius: Option<Sides<LengthUnit>>,
 }
 
+impl Default for InsetShape {
+  fn default() -> Self {
+    Self {
+      top: LengthUnit::Px(0.0),
+      right: LengthUnit::Px(0.0),
+      bottom: LengthUnit::Px(0.0),
+      left: LengthUnit::Px(0.0),
+      border_radius: None,
+    }
+  }
+}
+
 /// Represents a circle() shape.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -124,7 +136,8 @@ pub struct PathShape {
 
 /// Represents a basic shape function for clip-path.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
+#[ts(as = "ClipPathValue")]
+#[serde(try_from = "ClipPathValue")]
 pub enum BasicShape {
   /// inset() function
   Inset(InsetShape),
@@ -138,39 +151,46 @@ pub enum BasicShape {
   Path(PathShape),
 }
 
-/// Represents the clip-path property value.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, Default)]
-#[ts(as = "ClipPathValue")]
-#[serde(try_from = "ClipPathValue")]
-pub enum ClipPath {
-  /// No clipping
-  #[default]
-  None,
-  /// Basic shape function
-  Shape(BasicShape),
+impl Default for BasicShape {
+  fn default() -> Self {
+    BasicShape::Inset(InsetShape::default())
+  }
 }
 
 /// Proxy type for CSS deserialization that accepts either structured data or CSS strings.
 #[derive(Debug, Clone, Deserialize, TS)]
-#[serde(untagged)]
-pub enum ClipPathValue {
-  /// A structured basic shape
-  Shape(BasicShape),
+#[serde(rename_all = "camelCase")]
+pub(crate) enum ClipPathValue {
+  /// inset() function
+  Inset(InsetShape),
+  /// circle() function
+  Circle(CircleShape),
+  /// ellipse() function
+  Ellipse(EllipseShape),
+  /// polygon() function
+  Polygon(PolygonShape),
+  /// path() function
+  Path(PathShape),
+  #[serde(untagged)]
   /// Raw CSS string to be parsed
   Css(String),
 }
 
-impl TryFrom<ClipPathValue> for ClipPath {
+impl TryFrom<ClipPathValue> for BasicShape {
   type Error = String;
 
   fn try_from(value: ClipPathValue) -> Result<Self, Self::Error> {
     match value {
-      ClipPathValue::Shape(shape) => Ok(ClipPath::Shape(shape)),
+      ClipPathValue::Inset(shape) => Ok(BasicShape::Inset(shape)),
+      ClipPathValue::Circle(shape) => Ok(BasicShape::Circle(shape)),
+      ClipPathValue::Ellipse(shape) => Ok(BasicShape::Ellipse(shape)),
+      ClipPathValue::Polygon(shape) => Ok(BasicShape::Polygon(shape)),
+      ClipPathValue::Path(shape) => Ok(BasicShape::Path(shape)),
       ClipPathValue::Css(css) => {
         let mut input = ParserInput::new(&css);
         let mut parser = Parser::new(&mut input);
 
-        ClipPath::from_css(&mut parser).map_err(|e| e.to_string())
+        BasicShape::from_css(&mut parser).map_err(|e| e.to_string())
       }
     }
   }
@@ -236,18 +256,12 @@ impl<'i> FromCss<'i> for PolygonCoordinate {
   }
 }
 
-impl<'i> FromCss<'i> for ClipPath {
+impl<'i> FromCss<'i> for BasicShape {
   fn from_css(parser: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
     let location = parser.current_source_location();
     let token = parser.next()?;
 
     match token {
-      Token::Ident(ident) => {
-        match_ignore_ascii_case! { &ident,
-          "none" => Ok(ClipPath::None),
-          _ => Err(location.new_basic_unexpected_token_error(token.clone()).into())
-        }
-      }
       Token::Function(function) => {
         match_ignore_ascii_case! { &function,
           "inset" => parser.parse_nested_block(|input| {
@@ -271,7 +285,7 @@ impl<'i> FromCss<'i> for ClipPath {
               border_radius,
             };
 
-            Ok(ClipPath::Shape(BasicShape::Inset(inset_shape)))
+            Ok(BasicShape::Inset(inset_shape))
           }),
           "circle" => parser.parse_nested_block(|input| {
             let radius = input.try_parse(ShapeRadius::from_css).unwrap_or_default();
@@ -283,7 +297,7 @@ impl<'i> FromCss<'i> for ClipPath {
             };
 
             let circle_shape = CircleShape { radius, position };
-            Ok(ClipPath::Shape(BasicShape::Circle(circle_shape)))
+            Ok(BasicShape::Circle(circle_shape))
           }),
           "ellipse" => parser.parse_nested_block(|input| {
             let radius_x = ShapeRadius::from_css(input)?;
@@ -296,7 +310,7 @@ impl<'i> FromCss<'i> for ClipPath {
             };
 
             let ellipse_shape = EllipseShape { radius_x, radius_y, position };
-            Ok(ClipPath::Shape(BasicShape::Ellipse(ellipse_shape)))
+            Ok(BasicShape::Ellipse(ellipse_shape))
           }),
           "polygon" => parser.parse_nested_block(|input| {
             let fill_rule = input.try_parse(FillRule::from_css).ok();
@@ -319,7 +333,7 @@ impl<'i> FromCss<'i> for ClipPath {
               coordinates,
             };
 
-            Ok(ClipPath::Shape(BasicShape::Polygon(polygon_shape)))
+            Ok(BasicShape::Polygon(polygon_shape))
           }),
           "path" => parser.parse_nested_block(|input| {
             let fill_rule = input.try_parse(FillRule::from_css).ok();
@@ -334,7 +348,7 @@ impl<'i> FromCss<'i> for ClipPath {
               path_data,
             };
 
-            Ok(ClipPath::Shape(BasicShape::Path(path_shape)))
+            Ok(BasicShape::Path(path_shape))
           }),
           _ => Err(location.new_basic_unexpected_token_error(token.clone()).into())
         }
@@ -353,22 +367,16 @@ mod tests {
   use super::*;
   use cssparser::{Parser, ParserInput};
 
-  fn parse_clip_path_str(css: &str) -> ClipPath {
+  fn parse_clip_path_str(css: &str) -> BasicShape {
     let mut input = ParserInput::new(css);
     let mut parser = Parser::new(&mut input);
-    ClipPath::from_css(&mut parser).unwrap()
-  }
-
-  #[test]
-  fn test_parse_none() {
-    let result = parse_clip_path_str("none");
-    assert_eq!(result, ClipPath::None);
+    BasicShape::from_css(&mut parser).unwrap()
   }
 
   #[test]
   fn test_parse_inset_simple() {
     let result = parse_clip_path_str("inset(10px)");
-    if let ClipPath::Shape(BasicShape::Inset(inset)) = result {
+    if let BasicShape::Inset(inset) = result {
       assert_eq!(inset.top, LengthUnit::Px(10.0));
       assert_eq!(inset.right, LengthUnit::Px(10.0));
       assert_eq!(inset.bottom, LengthUnit::Px(10.0));
@@ -381,7 +389,7 @@ mod tests {
   #[test]
   fn test_parse_inset_four_values() {
     let result = parse_clip_path_str("inset(10px 20px 30px 40px)");
-    if let ClipPath::Shape(BasicShape::Inset(inset)) = result {
+    if let BasicShape::Inset(inset) = result {
       assert_eq!(inset.top, LengthUnit::Px(10.0));
       assert_eq!(inset.right, LengthUnit::Px(20.0));
       assert_eq!(inset.bottom, LengthUnit::Px(30.0));
@@ -395,7 +403,7 @@ mod tests {
   #[test]
   fn test_parse_inset_with_border_radius() {
     let result = parse_clip_path_str("inset(10px round 5px)");
-    if let ClipPath::Shape(BasicShape::Inset(inset)) = result {
+    if let BasicShape::Inset(inset) = result {
       assert_eq!(inset.top, LengthUnit::Px(10.0));
       assert_eq!(inset.right, LengthUnit::Px(10.0));
       assert_eq!(inset.bottom, LengthUnit::Px(10.0));
@@ -414,7 +422,7 @@ mod tests {
   #[test]
   fn test_parse_inset_with_complex_border_radius() {
     let result = parse_clip_path_str("inset(10px 20px 30px 40px round 5px 10px 15px 20px)");
-    if let ClipPath::Shape(BasicShape::Inset(inset)) = result {
+    if let BasicShape::Inset(inset) = result {
       assert_eq!(inset.top, LengthUnit::Px(10.0));
       assert_eq!(inset.right, LengthUnit::Px(20.0));
       assert_eq!(inset.bottom, LengthUnit::Px(30.0));
@@ -433,7 +441,7 @@ mod tests {
   #[test]
   fn test_parse_circle_simple() {
     let result = parse_clip_path_str("circle(50px)");
-    if let ClipPath::Shape(BasicShape::Circle(circle)) = result {
+    if let BasicShape::Circle(circle) = result {
       assert_eq!(circle.radius, ShapeRadius::Length(LengthUnit::Px(50.0)));
       assert_eq!(circle.position.x, LengthUnit::Percentage(50.0));
       assert_eq!(circle.position.y, LengthUnit::Percentage(50.0));
@@ -445,7 +453,7 @@ mod tests {
   #[test]
   fn test_parse_circle_with_position() {
     let result = parse_clip_path_str("circle(50px at 25% 75%)");
-    if let ClipPath::Shape(BasicShape::Circle(circle)) = result {
+    if let BasicShape::Circle(circle) = result {
       assert_eq!(circle.radius, ShapeRadius::Length(LengthUnit::Px(50.0)));
       assert_eq!(circle.position.x, LengthUnit::Percentage(25.0));
       assert_eq!(circle.position.y, LengthUnit::Percentage(75.0));
@@ -457,7 +465,7 @@ mod tests {
   #[test]
   fn test_parse_circle_default_radius() {
     let result = parse_clip_path_str("circle(at 25% 75%)");
-    if let ClipPath::Shape(BasicShape::Circle(circle)) = result {
+    if let BasicShape::Circle(circle) = result {
       assert_eq!(circle.radius, ShapeRadius::ClosestSide);
       assert_eq!(circle.position.x, LengthUnit::Percentage(25.0));
       assert_eq!(circle.position.y, LengthUnit::Percentage(75.0));
@@ -469,7 +477,7 @@ mod tests {
   #[test]
   fn test_parse_ellipse_simple() {
     let result = parse_clip_path_str("ellipse(50px 30px)");
-    if let ClipPath::Shape(BasicShape::Ellipse(ellipse)) = result {
+    if let BasicShape::Ellipse(ellipse) = result {
       assert_eq!(ellipse.radius_x, ShapeRadius::Length(LengthUnit::Px(50.0)));
       assert_eq!(ellipse.radius_y, ShapeRadius::Length(LengthUnit::Px(30.0)));
       assert_eq!(ellipse.position.x, LengthUnit::Percentage(50.0));
@@ -482,7 +490,7 @@ mod tests {
   #[test]
   fn test_parse_ellipse_with_position() {
     let result = parse_clip_path_str("ellipse(50px 30px at 25% 75%)");
-    if let ClipPath::Shape(BasicShape::Ellipse(ellipse)) = result {
+    if let BasicShape::Ellipse(ellipse) = result {
       assert_eq!(ellipse.radius_x, ShapeRadius::Length(LengthUnit::Px(50.0)));
       assert_eq!(ellipse.radius_y, ShapeRadius::Length(LengthUnit::Px(30.0)));
       assert_eq!(ellipse.position.x, LengthUnit::Percentage(25.0));
@@ -495,7 +503,7 @@ mod tests {
   #[test]
   fn test_parse_polygon_triangle() {
     let result = parse_clip_path_str("polygon(50% 0%, 0% 100%, 100% 100%)");
-    if let ClipPath::Shape(BasicShape::Polygon(polygon)) = result {
+    if let BasicShape::Polygon(polygon) = result {
       assert_eq!(polygon.fill_rule, FillRule::NonZero);
       assert_eq!(polygon.coordinates.len(), 3);
 
@@ -513,7 +521,7 @@ mod tests {
   #[test]
   fn test_parse_polygon_with_fill_rule() {
     let result = parse_clip_path_str("polygon(evenodd, 50% 0%, 0% 100%, 100% 100%)");
-    if let ClipPath::Shape(BasicShape::Polygon(polygon)) = result {
+    if let BasicShape::Polygon(polygon) = result {
       assert_eq!(polygon.fill_rule, FillRule::EvenOdd);
       assert_eq!(polygon.coordinates.len(), 3);
     } else {
@@ -524,7 +532,7 @@ mod tests {
   #[test]
   fn test_parse_path() {
     let result = parse_clip_path_str("path('M 10 10 L 90 90')");
-    if let ClipPath::Shape(BasicShape::Path(path)) = result {
+    if let BasicShape::Path(path) = result {
       assert_eq!(path.fill_rule, FillRule::NonZero);
       assert_eq!(path.path_data, "M 10 10 L 90 90");
     } else {
@@ -535,7 +543,7 @@ mod tests {
   #[test]
   fn test_parse_path_with_fill_rule() {
     let result = parse_clip_path_str("path(evenodd, 'M 10 10 L 90 90')");
-    if let ClipPath::Shape(BasicShape::Path(path)) = result {
+    if let BasicShape::Path(path) = result {
       assert_eq!(path.fill_rule, FillRule::EvenOdd);
       assert_eq!(path.path_data, "M 10 10 L 90 90");
     } else {
@@ -546,7 +554,7 @@ mod tests {
   #[test]
   fn test_parse_circle_percentage_radius() {
     let result = parse_clip_path_str("circle(50%)");
-    if let ClipPath::Shape(BasicShape::Circle(circle)) = result {
+    if let BasicShape::Circle(circle) = result {
       assert_eq!(circle.radius, ShapeRadius::Percentage(50.0));
     } else {
       panic!("Expected circle shape");
@@ -556,7 +564,7 @@ mod tests {
   #[test]
   fn test_parse_circle_closest_side() {
     let result = parse_clip_path_str("circle(closest-side)");
-    if let ClipPath::Shape(BasicShape::Circle(circle)) = result {
+    if let BasicShape::Circle(circle) = result {
       assert_eq!(circle.radius, ShapeRadius::ClosestSide);
     } else {
       panic!("Expected circle shape");
@@ -566,7 +574,7 @@ mod tests {
   #[test]
   fn test_parse_circle_farthest_side() {
     let result = parse_clip_path_str("circle(farthest-side)");
-    if let ClipPath::Shape(BasicShape::Circle(circle)) = result {
+    if let BasicShape::Circle(circle) = result {
       assert_eq!(circle.radius, ShapeRadius::FarthestSide);
     } else {
       panic!("Expected circle shape");

@@ -18,7 +18,7 @@ pub struct GridTemplateAreas(pub Vec<Vec<String>>);
 /// Serde helper that accepts either a matrix or a CSS string
 #[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
 #[serde(untagged)]
-pub enum GridTemplateAreasValue {
+pub(crate) enum GridTemplateAreasValue {
   /// A 2D matrix representation (use "." for empty)
   Matrix(Vec<Vec<String>>),
   /// A CSS string representation

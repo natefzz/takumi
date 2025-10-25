@@ -1,4 +1,4 @@
-import type { Color } from "./bindings/Color";
+import type { ColorInput } from "./bindings/ColorInput";
 import type {
   AnyNode,
   ContainerNode,
@@ -91,6 +91,6 @@ export function fr(fr: number) {
   };
 }
 
-export function rgba(r: number, g: number, b: number, a = 1): Color {
+export function rgba(r: number, g: number, b: number, a = 1): ColorInput {
   return [r, g, b, a];
 }

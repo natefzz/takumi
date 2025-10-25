@@ -44,7 +44,7 @@ impl<'i> FromCss<'i> for BackgroundImage {
 #[derive(Debug, Clone, PartialEq, TS, Deserialize)]
 #[serde(untagged)]
 #[allow(clippy::large_enum_variant)]
-pub enum BackgroundImagesValue {
+pub(crate) enum BackgroundImagesValue {
   /// Structured variant: explicit list of background images
   #[ts(as = "Vec<BackgroundImage>")]
   Images(SmallVec<[BackgroundImage; 4]>),

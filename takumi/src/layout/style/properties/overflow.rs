@@ -56,7 +56,7 @@ pub struct Overflows(pub Overflow, pub Overflow);
 /// for horizontal and vertical overflow.
 #[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
 #[serde(untagged)]
-pub enum OverflowValue {
+pub(crate) enum OverflowValue {
   /// Same overflow value for both horizontal and vertical
   SingleValue(Overflow),
   /// Separate values for horizontal and vertical overflow (horizontal, vertical)

@@ -18,7 +18,7 @@ pub struct GridTrackSizes(pub Vec<GridTrackSize>);
 /// pre-parsed `GridTrackSize` values or a CSS string to parse.
 #[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
 #[serde(untagged)]
-pub enum GridTrackSizesValue {
+pub(crate) enum GridTrackSizesValue {
   /// Explicit list of track sizes.
   Components(Vec<GridTrackSize>),
   /// CSS value to parse (e.g. "minmax(10px, 1fr) 2fr").

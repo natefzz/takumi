@@ -169,7 +169,7 @@ define_style!(
   image_rendering: ImageScalingAlgorithm = CssValue::inherit() => Default::default(),
   overflow_wrap: OverflowWrap = CssValue::inherit() => Default::default(),
   word_break: WordBreak = CssValue::inherit() => Default::default(),
-  clip_path: ClipPath = ClipPath::None => ClipPath::None,
+  clip_path: CssOption<BasicShape> = CssOption::none() => CssOption::none(),
 );
 
 /// Sized font style with resolved font size and line height.

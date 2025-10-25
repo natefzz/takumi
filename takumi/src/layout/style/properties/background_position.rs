@@ -72,7 +72,7 @@ pub struct BackgroundPosition {
 /// Proxy type for deserializing `BackgroundPosition`
 #[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
 #[serde(untagged)]
-pub enum BackgroundPositionValue {
+pub(crate) enum BackgroundPositionValue {
   /// Parsed positions for one or two dimensions.
   Position(PositionComponent, PositionComponent),
   /// Raw CSS string to be parsed.
@@ -147,7 +147,7 @@ impl<'i> FromCss<'i> for PositionComponent {
 /// A value representing either a list of parsed positions or a raw CSS string.
 #[derive(Debug, Clone, PartialEq, TS, Deserialize)]
 #[serde(untagged)]
-pub enum BackgroundPositionsValue {
+pub(crate) enum BackgroundPositionsValue {
   /// Parsed positions for one or more layers.
   Positions(Vec<BackgroundPosition>),
   /// Raw CSS to be parsed at runtime.

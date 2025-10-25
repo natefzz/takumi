@@ -352,7 +352,7 @@ impl RadialPosition {
 /// Proxy type for `RadialGradient` Css deserialization.
 #[derive(Debug, Clone, PartialEq, TS, Deserialize)]
 #[serde(untagged)]
-pub enum RadialGradientValue {
+pub(crate) enum RadialGradientValue {
   /// Represents a radial gradient.
   Structured {
     /// The shape of the gradient.

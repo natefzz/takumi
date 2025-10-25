@@ -179,7 +179,7 @@ pub struct StopPosition(pub LengthUnit);
 /// Proxy type for `StopPosition` Css deserialization.
 #[derive(Debug, Clone, PartialEq, TS, Deserialize, Serialize)]
 #[serde(untagged)]
-pub enum StopPositionValue {
+pub(crate) enum StopPositionValue {
   /// Length value, percentage or number (0.0-1.0) is treated as a percentage.
   Length(LengthUnit),
   /// CSS string

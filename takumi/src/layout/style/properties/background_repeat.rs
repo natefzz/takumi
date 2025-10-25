@@ -102,7 +102,7 @@ impl<'i> FromCss<'i> for BackgroundRepeat {
 /// Proxy type to deserialize CSS background-repeat as either a list or CSS string.
 #[derive(Debug, Clone, PartialEq, TS, Deserialize)]
 #[serde(untagged)]
-pub enum BackgroundRepeatsValue {
+pub(crate) enum BackgroundRepeatsValue {
   /// Parsed repeats for one or more layers.
   Repeats(Vec<BackgroundRepeat>),
   /// Raw CSS to be parsed at runtime.

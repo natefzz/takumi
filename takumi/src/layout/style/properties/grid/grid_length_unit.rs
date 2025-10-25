@@ -30,7 +30,7 @@ pub enum GridLengthUnit {
 /// Represents a grid length unit value with serde support
 #[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
 #[serde(untagged)]
-pub enum GridLengthUnitValue {
+pub(crate) enum GridLengthUnitValue {
   /// A fraction of the available space
   Fr(FrLengthUnit),
   /// A fixed length
