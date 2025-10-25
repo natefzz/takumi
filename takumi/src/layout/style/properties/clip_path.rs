@@ -22,15 +22,14 @@ pub enum FillRule {
 #[serde(rename_all = "kebab-case")]
 #[derive(Default)]
 pub enum ShapeRadius {
-  /// A specific length value
-  Length(LengthUnit),
-  /// A percentage of the reference box
-  Percentage(f32),
   /// Uses the length from the center to the closest side of the reference box
   #[default]
   ClosestSide,
   /// Uses the length from the center to the farthest side of the reference box
   FarthestSide,
+  /// A specific length value
+  #[serde(untagged)]
+  Length(LengthUnit),
 }
 
 /// Represents a position for circle() and ellipse() functions.
@@ -210,10 +209,7 @@ impl<'i> FromCss<'i> for ShapeRadius {
 
     // Try parsing as length first
     if let Ok(length) = parser.try_parse(LengthUnit::from_css) {
-      return match length {
-        LengthUnit::Percentage(p) => Ok(ShapeRadius::Percentage(p)),
-        length => Ok(ShapeRadius::Length(length)),
-      };
+      return Ok(ShapeRadius::Length(length));
     }
 
     // Try parsing keywords
@@ -550,7 +546,10 @@ mod tests {
   fn test_parse_circle_percentage_radius() {
     let result = parse_clip_path_str("circle(50%)");
     if let BasicShape::Circle(circle) = result {
-      assert_eq!(circle.radius, ShapeRadius::Percentage(50.0));
+      assert_eq!(
+        circle.radius,
+        ShapeRadius::Length(LengthUnit::Percentage(50.0))
+      );
     } else {
       panic!("Expected circle shape");
     }

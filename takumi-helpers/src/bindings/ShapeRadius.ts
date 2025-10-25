@@ -4,8 +4,4 @@ import type { LengthUnit } from "./LengthUnit";
 /**
  * Represents radius values for circle() and ellipse() functions.
  */
-export type ShapeRadius =
-  | { length: LengthUnit }
-  | { percentage: number }
-  | "closest-side"
-  | "farthest-side";
+export type ShapeRadius = "closest-side" | "farthest-side" | LengthUnit;
