@@ -39,5 +39,5 @@ fn test_style_position() {
     ]),
   };
 
-  run_style_width_test(container.into(), "tests/fixtures/style_position.png");
+  run_style_width_test(container.into(), "tests/fixtures/style_position.webp");
 }

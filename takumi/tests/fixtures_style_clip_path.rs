@@ -76,7 +76,7 @@ fn fixtures_clip_path_text_stroke_filled() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/clip_path_text_stroke_filled.png",
+    "tests/fixtures/clip_path_text_stroke_filled.webp",
   );
 }
 
@@ -118,7 +118,7 @@ fn fixtures_clip_path_triangle_vercel() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/clip_path_triangle_vercel.png",
+    "tests/fixtures/clip_path_triangle_vercel.webp",
   );
 }
 
@@ -165,7 +165,7 @@ fn fixtures_clip_path_triangle_gradient() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/clip_path_triangle_gradient.png",
+    "tests/fixtures/clip_path_triangle_gradient.webp",
   );
 }
 
@@ -205,7 +205,7 @@ fn fixtures_clip_path_circle() {
     ]),
   };
 
-  run_style_width_test(container.into(), "tests/fixtures/clip_path_circle.png");
+  run_style_width_test(container.into(), "tests/fixtures/clip_path_circle.webp");
 }
 
 // Inset with border radius clip-path test
@@ -246,6 +246,6 @@ fn fixtures_clip_path_inset_rounded() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/clip_path_inset_rounded.png",
+    "tests/fixtures/clip_path_inset_rounded.webp",
   );
 }

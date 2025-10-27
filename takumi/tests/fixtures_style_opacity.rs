@@ -54,5 +54,5 @@ fn test_style_opacity() {
     ]),
   };
 
-  run_style_width_test(container.into(), "tests/fixtures/style_opacity.png");
+  run_style_width_test(container.into(), "tests/fixtures/style_opacity.webp");
 }

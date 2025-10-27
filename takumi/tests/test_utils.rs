@@ -85,7 +85,7 @@ pub fn run_style_width_test(node: NodeKind, fixture_path: &str) {
   let mut file = File::create(path).unwrap();
   let mut buf = BufWriter::new(&mut file);
 
-  write_image(&image, &mut buf, ImageOutputFormat::Png, None).unwrap();
+  write_image(&image, &mut buf, ImageOutputFormat::WebP, None).unwrap();
 }
 
 #[allow(dead_code)]

@@ -31,7 +31,7 @@ fn test_style_object_position_contain_center() {
 
   run_style_width_test(
     image.into(),
-    "tests/fixtures/style_object_position_contain_center.png",
+    "tests/fixtures/style_object_position_contain_center.webp",
   );
 }
 
@@ -57,7 +57,7 @@ fn test_style_object_position_contain_top_left() {
 
   run_style_width_test(
     image.into(),
-    "tests/fixtures/style_object_position_contain_top_left.png",
+    "tests/fixtures/style_object_position_contain_top_left.webp",
   );
 }
 
@@ -83,7 +83,7 @@ fn test_style_object_position_contain_bottom_right() {
 
   run_style_width_test(
     image.into(),
-    "tests/fixtures/style_object_position_contain_bottom_right.png",
+    "tests/fixtures/style_object_position_contain_bottom_right.webp",
   );
 }
 
@@ -109,7 +109,7 @@ fn test_style_object_position_cover_center() {
 
   run_style_width_test(
     image.into(),
-    "tests/fixtures/style_object_position_cover_center.png",
+    "tests/fixtures/style_object_position_cover_center.webp",
   );
 }
 
@@ -135,7 +135,7 @@ fn test_style_object_position_cover_top_left() {
 
   run_style_width_test(
     image.into(),
-    "tests/fixtures/style_object_position_cover_top_left.png",
+    "tests/fixtures/style_object_position_cover_top_left.webp",
   );
 }
 
@@ -161,7 +161,7 @@ fn test_style_object_position_none_center() {
 
   run_style_width_test(
     image.into(),
-    "tests/fixtures/style_object_position_none_center.png",
+    "tests/fixtures/style_object_position_none_center.webp",
   );
 }
 
@@ -187,7 +187,7 @@ fn test_style_object_position_none_top_left() {
 
   run_style_width_test(
     image.into(),
-    "tests/fixtures/style_object_position_none_top_left.png",
+    "tests/fixtures/style_object_position_none_top_left.webp",
   );
 }
 
@@ -213,6 +213,6 @@ fn test_style_object_position_percentage_25_75() {
 
   run_style_width_test(
     image.into(),
-    "tests/fixtures/style_object_position_percentage_25_75.png",
+    "tests/fixtures/style_object_position_percentage_25_75.webp",
   );
 }

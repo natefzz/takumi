@@ -105,14 +105,17 @@ fn create_text_overflow_fixture(overflows: Overflows) -> NodeKind {
 fn test_style_overflow_visible() {
   let container = create_overflow_fixture(Overflows(Overflow::Visible, Overflow::Visible));
 
-  run_style_width_test(container, "tests/fixtures/style_overflow_visible_image.png");
+  run_style_width_test(
+    container,
+    "tests/fixtures/style_overflow_visible_image.webp",
+  );
 }
 
 #[test]
 fn test_overflow_hidden() {
   let container = create_overflow_fixture(Overflows(Overflow::Hidden, Overflow::Hidden));
 
-  run_style_width_test(container, "tests/fixtures/style_overflow_hidden_image.png");
+  run_style_width_test(container, "tests/fixtures/style_overflow_hidden_image.webp");
 }
 
 #[test]
@@ -121,7 +124,7 @@ fn test_overflow_mixed_axes() {
 
   run_style_width_test(
     container,
-    "tests/fixtures/style_overflow_hidden_visible_image.png",
+    "tests/fixtures/style_overflow_hidden_visible_image.webp",
   );
 }
 
@@ -129,14 +132,14 @@ fn test_overflow_mixed_axes() {
 fn test_text_overflow_visible() {
   let container = create_text_overflow_fixture(Overflows(Overflow::Visible, Overflow::Visible));
 
-  run_style_width_test(container, "tests/fixtures/style_overflow_visible_text.png");
+  run_style_width_test(container, "tests/fixtures/style_overflow_visible_text.webp");
 }
 
 #[test]
 fn test_text_overflow_hidden() {
   let container = create_text_overflow_fixture(Overflows(Overflow::Hidden, Overflow::Hidden));
 
-  run_style_width_test(container, "tests/fixtures/style_overflow_hidden_text.png");
+  run_style_width_test(container, "tests/fixtures/style_overflow_hidden_text.webp");
 }
 
 #[test]
@@ -145,6 +148,6 @@ fn test_text_overflow_mixed_axes() {
 
   run_style_width_test(
     container,
-    "tests/fixtures/style_overflow_hidden_visible_text.png",
+    "tests/fixtures/style_overflow_hidden_visible_text.webp",
   );
 }

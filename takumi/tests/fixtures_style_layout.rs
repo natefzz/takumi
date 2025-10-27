@@ -64,7 +64,7 @@ fn test_style_flex_basis() {
     ]),
   };
 
-  run_style_width_test(container.into(), "tests/fixtures/style_flex_basis.png");
+  run_style_width_test(container.into(), "tests/fixtures/style_flex_basis.webp");
 }
 
 #[test]
@@ -120,7 +120,7 @@ fn test_style_flex_direction() {
     ]),
   };
 
-  run_style_width_test(container.into(), "tests/fixtures/style_flex_direction.png");
+  run_style_width_test(container.into(), "tests/fixtures/style_flex_direction.webp");
 }
 
 #[test]
@@ -179,7 +179,7 @@ fn test_style_gap() {
     ]),
   };
 
-  run_style_width_test(container.into(), "tests/fixtures/style_gap.png");
+  run_style_width_test(container.into(), "tests/fixtures/style_gap.webp");
 }
 
 #[test]
@@ -224,7 +224,7 @@ fn test_style_grid_template_columns() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_grid_template_columns.png",
+    "tests/fixtures/style_grid_template_columns.webp",
   );
 }
 
@@ -270,6 +270,6 @@ fn test_style_grid_template_rows() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_grid_template_rows.png",
+    "tests/fixtures/style_grid_template_rows.webp",
   );
 }

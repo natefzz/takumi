@@ -20,7 +20,7 @@ fn fixtures_text_basic() {
     text: "The quick brown fox jumps over the lazy dog 12345".to_string(),
   };
 
-  run_style_width_test(NodeKind::Text(text), "tests/fixtures/text_basic.png");
+  run_style_width_test(NodeKind::Text(text), "tests/fixtures/text_basic.webp");
 }
 
 #[test]
@@ -38,7 +38,7 @@ fn fixtures_text_typography_regular_24px() {
 
   run_style_width_test(
     text.into(),
-    "tests/fixtures/text_typography_regular_24px.png",
+    "tests/fixtures/text_typography_regular_24px.webp",
   );
 }
 
@@ -76,7 +76,7 @@ fn fixtures_text_typography_variable_weight() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/text_typography_variable_weight.png",
+    "tests/fixtures/text_typography_variable_weight.webp",
   );
 }
 
@@ -96,7 +96,7 @@ fn fixtures_text_typography_medium_weight_500() {
 
   run_style_width_test(
     text.into(),
-    "tests/fixtures/text_typography_medium_weight_500.png",
+    "tests/fixtures/text_typography_medium_weight_500.webp",
   );
 }
 
@@ -116,7 +116,7 @@ fn fixtures_text_typography_line_height_40px() {
 
   run_style_width_test(
     text.into(),
-    "tests/fixtures/text_typography_line_height_40px.png",
+    "tests/fixtures/text_typography_line_height_40px.webp",
   );
 }
 
@@ -136,7 +136,7 @@ fn fixtures_text_typography_letter_spacing_2px() {
 
   run_style_width_test(
     text.into(),
-    "tests/fixtures/text_typography_letter_spacing_2px.png",
+    "tests/fixtures/text_typography_letter_spacing_2px.webp",
   );
 }
 
@@ -155,7 +155,7 @@ fn fixtures_text_align_start() {
     text: "Start aligned".to_string(),
   };
 
-  run_style_width_test(text.into(), "tests/fixtures/text_align_start.png");
+  run_style_width_test(text.into(), "tests/fixtures/text_align_start.webp");
 }
 
 #[test]
@@ -173,7 +173,7 @@ fn fixtures_text_align_center() {
     text: "Center aligned".to_string(),
   };
 
-  run_style_width_test(text.into(), "tests/fixtures/text_align_center.png");
+  run_style_width_test(text.into(), "tests/fixtures/text_align_center.webp");
 }
 
 #[test]
@@ -191,7 +191,7 @@ fn fixtures_text_align_right() {
     text: "Right aligned".to_string(),
   };
 
-  run_style_width_test(text.into(), "tests/fixtures/text_align_right.png");
+  run_style_width_test(text.into(), "tests/fixtures/text_align_right.webp");
 }
 
 #[test]
@@ -214,7 +214,7 @@ Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliqu
     text: long_text.to_string(),
   };
 
-  run_style_width_test(text.into(), "tests/fixtures/text_justify_clip.png");
+  run_style_width_test(text.into(), "tests/fixtures/text_justify_clip.webp");
 }
 
 #[test]
@@ -235,7 +235,10 @@ fn fixtures_text_ellipsis_line_clamp_2() {
     text: long_text.to_string(),
   };
 
-  run_style_width_test(text.into(), "tests/fixtures/text_ellipsis_line_clamp_2.png");
+  run_style_width_test(
+    text.into(),
+    "tests/fixtures/text_ellipsis_line_clamp_2.webp",
+  );
 }
 
 #[test]
@@ -301,7 +304,7 @@ fn fixtures_text_transform_all() {
     ]),
   };
 
-  run_style_width_test(container.into(), "tests/fixtures/text_transform_all.png");
+  run_style_width_test(container.into(), "tests/fixtures/text_transform_all.webp");
 }
 
 #[test]
@@ -335,7 +338,7 @@ fn fixtures_text_mask_image_gradient_and_emoji() {
 
   run_style_width_test(
     text.clone().into(),
-    "tests/fixtures/text_mask_image_gradient_emoji.png",
+    "tests/fixtures/text_mask_image_gradient_emoji.webp",
   );
 }
 
@@ -355,7 +358,7 @@ fn fixtures_text_stroke_black_red() {
     text: "Red Stroke".to_string(),
   };
 
-  run_style_width_test(text.into(), "tests/fixtures/text_stroke_black_red.png");
+  run_style_width_test(text.into(), "tests/fixtures/text_stroke_black_red.webp");
 }
 
 // Text shadow fixture
@@ -381,7 +384,7 @@ fn fixtures_text_shadow() {
     text: "Shadowed Text".to_string(),
   };
 
-  run_style_width_test(text.into(), "tests/fixtures/text_shadow.png");
+  run_style_width_test(text.into(), "tests/fixtures/text_shadow.webp");
 }
 
 #[test]
@@ -406,5 +409,8 @@ fn fixtures_text_shadow_no_blur_radius() {
     text: "Shadowed Text".to_string(),
   };
 
-  run_style_width_test(text.into(), "tests/fixtures/text_shadow_no_blur_radius.png");
+  run_style_width_test(
+    text.into(),
+    "tests/fixtures/text_shadow_no_blur_radius.webp",
+  );
 }

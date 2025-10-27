@@ -61,13 +61,13 @@ jobs:
       - name: Check for git changes and prepare artifact
         id: check_changes
         run: |
-          if ! git diff-index --quiet HEAD --; then
-            git diff-index --name-only HEAD -- > changed_files.txt
-            git diff-index --binary HEAD -- | git apply --cached --unidiff-zero
+          if git diff --quiet HEAD; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            git diff --name-only HEAD > changed_files.txt
+            git diff HEAD | git apply --cached --unidiff-zero
             tar czf changed_files.tar.gz $(cat changed_files.txt)
             echo "changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Upload changed files artifact

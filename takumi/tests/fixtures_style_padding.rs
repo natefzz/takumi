@@ -38,5 +38,5 @@ fn test_style_padding() {
     ]),
   };
 
-  run_style_width_test(container.into(), "tests/fixtures/style_padding.png");
+  run_style_width_test(container.into(), "tests/fixtures/style_padding.webp");
 }

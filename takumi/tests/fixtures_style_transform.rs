@@ -35,7 +35,7 @@ fn test_style_transform_origin_center() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_transform_origin_center.png",
+    "tests/fixtures/style_transform_origin_center.webp",
   );
 }
 
@@ -71,7 +71,7 @@ fn test_style_transform_origin_top_left() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_transform_origin_top_left.png",
+    "tests/fixtures/style_transform_origin_top_left.webp",
   );
 }
 
@@ -228,6 +228,6 @@ fn test_style_transform_translate_and_scale() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_transform_translate_and_scale.png",
+    "tests/fixtures/style_transform_translate_and_scale.webp",
   );
 }

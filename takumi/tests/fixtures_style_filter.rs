@@ -75,5 +75,5 @@ fn test_style_filter_on_image_node() {
     ),
   };
 
-  run_style_width_test(container.into(), "tests/fixtures/style_filter.png");
+  run_style_width_test(container.into(), "tests/fixtures/style_filter.webp");
 }

@@ -51,7 +51,7 @@ fn test_style_background_image_gradient_basic() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_background_image_gradient.png",
+    "tests/fixtures/style_background_image_gradient.webp",
   );
 }
 
@@ -64,7 +64,7 @@ fn test_style_background_image_gradient_alt() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_background_image_gradient_alt.png",
+    "tests/fixtures/style_background_image_gradient_alt.webp",
   );
 }
 
@@ -77,7 +77,7 @@ fn test_style_background_image_gradient_hard_stop() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_background_image_gradient_hard_stop.png",
+    "tests/fixtures/style_background_image_gradient_hard_stop.webp",
   );
 }
 
@@ -89,7 +89,7 @@ fn test_style_background_image_radial_basic() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_background_image_radial_basic.png",
+    "tests/fixtures/style_background_image_radial_basic.webp",
   );
 }
 
@@ -101,7 +101,7 @@ fn test_style_background_image_radial_mixed() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_background_image_radial_mixed.png",
+    "tests/fixtures/style_background_image_radial_mixed.webp",
   );
 }
 
@@ -116,7 +116,7 @@ fn test_style_background_image_linear_radial_mixed() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_background_image_linear_radial_mixed.png",
+    "tests/fixtures/style_background_image_linear_radial_mixed.webp",
   );
 }
 
@@ -133,7 +133,7 @@ fn test_background_no_repeat_center_with_size_px() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_background_no_repeat_center_200x120.png",
+    "tests/fixtures/style_background_no_repeat_center_200x120.webp",
   );
 }
 
@@ -150,7 +150,7 @@ fn test_background_repeat_tile_from_top_left() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_background_repeat_tile_from_top_left.png",
+    "tests/fixtures/style_background_repeat_tile_from_top_left.webp",
   );
 }
 
@@ -169,7 +169,7 @@ fn test_background_repeat_space() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_background_repeat_space.png",
+    "tests/fixtures/style_background_repeat_space.webp",
   );
 }
 
@@ -187,7 +187,7 @@ fn test_background_repeat_round() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_background_repeat_round.png",
+    "tests/fixtures/style_background_repeat_round.webp",
   );
 }
 
@@ -205,7 +205,7 @@ fn test_background_position_percentage_with_no_repeat() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_background_position_percent_25_75.png",
+    "tests/fixtures/style_background_position_percent_25_75.webp",
   );
 }
 
@@ -223,7 +223,7 @@ fn test_background_size_percentage_with_repeat() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_background_size_percent_20_20.png",
+    "tests/fixtures/style_background_size_percent_20_20.webp",
   );
 }
 
@@ -254,7 +254,7 @@ fn test_background_image_grid_pattern() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_background_image_grid_pattern.png",
+    "tests/fixtures/style_background_image_grid_pattern.webp",
   );
 }
 
@@ -276,6 +276,6 @@ fn test_background_image_noise_v1_with_gradient() {
 
   run_style_width_test(
     container.into(),
-    "tests/fixtures/style_background_image_noise_v1_blend.png",
+    "tests/fixtures/style_background_image_noise_v1_blend.webp",
   );
 }
