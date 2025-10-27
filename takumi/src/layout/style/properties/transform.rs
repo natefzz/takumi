@@ -402,7 +402,7 @@ impl Affine {
   }
 
   /// Zero the translation
-  pub fn zero_translation(mut self) {
+  pub fn zero_translation(&mut self) {
     self.x = 0.0;
     self.y = 0.0;
   }
