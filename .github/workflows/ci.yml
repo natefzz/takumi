@@ -62,7 +62,7 @@ jobs:
       - name: Check for git changes and prepare artifact
         id: check_changes
         run: |
-          changed_files=$(git diff --name-only HEAD -- || true)
+          changed_files=$(git status --porcelain -z -uall | tr '\0' '\n' | grep -v '^??' | awk '{print $NF}' | sort -u || true)
           if [ -n "$changed_files" ]; then
             echo "Warning: The following files were modified during the build:"
             echo "$changed_files"
@@ -71,7 +71,7 @@ jobs:
             echo "These files will be uploaded as artifacts before the CI fails."
             echo "$changed_files" > changed_files.txt
             # Create a tarball of the changed files from HEAD so we capture committed content
-            git archive --output=changed_files.tar.gz HEAD $(git diff --name-only HEAD --)
+            git archive --output=changed_files.tar.gz HEAD $(git status --porcelain -z -uall | tr '\0' '\n' | grep -v '^??' | awk '{print $NF}')
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "No files were modified during the build."
