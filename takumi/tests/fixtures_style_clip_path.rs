@@ -20,6 +20,9 @@ fn fixtures_clip_path_text_stroke_filled() {
         .justify_content(JustifyContent::Center)
         .align_items(AlignItems::Center)
         .flex_direction(FlexDirection::Column)
+        .font_size(CssOption::some(Px(84.0)))
+        .font_weight(FontWeight::from(700.0))
+        .text_align(TextAlign::Center)
         .build()
         .unwrap(),
     ),
@@ -34,10 +37,7 @@ fn fixtures_clip_path_text_stroke_filled() {
               x: Percentage(-50.0),
               y: Percentage(-50.0),
             }))
-            .font_size(CssOption::some(Px(84.0)))
-            .font_weight(FontWeight::from(700.0))
-            .color(ColorInput::Value(Color([255, 255, 255, 255]))) // White fill
-            .text_align(TextAlign::Center)
+            .color(ColorInput::Value(Color::white())) // White fill
             .clip_path(CssOption::some(
               BasicShape::from_str("polygon(0 0, 100% 0, 0 100%)").unwrap(),
             ))
@@ -57,14 +57,11 @@ fn fixtures_clip_path_text_stroke_filled() {
               x: Percentage(-50.0),
               y: Percentage(-50.0),
             }))
-            .font_size(CssOption::some(Px(84.0)))
-            .font_weight(FontWeight::from(700.0))
             .color(ColorInput::Value(Color::transparent())) // Transparent fill
             .text_stroke_width(Px(2.0))
             .text_stroke_color(CssOption::some(ColorInput::Value(Color([
               128, 128, 128, 255,
             ])))) // Semi-transparent white stroke
-            .text_align(TextAlign::Center)
             .clip_path(CssOption::some(
               BasicShape::from_str("polygon(0 100%, 100% 0, 100% 100%)").unwrap(),
             ))
@@ -106,7 +103,7 @@ fn fixtures_clip_path_triangle_vercel() {
           StyleBuilder::default()
             .width(Px(128.0))
             .height(Px(128.0))
-            .background_color(ColorInput::Value(Color([0, 0, 0, 255]))) // Black triangle
+            .background_color(ColorInput::Value(Color::black())) // Black triangle
             .clip_path(CssOption::some(
               BasicShape::from_str("polygon(0% 100%, 100% 100%, 50% 12.25%)").unwrap(),
             ))

@@ -58,23 +58,15 @@ jobs:
       - name: Run Biome
         run: biome check --write --unsafe .
 
-      # make sure cargo test didn't change any files (like TypeScript bindings)
       - name: Check for git changes and prepare artifact
         id: check_changes
         run: |
-          changed_files=$(git status --porcelain -z -uall | tr '\0' '\n' | grep -v '^??' | awk '{print $NF}' | sort -u || true)
-          if [ -n "$changed_files" ]; then
-            echo "Warning: The following files were modified during the build:"
-            echo "$changed_files"
-            echo ""
-            echo "This usually happens when generated files (like TypeScript bindings) are not committed."
-            echo "These files will be uploaded as artifacts before the CI fails."
-            echo "$changed_files" > changed_files.txt
-            # Create a tarball of the changed files from HEAD so we capture committed content
-            git archive --output=changed_files.tar.gz HEAD $(git status --porcelain -z -uall | tr '\0' '\n' | grep -v '^??' | awk '{print $NF}')
+          if ! git diff-index --quiet HEAD --; then
+            git diff-index --name-only HEAD -- > changed_files.txt
+            git diff-index --binary HEAD -- | git apply --cached --unidiff-zero
+            tar czf changed_files.tar.gz $(cat changed_files.txt)
             echo "changed=true" >> $GITHUB_OUTPUT
           else
-            echo "No files were modified during the build."
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
@@ -89,12 +81,9 @@ jobs:
       - name: Fail if files were changed
         if: steps.check_changes.outputs.changed == 'true'
         run: |
-          echo "Error: The following files were modified during the build process:"
+          echo "Error: Generated files were modified during build:"
           echo ""
           cat changed_files.txt
-          echo ""
-          echo "The changed files have been uploaded as artifacts for review."
-          echo "Please commit these changes or update the generation scripts."
           exit 1
 
       - name: Test README.md is up to date
