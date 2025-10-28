@@ -32,6 +32,12 @@ macro_rules! impl_node_enum {
         }
       }
 
+      fn children_ref(&self) -> Option<&[$name]> {
+        match self {
+          $( $name::$variant(inner) => inner.children_ref(), )*
+        }
+      }
+
       fn create_inherited_style(&mut self, parent: &$crate::layout::style::InheritedStyle) -> $crate::layout::style::InheritedStyle {
         match self {
           $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::create_inherited_style(inner, parent), )*
@@ -132,37 +138,56 @@ macro_rules! impl_node_enum {
 /// This trait defines the common interface for all elements that can be
 /// rendered in the layout system, including containers, text, and images.
 pub trait Node<N: Node<N>>: Send + Sync + Clone {
+  /// Gets reference of children.
+  fn children_ref(&self) -> Option<&[N]> {
+    None
+  }
+
   /// Creates resolving tasks for node's http resources.
-  fn collect_fetch_tasks(&self, _collection: &mut FetchTaskCollection) {}
+  fn collect_fetch_tasks(&self, collection: &mut FetchTaskCollection) {
+    let Some(children) = self.children_ref() else {
+      return;
+    };
+
+    for child in children {
+      child.collect_fetch_tasks(collection);
+    }
+  }
 
   /// Returns a reference to this node's raw [`Style`], if any.
   fn get_style(&self) -> Option<&Style>;
 
   /// Creates resolving tasks for style's http resources.
   fn collect_style_fetch_tasks(&self, collection: &mut FetchTaskCollection) {
-    let Some(style) = self.get_style() else {
+    if let Some(style) = self.get_style() {
+      if let CssValue::Value(CssOption(Some(images))) = &style.background_image {
+        collection.insert_many(images.0.iter().filter_map(|image| {
+          if let BackgroundImage::Url(url) = image {
+            Some(url.clone())
+          } else {
+            None
+          }
+        }))
+      };
+
+      if let CssValue::Value(CssOption(Some(images))) = &style.mask_image {
+        collection.insert_many(images.0.iter().filter_map(|image| {
+          if let BackgroundImage::Url(url) = image {
+            Some(url.clone())
+          } else {
+            None
+          }
+        }));
+      };
+    };
+
+    let Some(children) = self.children_ref() else {
       return;
     };
 
-    if let CssValue::Value(CssOption(Some(images))) = &style.background_image {
-      collection.insert_many(images.0.iter().filter_map(|image| {
-        if let BackgroundImage::Url(url) = image {
-          Some(url.clone())
-        } else {
-          None
-        }
-      }))
-    };
-
-    if let CssValue::Value(CssOption(Some(images))) = &style.mask_image {
-      collection.insert_many(images.0.iter().filter_map(|image| {
-        if let BackgroundImage::Url(url) = image {
-          Some(url.clone())
-        } else {
-          None
-        }
-      }));
-    };
+    for child in children {
+      child.collect_fetch_tasks(collection);
+    }
   }
 
   /// Return reference to children nodes.

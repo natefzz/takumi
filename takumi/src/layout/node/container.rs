@@ -7,12 +7,9 @@ use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-  layout::{
-    node::Node,
-    style::{InheritedStyle, Style},
-  },
-  resources::task::FetchTaskCollection,
+use crate::layout::{
+  node::Node,
+  style::{InheritedStyle, Style},
 };
 
 /// A container node that can hold child nodes.
@@ -28,24 +25,8 @@ pub struct ContainerNode<Nodes: Node<Nodes>> {
 }
 
 impl<Nodes: Node<Nodes>> Node<Nodes> for ContainerNode<Nodes> {
-  fn collect_fetch_tasks(&self, collection: &mut FetchTaskCollection) {
-    let Some(children) = self.children.as_ref() else {
-      return;
-    };
-
-    for child in children {
-      child.collect_fetch_tasks(collection);
-    }
-  }
-
-  fn collect_style_fetch_tasks(&self, collection: &mut FetchTaskCollection) {
-    let Some(children) = self.children.as_ref() else {
-      return;
-    };
-
-    for child in children {
-      child.collect_style_fetch_tasks(collection);
-    }
+  fn children_ref(&self) -> Option<&[Nodes]> {
+    self.children.as_deref()
   }
 
   fn create_inherited_style(&mut self, parent_style: &InheritedStyle) -> InheritedStyle {
