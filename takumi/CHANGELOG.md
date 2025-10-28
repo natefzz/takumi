@@ -1,5 +1,11 @@
 # takumi
 
+## 0.40.1
+
+### Patch Changes
+
+- 8751a1b: fix fetch tasks collecting being overwritten
+
 ## 0.40.0
 
 ### Minor Changes
