@@ -420,10 +420,10 @@ impl InheritedStyle {
       stroke_width: resolved_stroke_width,
       letter_spacing: self
         .letter_spacing
-        .map(|spacing| spacing.resolve_to_px(context, context.font_size) / context.font_size),
+        .map(|spacing| spacing.resolve_to_px(context, context.font_size)),
       word_spacing: self
         .word_spacing
-        .map(|spacing| spacing.resolve_to_px(context, context.font_size) / context.font_size),
+        .map(|spacing| spacing.resolve_to_px(context, context.font_size)),
       text_shadow: self.text_shadow.as_ref().map(|shadows| {
         shadows
           .0
