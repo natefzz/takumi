@@ -1,5 +1,12 @@
 # takumi
 
+## 0.40.2
+
+### Patch Changes
+
+- 21a9988: add `word-break: break-word` as alias for `word-break: normal` + `overflow-wrap: anywhere`
+- ddae1b5: fix `letter-spacing`, `word-spacing` should not divide by font size
+
 ## 0.40.1
 
 ### Patch Changes
