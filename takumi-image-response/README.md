@@ -83,3 +83,31 @@ const renderer = new Renderer();
 
 new ImageResponse(<OgImage />, { renderer });
 ```
+
+---
+
+## WASM Usage
+
+If you want to use this package in browser environment/cloudflare, you can import from the wasm entry point.
+
+Make sure you have the `@takumi-rs/wasm` package installed as well.
+
+```tsx
+import { describe, expect, test } from "bun:test";
+import init from "@takumi-rs/wasm";
+import ImageResponse from "@takumi-rs/image-response/wasm";
+
+// Or with bundler specific WASM resolution process,
+// like cloudflare workers can be configured with wrangler.toml.
+await init({
+  module_or_path: fetch(
+    import.meta.resolve("@takumi-rs/wasm/takumi_wasm_bg.wasm"),
+  ),
+});
+
+export default {
+  fetch() {
+    return new ImageResponse(<div>Hello</div>);
+  }
+}
+```
