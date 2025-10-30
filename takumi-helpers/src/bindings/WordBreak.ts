@@ -5,4 +5,4 @@
  *
  * Corresponds to CSS word-break property.
  */
-export type WordBreak = "normal" | "break-all" | "keep-all";
+export type WordBreak = "normal" | "break-all" | "keep-all" | "break-word";

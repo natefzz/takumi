@@ -6,40 +6,25 @@ use ts_rs::TS;
 ///
 /// Corresponds to CSS word-break property.
 #[derive(Debug, Default, Copy, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(from = "WordBreakValue", into = "WordBreakValue")]
-#[ts(as = "WordBreakValue")]
-pub struct WordBreak(pub WordBreakStrength);
-
-#[derive(Debug, Copy, Clone, Deserialize, Serialize, TS, PartialEq)]
 #[serde(rename_all = "kebab-case")]
-enum WordBreakValue {
+pub enum WordBreak {
+  /// Normal line breaking behavior—lines may break according to language rules.
+  #[default]
   Normal,
+  /// Break words at arbitrary points to prevent overflow.
   BreakAll,
+  /// Prevents word breaks within words. Useful for languages like Japanese.
   KeepAll,
-}
-
-impl From<WordBreak> for WordBreakValue {
-  fn from(value: WordBreak) -> Self {
-    match value.0 {
-      WordBreakStrength::Normal => WordBreakValue::Normal,
-      WordBreakStrength::BreakAll => WordBreakValue::BreakAll,
-      WordBreakStrength::KeepAll => WordBreakValue::KeepAll,
-    }
-  }
-}
-
-impl From<WordBreakValue> for WordBreak {
-  fn from(value: WordBreakValue) -> Self {
-    match value {
-      WordBreakValue::Normal => WordBreak(WordBreakStrength::Normal),
-      WordBreakValue::BreakAll => WordBreak(WordBreakStrength::BreakAll),
-      WordBreakValue::KeepAll => WordBreak(WordBreakStrength::KeepAll),
-    }
-  }
+  /// Allow breaking within long words if necessary to prevent overflow.
+  BreakWord,
 }
 
 impl From<WordBreak> for WordBreakStrength {
   fn from(value: WordBreak) -> Self {
-    value.0
+    match value {
+      WordBreak::Normal | WordBreak::BreakWord => WordBreakStrength::Normal,
+      WordBreak::BreakAll => WordBreakStrength::BreakAll,
+      WordBreak::KeepAll => WordBreakStrength::KeepAll,
+    }
   }
 }

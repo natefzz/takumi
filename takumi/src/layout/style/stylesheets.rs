@@ -216,7 +216,13 @@ impl<'s> From<&'s SizedFontStyle<'s>> for TextStyle<'s, InlineBrush> {
       letter_spacing: style.letter_spacing.unwrap_or_default(),
       word_spacing: style.word_spacing.unwrap_or_default(),
       word_break: style.parent.word_break.into(),
-      overflow_wrap: style.parent.overflow_wrap.into(),
+      overflow_wrap: if style.parent.word_break == WordBreak::BreakWord {
+        // When word-break is break-word, ignore the overflow-wrap property's value.
+        // https://developer.mozilla.org/en-US/docs/Web/CSS/word-break#break-word
+        parley::OverflowWrap::Anywhere
+      } else {
+        style.parent.overflow_wrap.into()
+      },
       brush: InlineBrush {
         color: style.color,
         decoration_color: style.text_decoration_color,
