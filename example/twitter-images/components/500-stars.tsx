@@ -67,7 +67,7 @@ export default function FiveHundredStars() {
           left: 0,
           width: "100%",
           height: "100%",
-          backgroundImage: "noise-v1(opacity(0.3) frequency(1.0) octaves(4))",
+          backgroundImage: "noise-v1(opacity(0.2))",
         }}
       />
     </div>

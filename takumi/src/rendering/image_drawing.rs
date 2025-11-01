@@ -214,7 +214,12 @@ pub fn process_image_for_object_fit<'i>(
 ///
 /// The image will be resized and positioned according to the object_fit style property.
 /// Border radius will be applied if specified in the style.
-pub fn draw_image(image: &ImageSource, context: &RenderContext, canvas: &Canvas, layout: Layout) {
+pub fn draw_image(
+  image: &ImageSource,
+  context: &RenderContext,
+  canvas: &mut Canvas,
+  layout: Layout,
+) {
   let (image, offset) = process_image_for_object_fit(image, context, layout.content_box_size());
 
   // manually apply the border and padding to ensure rotation with origin is applied correctly

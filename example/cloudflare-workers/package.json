@@ -8,11 +8,15 @@
     "cf-typegen": "wrangler types"
   },
   "devDependencies": {
+    "@types/react": "^19.2.2",
     "typescript": "catalog:",
     "wrangler": "^4.45.0"
   },
   "dependencies": {
     "@takumi-rs/helpers": "workspace:*",
-    "@takumi-rs/wasm": "workspace:*"
+    "@takumi-rs/image-response": "workspace:*",
+    "@takumi-rs/template": "workspace:*",
+    "@takumi-rs/wasm": "workspace:*",
+    "react": "^19.2.0"
   }
 }

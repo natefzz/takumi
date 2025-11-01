@@ -89,7 +89,7 @@ impl<Nodes: Node<Nodes>> Node<Nodes> for ImageNode {
     overridden_size
   }
 
-  fn draw_content(&self, context: &RenderContext, canvas: &Canvas, layout: Layout) {
+  fn draw_content(&self, context: &RenderContext, canvas: &mut Canvas, layout: Layout) {
     let Ok(image) = resolve_image(&self.src, context) else {
       return;
     };
@@ -130,7 +130,7 @@ fn resolve_image(src: &str, context: &RenderContext) -> ImageResult {
   }
 
   if let Some(img) = context.global.persistent_image_store.get(src) {
-    return Ok(img);
+    return Ok(img.clone());
   }
 
   Err(ImageResourceError::Unknown)

@@ -16,7 +16,7 @@ use crate::{
 fn draw_glyph_run(
   style: &SizedFontStyle,
   glyph_run: &GlyphRun<'_, InlineBrush>,
-  canvas: &Canvas,
+  canvas: &mut Canvas,
   layout: Layout,
   context: &RenderContext,
   image_fill: Option<&RgbaImage>,
@@ -98,7 +98,7 @@ pub(crate) fn draw_inline_box<N: Node<N>>(
   node: &N,
   context: &RenderContext,
   mut layout: Layout,
-  canvas: &Canvas,
+  canvas: &mut Canvas,
 ) {
   if context.opacity == 0.0 {
     return;
@@ -132,7 +132,7 @@ pub(crate) fn draw_inline_box<N: Node<N>>(
 
 pub(crate) fn draw_inline_layout(
   context: &RenderContext,
-  canvas: &Canvas,
+  canvas: &mut Canvas,
   layout: Layout,
   inline_layout: InlineLayout,
   font_style: &SizedFontStyle,

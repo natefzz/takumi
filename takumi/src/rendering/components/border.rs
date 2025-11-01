@@ -187,7 +187,11 @@ impl BorderProperties {
 ///
 /// This function draws borders with specified size and color. If border_radius is specified,
 /// it creates a rounded border using a custom drawing approach.
-pub(crate) fn draw_border(canvas: &Canvas, canvas_offset: Point<f32>, border: BorderProperties) {
+pub(crate) fn draw_border(
+  canvas: &mut Canvas,
+  canvas_offset: Point<f32>,
+  border: BorderProperties,
+) {
   if border.width.left == 0.0
     && border.width.right == 0.0
     && border.width.top == 0.0

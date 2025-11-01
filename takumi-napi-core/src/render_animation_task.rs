@@ -1,6 +1,6 @@
 use napi::bindgen_prelude::*;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use std::{io::Cursor, sync::Arc};
+use std::io::Cursor;
 use takumi::{
   GlobalContext,
   layout::{Viewport, node::NodeKind},
@@ -11,15 +11,15 @@ use takumi::{
 
 use crate::renderer::AnimationOutputFormat;
 
-pub struct RenderAnimationTask {
+pub struct RenderAnimationTask<'g> {
   pub nodes: Option<Vec<(NodeKind, u32)>>,
-  pub context: Arc<GlobalContext>,
+  pub context: &'g GlobalContext,
   pub viewport: Viewport,
   pub format: AnimationOutputFormat,
   pub draw_debug_border: bool,
 }
 
-impl Task for RenderAnimationTask {
+impl Task for RenderAnimationTask<'_> {
   type Output = Vec<u8>;
   type JsValue = Buffer;
 
@@ -34,7 +34,7 @@ impl Task for RenderAnimationTask {
             RenderOptionsBuilder::default()
               .viewport(self.viewport)
               .node(node)
-              .global(&self.context)
+              .global(self.context)
               .draw_debug_border(self.draw_debug_border)
               .build()
               .unwrap(),

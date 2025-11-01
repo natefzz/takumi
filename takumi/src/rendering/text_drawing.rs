@@ -16,7 +16,7 @@ use crate::{
 };
 
 pub(crate) fn draw_decoration(
-  canvas: &Canvas,
+  canvas: &mut Canvas,
   glyph_run: &GlyphRun<'_, InlineBrush>,
   color: Color,
   offset: f32,
@@ -48,7 +48,7 @@ pub(crate) fn draw_decoration(
 pub(crate) fn draw_glyph(
   glyph: Glyph,
   glyph_content: &ResolvedGlyph,
-  canvas: &Canvas,
+  canvas: &mut Canvas,
   style: &SizedFontStyle,
   layout: Layout,
   image_fill: Option<&RgbaImage>,

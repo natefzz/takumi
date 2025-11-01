@@ -1,8 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "takumi-workers-example",
-  "main": "src/index.ts",
-  "compatibility_date": "2025-08-03",
+  "main": "src/index.tsx",
+  "compatibility_date": "2025-10-30",
   "observability": {
     "enabled": true
   },

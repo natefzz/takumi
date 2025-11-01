@@ -23,7 +23,7 @@ pub(crate) struct NodeTree<'g, N: Node<N>> {
 }
 
 impl<'g, N: Node<N>> NodeTree<'g, N> {
-  pub fn draw_on_canvas(&self, canvas: &Canvas, layout: Layout) {
+  pub fn draw_on_canvas(&self, canvas: &mut Canvas, layout: Layout) {
     // Draw the block node itself first
     if let Some(node) = &self.node {
       node.draw_on_canvas(&self.context, canvas, layout);
@@ -34,7 +34,7 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
     }
   }
 
-  pub fn draw_inline(&self, canvas: &Canvas, layout: Layout) {
+  pub fn draw_inline(&self, canvas: &mut Canvas, layout: Layout) {
     if self.context.opacity == 0.0 {
       return;
     }

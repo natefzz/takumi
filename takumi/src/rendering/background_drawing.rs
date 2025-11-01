@@ -304,7 +304,7 @@ pub(crate) fn draw_background_layers(
   tiles: Vec<ImageTiles>,
   radius: BorderProperties,
   context: &RenderContext,
-  canvas: &Canvas,
+  canvas: &mut Canvas,
   layout: Layout,
 ) {
   for (tile_image, xs, ys) in tiles {

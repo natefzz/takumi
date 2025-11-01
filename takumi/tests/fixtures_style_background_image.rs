@@ -261,7 +261,7 @@ fn test_background_image_grid_pattern() {
 #[test]
 fn test_background_image_noise_v1_with_gradient() {
   let images = BackgroundImages::from_str(
-    "radial-gradient(circle at 25% 25%, rgba(255, 0, 128, 0.6), transparent 50%), radial-gradient(circle at 75% 75%, rgba(0, 128, 255, 0.6), transparent 50%), linear-gradient(135deg, rgba(138, 43, 226, 0.4), rgba(30, 144, 255, 0.4), rgba(255, 20, 147, 0.4)), noise-v1(frequency(1.4) octaves(4) opacity(0.8))",
+    "radial-gradient(circle at 25% 25%, rgba(255, 0, 128, 0.6), transparent 50%), radial-gradient(circle at 75% 75%, rgba(0, 128, 255, 0.6), transparent 50%), linear-gradient(135deg, rgba(138, 43, 226, 0.4), rgba(30, 144, 255, 0.4), rgba(255, 20, 147, 0.4)), noise-v1(opacity(0.8))",
   )
   .unwrap();
 

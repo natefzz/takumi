@@ -32,10 +32,10 @@ const TEST_FONTS: &[(&[u8], &str, GenericFamily)] = &[
 ];
 
 fn create_test_context() -> GlobalContext {
-  let context = GlobalContext::default();
+  let mut context = GlobalContext::default();
 
   context.persistent_image_store.insert(
-    "assets/images/yeecord.png",
+    "assets/images/yeecord.png".to_string(),
     Arc::new(ImageSource::Bitmap(
       load_from_memory(include_bytes!("../../assets/images/yeecord.png"))
         .unwrap()
@@ -44,7 +44,7 @@ fn create_test_context() -> GlobalContext {
   );
 
   context.persistent_image_store.insert(
-    "assets/images/luma.svg",
+    "assets/images/luma.svg".to_string(),
     parse_svg_str(include_str!("../../assets/images/luma.svg")).unwrap(),
   );
 

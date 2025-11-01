@@ -3,7 +3,7 @@
 //! This module provides performance-optimized canvas operations including
 //! fast image blending and pixel manipulation operations.
 
-use std::{borrow::Cow, sync::Mutex};
+use std::borrow::Cow;
 
 use image::{
   Pixel, Rgba, RgbaImage,
@@ -21,21 +21,21 @@ use crate::{
 ///
 /// This struct wraps a channel sender that can be cloned and used to send
 /// drawing commands to a canvas rendering loop without blocking the main thread.
-pub struct Canvas(Mutex<RgbaImage>);
+pub struct Canvas(RgbaImage);
 
 impl Canvas {
   /// Creates a new canvas handle from a draw command sender.
   pub(crate) fn new(size: Size<u32>) -> Self {
-    Self(Mutex::new(RgbaImage::new(size.width, size.height)))
+    Self(RgbaImage::new(size.width, size.height))
   }
 
   pub(crate) fn into_inner(self) -> RgbaImage {
-    self.0.into_inner().unwrap()
+    self.0
   }
 
   /// Overlays an image onto the canvas with optional border radius.
   pub(crate) fn overlay_image(
-    &self,
+    &mut self,
     image: &RgbaImage,
     offset: Point<i32>,
     border: BorderProperties,
@@ -47,15 +47,20 @@ impl Canvas {
       return;
     }
 
-    let mut lock = self.0.lock().unwrap();
     overlay_image(
-      &mut lock, image, offset, border, transform, algorithm, filters,
+      &mut self.0,
+      image,
+      offset,
+      border,
+      transform,
+      algorithm,
+      filters,
     );
   }
 
   /// Draws a mask with the specified color onto the canvas.
   pub(crate) fn draw_mask(
-    &self,
+    &mut self,
     mask: &[u8],
     placement: Placement,
     color: Color,
@@ -65,13 +70,12 @@ impl Canvas {
       return;
     }
 
-    let mut lock = self.0.lock().unwrap();
-    draw_mask(&mut lock, mask, placement, color, image.as_ref());
+    draw_mask(&mut self.0, mask, placement, color, image.as_ref());
   }
 
   /// Fills a rectangular area with the specified color and optional border radius.
   pub(crate) fn fill_color(
-    &self,
+    &mut self,
     offset: Point<i32>,
     size: Size<u32>,
     color: Color,
@@ -82,8 +86,7 @@ impl Canvas {
       return;
     }
 
-    let mut lock = self.0.lock().unwrap();
-    fill_color(&mut lock, size, offset, color, border, transform);
+    fill_color(&mut self.0, size, offset, color, border, transform);
   }
 }
 
@@ -91,6 +94,7 @@ impl Canvas {
 ///
 /// If the color is fully transparent (alpha = 0), no operation is performed.
 /// Otherwise, the pixel is blended with the existing canvas pixel using alpha blending.
+#[inline]
 pub(crate) fn draw_pixel(canvas: &mut RgbaImage, x: u32, y: u32, color: Rgba<u8>) {
   if color.0[3] == 0 {
     return;
@@ -141,10 +145,9 @@ pub(crate) fn fill_color<C: Into<Rgba<u8>>>(
     && size.height == image.height()
   {
     let image_mut = image.as_mut();
-    let image_len = image_mut.len();
 
-    for i in (0..image_len).step_by(4) {
-      image_mut[i..i + 4].copy_from_slice(&color.0);
+    for chunk in image_mut.chunks_exact_mut(4) {
+      chunk.copy_from_slice(&color.0);
     }
 
     return;

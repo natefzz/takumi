@@ -22,10 +22,10 @@ use crate::{
   renderer::{OutputFormat, RenderOptions, ResourceCache},
 };
 
-pub struct RenderTask {
+pub struct RenderTask<'g> {
   pub draw_debug_border: bool,
   pub node: Option<NodeKind>,
-  pub context: Arc<GlobalContext>,
+  pub global: &'g GlobalContext,
   pub viewport: Viewport,
   pub format: OutputFormat,
   pub quality: Option<u8>,
@@ -33,13 +33,13 @@ pub struct RenderTask {
   pub(crate) tasks_rx: Receiver<(FetchTask, MaybeInitialized<Buffer, Arc<ImageSource>>)>,
 }
 
-impl RenderTask {
+impl<'g> RenderTask<'g> {
   pub fn from_options(
     env: Env,
     node: NodeKind,
     options: RenderOptions,
     resources_cache: &ResourceCache,
-    global: Arc<GlobalContext>,
+    global: &'g GlobalContext,
   ) -> Result<Self> {
     let mut collection = FetchTaskCollection::default();
 
@@ -95,7 +95,7 @@ impl RenderTask {
 
     Ok(RenderTask {
       node: Some(node),
-      context: global,
+      global,
       viewport: Viewport::new(options.width, options.height),
       format: options.format.unwrap_or(OutputFormat::png),
       quality: options.quality,
@@ -106,7 +106,7 @@ impl RenderTask {
   }
 }
 
-impl Task for RenderTask {
+impl Task for RenderTask<'_> {
   type Output = Vec<u8>;
   type JsValue = Buffer;
 
@@ -143,7 +143,7 @@ impl Task for RenderTask {
         .viewport(self.viewport)
         .fetched_resources(fetched_resources)
         .node(node)
-        .global(&self.context)
+        .global(self.global)
         .draw_debug_border(self.draw_debug_border)
         .build()
         .unwrap(),

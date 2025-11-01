@@ -62,37 +62,37 @@ macro_rules! impl_node_enum {
         }
       }
 
-      fn draw_on_canvas(&self, context: &$crate::rendering::RenderContext, canvas: &$crate::rendering::Canvas, layout: $crate::taffy::Layout) {
+      fn draw_on_canvas(&self, context: &$crate::rendering::RenderContext, canvas: &mut $crate::rendering::Canvas, layout: $crate::taffy::Layout) {
         match self {
           $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::draw_on_canvas(inner, context, canvas, layout), )*
         }
       }
 
-      fn draw_background_color(&self, context: &$crate::rendering::RenderContext, canvas: &$crate::rendering::Canvas, layout: $crate::taffy::Layout) {
+      fn draw_background_color(&self, context: &$crate::rendering::RenderContext, canvas: &mut $crate::rendering::Canvas, layout: $crate::taffy::Layout) {
         match self {
           $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::draw_background_color(inner, context, canvas, layout), )*
         }
       }
 
-      fn draw_content(&self, context: &$crate::rendering::RenderContext, canvas: &$crate::rendering::Canvas, layout: $crate::taffy::Layout) {
+      fn draw_content(&self, context: &$crate::rendering::RenderContext, canvas: &mut $crate::rendering::Canvas, layout: $crate::taffy::Layout) {
         match self {
           $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::draw_content(inner, context, canvas, layout), )*
         }
       }
 
-      fn draw_border(&self, context: &$crate::rendering::RenderContext, canvas: &$crate::rendering::Canvas, layout: $crate::taffy::Layout) {
+      fn draw_border(&self, context: &$crate::rendering::RenderContext, canvas: &mut $crate::rendering::Canvas, layout: $crate::taffy::Layout) {
         match self {
           $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::draw_border(inner, context, canvas, layout), )*
         }
       }
 
-      fn draw_outset_box_shadow(&self, context: &$crate::rendering::RenderContext, canvas: &$crate::rendering::Canvas, layout: $crate::taffy::Layout) {
+      fn draw_outset_box_shadow(&self, context: &$crate::rendering::RenderContext, canvas: &mut $crate::rendering::Canvas, layout: $crate::taffy::Layout) {
         match self {
           $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::draw_outset_box_shadow(inner, context, canvas, layout), )*
         }
       }
 
-      fn draw_inset_box_shadow(&self, context: &$crate::rendering::RenderContext, canvas: &$crate::rendering::Canvas, layout: $crate::taffy::Layout) {
+      fn draw_inset_box_shadow(&self, context: &$crate::rendering::RenderContext, canvas: &mut $crate::rendering::Canvas, layout: $crate::taffy::Layout) {
         match self {
           $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::draw_inset_box_shadow(inner, context, canvas, layout), )*
         }
@@ -116,7 +116,7 @@ macro_rules! impl_node_enum {
         }
       }
 
-      fn draw_background_image(&self, context: &$crate::rendering::RenderContext, canvas: &$crate::rendering::Canvas, layout: $crate::taffy::Layout) {
+      fn draw_background_image(&self, context: &$crate::rendering::RenderContext, canvas: &mut $crate::rendering::Canvas, layout: $crate::taffy::Layout) {
         match self {
           $( $name::$variant(inner) => <_ as $crate::layout::node::Node<$name>>::draw_background_image(inner, context, canvas, layout), )*
         }
@@ -215,7 +215,7 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
   }
 
   /// Draws the node onto the canvas using the computed layout.
-  fn draw_on_canvas(&self, context: &RenderContext, canvas: &Canvas, layout: Layout) {
+  fn draw_on_canvas(&self, context: &RenderContext, canvas: &mut Canvas, layout: Layout) {
     self.draw_outset_box_shadow(context, canvas, layout);
     self.draw_background_color(context, canvas, layout);
     self.draw_background_image(context, canvas, layout);
@@ -225,7 +225,7 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
   }
 
   /// Draws the outset box shadow of the node.
-  fn draw_outset_box_shadow(&self, context: &RenderContext, canvas: &Canvas, layout: Layout) {
+  fn draw_outset_box_shadow(&self, context: &RenderContext, canvas: &mut Canvas, layout: Layout) {
     if let Some(box_shadow) = context.style.box_shadow.as_ref() {
       let border_radius = BorderProperties::from_context(context, &layout);
 
@@ -253,7 +253,7 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
   }
 
   /// Draws the inset box shadow of the node.
-  fn draw_inset_box_shadow(&self, context: &RenderContext, canvas: &Canvas, layout: Layout) {
+  fn draw_inset_box_shadow(&self, context: &RenderContext, canvas: &mut Canvas, layout: Layout) {
     if let Some(box_shadow) = context.style.box_shadow.as_ref() {
       let border_radius = BorderProperties::from_context(context, &layout);
 
@@ -269,7 +269,7 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
   }
 
   /// Draws the background color of the node.
-  fn draw_background_color(&self, context: &RenderContext, canvas: &Canvas, layout: Layout) {
+  fn draw_background_color(&self, context: &RenderContext, canvas: &mut Canvas, layout: Layout) {
     let radius = BorderProperties::from_context(context, &layout);
 
     canvas.fill_color(
@@ -291,7 +291,7 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
   }
 
   /// Draws the background image(s) of the node.
-  fn draw_background_image(&self, context: &RenderContext, canvas: &Canvas, layout: Layout) {
+  fn draw_background_image(&self, context: &RenderContext, canvas: &mut Canvas, layout: Layout) {
     let Some(background_image) = context.style.background_image.as_ref() else {
       return;
     };
@@ -315,12 +315,12 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
   }
 
   /// Draws the main content of the node.
-  fn draw_content(&self, _context: &RenderContext, _canvas: &Canvas, _layout: Layout) {
+  fn draw_content(&self, _context: &RenderContext, _canvas: &mut Canvas, _layout: Layout) {
     // Default implementation does nothing
   }
 
   /// Draws the border of the node.
-  fn draw_border(&self, context: &RenderContext, canvas: &Canvas, layout: Layout) {
+  fn draw_border(&self, context: &RenderContext, canvas: &mut Canvas, layout: Layout) {
     draw_border(
       canvas,
       layout.location,

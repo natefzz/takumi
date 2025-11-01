@@ -54,7 +54,7 @@ pub fn create_app(state: AxumState) -> Router {
   app
 }
 
-pub async fn run_server(args: Args, context: GlobalContext) {
+pub async fn run_server(args: Args, mut context: GlobalContext) {
   if let Some(font_glob) = args.font_glob.as_ref() {
     for font in glob(font_glob).unwrap() {
       match font {

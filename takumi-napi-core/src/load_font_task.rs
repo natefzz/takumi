@@ -1,5 +1,4 @@
 use napi::bindgen_prelude::*;
-use std::sync::Arc;
 use takumi::{
   GlobalContext,
   parley::{FontWeight, fontique::FontInfoOverride},
@@ -7,12 +6,12 @@ use takumi::{
 
 use crate::FontInputOwned;
 
-pub struct LoadFontTask {
-  pub context: Arc<GlobalContext>,
+pub struct LoadFontTask<'g> {
+  pub context: &'g mut GlobalContext,
   pub(crate) buffers: Vec<FontInputOwned>,
 }
 
-impl Task for LoadFontTask {
+impl Task for LoadFontTask<'_> {
   type Output = usize;
   type JsValue = u32;
 

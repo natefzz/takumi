@@ -9,7 +9,7 @@ use crate::{
 ///
 /// This function draws colored rectangles to visualize the content box
 /// (red) and the full layout box (green) for debugging purposes.
-pub fn draw_debug_border(canvas: &Canvas, layout: Layout, transform: Affine) {
+pub fn draw_debug_border(canvas: &mut Canvas, layout: Layout, transform: Affine) {
   let x = layout.content_box_x();
   let y = layout.content_box_y();
 

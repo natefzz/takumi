@@ -1,7 +1,7 @@
 use std::{
   borrow::Cow,
   collections::{HashMap, HashSet},
-  sync::{Arc, Mutex},
+  sync::Arc,
 };
 
 use parley::{
@@ -94,14 +94,9 @@ fn guess_font_format(source: &[u8]) -> Result<FontFormat, FontError> {
 }
 
 /// A context for managing fonts in the rendering system.
+#[derive(Default)]
 pub struct FontContext {
-  layout: Mutex<(parley::FontContext, LayoutContext<InlineBrush>)>,
-}
-
-impl Default for FontContext {
-  fn default() -> Self {
-    Self::new()
-  }
+  inner: parley::FontContext,
 }
 
 impl FontContext {
@@ -162,36 +157,24 @@ impl FontContext {
   }
 
   /// Create an inline layout with the given root style and function
-  pub fn tree_builder(
+  pub(crate) fn tree_builder(
     &self,
     root_style: TextStyle<'_, InlineBrush>,
     func: impl FnOnce(&mut TreeBuilder<'_, InlineBrush>),
   ) -> (InlineLayout, String) {
-    let mut lock = self.layout.lock().unwrap();
-    let (fcx, lcx) = &mut *lock;
+    let mut font_context = self.inner.clone();
+    let mut layout_context = LayoutContext::new();
 
-    let mut builder = lcx.tree_builder(fcx, 1.0, true, &root_style);
+    let mut builder = layout_context.tree_builder(&mut font_context, 1.0, true, &root_style);
 
     func(&mut builder);
 
     builder.build()
   }
 
-  /// Purge the rasterization cache.
-  pub fn purge_cache(&self) {
-    self.layout.lock().unwrap().0.source_cache.prune(0, true);
-  }
-
-  /// Creates a new font context.
-  pub fn new() -> Self {
-    Self {
-      layout: Mutex::new((parley::FontContext::default(), LayoutContext::default())),
-    }
-  }
-
   /// Loads font into internal font db
   pub fn load_and_store(
-    &self,
+    &mut self,
     source: &[u8],
     info_override: Option<FontInfoOverride<'_>>,
     generic_family: Option<GenericFamily>,
@@ -201,21 +184,22 @@ impl FontContext {
       Cow::Borrowed(slice) => slice.to_vec(),
     }));
 
-    let mut lock = self.layout.lock().unwrap();
-
-    let fonts = lock.0.collection.register_fonts(font_data, info_override);
+    let fonts = self
+      .inner
+      .collection
+      .register_fonts(font_data, info_override);
 
     for (family, _) in fonts {
       if let Some(generic_family) = generic_family {
-        lock
-          .0
+        self
+          .inner
           .collection
           .append_generic_families(generic_family, std::iter::once(family));
       }
 
       for (script, _) in Script::all_samples() {
-        lock
-          .0
+        self
+          .inner
           .collection
           .append_fallbacks(FallbackKey::new(*script, None), std::iter::once(family));
       }

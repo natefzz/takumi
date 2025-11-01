@@ -27,7 +27,7 @@ pub(crate) type ResourceCache = Option<Arc<Mutex<LruCache<FetchTask, Arc<ImageSo
 
 #[napi]
 pub struct Renderer {
-  global: Arc<GlobalContext>,
+  global: GlobalContext,
   resources_cache: ResourceCache,
 }
 
@@ -142,21 +142,11 @@ impl Renderer {
       .resource_cache_capacity
       .unwrap_or(DEFAULT_RESOURCE_CACHE_CAPACITY);
 
-    let renderer = Self {
-      global: Arc::new(GlobalContext::default()),
-      resources_cache: if resource_cache_capacity > 0 {
-        Some(Arc::new(Mutex::new(LruCache::new(
-          NonZeroUsize::new(resource_cache_capacity as usize).unwrap(),
-        ))))
-      } else {
-        None
-      },
-    };
+    let mut global = GlobalContext::default();
 
     if load_default_fonts {
       for (font, name, generic) in EMBEDDED_FONTS {
-        renderer
-          .global
+        global
           .font_context
           .load_and_store(
             font,
@@ -170,25 +160,13 @@ impl Renderer {
       }
     }
 
-    if let Some(images) = options.persistent_images {
-      for image in images {
-        let image_source = load_image_source_from_bytes(&image.data).unwrap();
-
-        renderer
-          .global
-          .persistent_image_store
-          .insert(&image.src, image_source);
-      }
-    }
-
     if let Some(fonts) = options.fonts {
       for font in fonts {
         if font.is_arraybuffer().unwrap() || font.is_buffer().unwrap() {
           // SAFETY: We know the font is a buffer
           let buffer = unsafe { BufferSlice::from_napi_value(env.raw(), font.raw()).unwrap() };
 
-          renderer
-            .global
+          global
             .font_context
             .load_and_store(&buffer, None, None)
             .unwrap();
@@ -206,11 +184,32 @@ impl Renderer {
           width: None,
         };
 
-        renderer
-          .global
+        global
           .font_context
           .load_and_store(&font.data, Some(font_override), None)
           .unwrap();
+      }
+    }
+
+    let renderer = Self {
+      global,
+      resources_cache: if resource_cache_capacity > 0 {
+        Some(Arc::new(Mutex::new(LruCache::new(
+          NonZeroUsize::new(resource_cache_capacity as usize).unwrap(),
+        ))))
+      } else {
+        None
+      },
+    };
+
+    if let Some(images) = options.persistent_images {
+      for image in images {
+        let image_source = load_image_source_from_bytes(&image.data).unwrap();
+
+        renderer
+          .global
+          .persistent_image_store
+          .insert(image.src, image_source);
       }
     }
 
@@ -226,10 +225,9 @@ impl Renderer {
     }
   }
 
+  /// @deprecated This function does nothing.
   #[napi]
-  pub fn purge_font_cache(&self) {
-    self.global.font_context.purge_cache();
-  }
+  pub fn purge_font_cache(&self) {}
 
   /// @deprecated Use `putPersistentImage` instead (to align with the naming convention for sync/async functions).
   #[napi(
@@ -237,11 +235,11 @@ impl Renderer {
     ts_return_type = "Promise<void>"
   )]
   pub fn put_persistent_image_async(
-    &self,
+    &'_ self,
     src: String,
     data: Buffer,
     signal: Option<AbortSignal>,
-  ) -> AsyncTask<PutPersistentImageTask> {
+  ) -> AsyncTask<PutPersistentImageTask<'_>> {
     self.put_persistent_image(src, data, signal)
   }
 
@@ -250,15 +248,15 @@ impl Renderer {
     ts_return_type = "Promise<void>"
   )]
   pub fn put_persistent_image(
-    &self,
+    &'_ self,
     src: String,
     data: Buffer,
     signal: Option<AbortSignal>,
-  ) -> AsyncTask<PutPersistentImageTask> {
+  ) -> AsyncTask<PutPersistentImageTask<'_>> {
     AsyncTask::with_optional_signal(
       PutPersistentImageTask {
         src: Some(src),
-        context: Arc::clone(&self.global),
+        store: &self.global.persistent_image_store,
         buffer: data,
       },
       signal,
@@ -271,11 +269,11 @@ impl Renderer {
     ts_return_type = "Promise<number>"
   )]
   pub fn load_font_async(
-    &self,
+    &'_ mut self,
     env: Env,
     data: Object,
     signal: Option<AbortSignal>,
-  ) -> AsyncTask<LoadFontTask> {
+  ) -> AsyncTask<LoadFontTask<'_>> {
     self.load_fonts_async(env, vec![data], signal)
   }
 
@@ -284,11 +282,11 @@ impl Renderer {
     ts_return_type = "Promise<number>"
   )]
   pub fn load_font(
-    &self,
+    &'_ mut self,
     env: Env,
     data: Object,
     signal: Option<AbortSignal>,
-  ) -> AsyncTask<LoadFontTask> {
+  ) -> AsyncTask<LoadFontTask<'_>> {
     self.load_fonts_async(env, vec![data], signal)
   }
 
@@ -298,11 +296,11 @@ impl Renderer {
     ts_return_type = "Promise<number>"
   )]
   pub fn load_fonts_async(
-    &self,
+    &'_ mut self,
     env: Env,
     fonts: Vec<Object>,
     signal: Option<AbortSignal>,
-  ) -> AsyncTask<LoadFontTask> {
+  ) -> AsyncTask<LoadFontTask<'_>> {
     self.load_fonts(env, fonts, signal)
   }
 
@@ -311,11 +309,11 @@ impl Renderer {
     ts_return_type = "Promise<number>"
   )]
   pub fn load_fonts(
-    &self,
+    &'_ mut self,
     env: Env,
     fonts: Vec<Object>,
     signal: Option<AbortSignal>,
-  ) -> AsyncTask<LoadFontTask> {
+  ) -> AsyncTask<LoadFontTask<'_>> {
     let fonts = fonts
       .into_iter()
       .map(|font| {
@@ -335,7 +333,7 @@ impl Renderer {
 
     AsyncTask::with_optional_signal(
       LoadFontTask {
-        context: Arc::clone(&self.global),
+        context: &mut self.global,
         buffers: fonts,
       },
       signal,
@@ -352,22 +350,16 @@ impl Renderer {
     ts_return_type = "Promise<Buffer>"
   )]
   pub fn render(
-    &self,
+    &'_ self,
     env: Env,
     source: Object,
     options: RenderOptions,
     signal: Option<AbortSignal>,
-  ) -> Result<AsyncTask<RenderTask>> {
+  ) -> Result<AsyncTask<RenderTask<'_>>> {
     let node: NodeKind = deserialize_with_tracing(source)?;
 
     Ok(AsyncTask::with_optional_signal(
-      RenderTask::from_options(
-        env,
-        node,
-        options,
-        &self.resources_cache,
-        self.global.clone(),
-      )?,
+      RenderTask::from_options(env, node, options, &self.resources_cache, &self.global)?,
       signal,
     ))
   }
@@ -378,12 +370,12 @@ impl Renderer {
     ts_return_type = "Promise<Buffer>"
   )]
   pub fn render_async(
-    &mut self,
+    &'_ mut self,
     env: Env,
     source: Object,
     options: RenderOptions,
     signal: Option<AbortSignal>,
-  ) -> Result<AsyncTask<RenderTask>> {
+  ) -> Result<AsyncTask<RenderTask<'_>>> {
     self.render(env, source, options, signal)
   }
 
@@ -392,11 +384,11 @@ impl Renderer {
     ts_return_type = "Promise<Buffer>"
   )]
   pub fn render_animation(
-    &self,
+    &'_ self,
     source: Vec<AnimationFrameSource>,
     options: RenderAnimationOptions,
     signal: Option<AbortSignal>,
-  ) -> Result<AsyncTask<RenderAnimationTask>> {
+  ) -> Result<AsyncTask<RenderAnimationTask<'_>>> {
     let nodes = source
       .into_iter()
       .map(|frame| {
@@ -410,7 +402,7 @@ impl Renderer {
     Ok(AsyncTask::with_optional_signal(
       RenderAnimationTask {
         nodes: Some(nodes),
-        context: Arc::clone(&self.global),
+        context: &self.global,
         viewport: Viewport::new(options.width, options.height),
         format: options.format.unwrap_or(AnimationOutputFormat::webp),
         draw_debug_border: options.draw_debug_border.unwrap_or_default(),

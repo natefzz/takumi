@@ -39,7 +39,7 @@ pub struct RenderOptions<'g, N: Node<N>> {
 pub fn render<'g, N: Node<N>>(options: RenderOptions<'g, N>) -> Result<RgbaImage, crate::Error> {
   let mut taffy = TaffyTree::new();
 
-  let canvas = Canvas::new(options.viewport.into());
+  let mut canvas = Canvas::new(options.viewport.into());
 
   let render_context = RenderContext {
     draw_debug_border: options.draw_debug_border,
@@ -78,7 +78,7 @@ pub fn render<'g, N: Node<N>>(options: RenderOptions<'g, N>) -> Result<RgbaImage
   render_node(
     &mut taffy,
     root_node_id,
-    &canvas,
+    &mut canvas,
     Point::ZERO,
     Affine::identity(),
   );
@@ -131,7 +131,7 @@ fn create_transform(style: &InheritedStyle, layout: &Layout, context: &RenderCon
 fn render_node<'g, Nodes: Node<Nodes>>(
   taffy: &mut TaffyTree<NodeTree<'g, Nodes>>,
   node_id: NodeId,
-  canvas: &Canvas,
+  canvas: &mut Canvas,
   offset: Point<f32>,
   mut transform: Affine,
 ) {
@@ -159,7 +159,7 @@ fn render_node<'g, Nodes: Node<Nodes>>(
     node_context.context.transform.x = -placement.left as f32;
     node_context.context.transform.y = -placement.top as f32;
 
-    let inner_canvas = Canvas::new(Size {
+    let mut inner_canvas = Canvas::new(Size {
       width: placement.width,
       height: placement.height,
     });
@@ -169,13 +169,13 @@ fn render_node<'g, Nodes: Node<Nodes>>(
       ..layout
     };
 
-    node_context.draw_on_canvas(&inner_canvas, inner_layout);
+    node_context.draw_on_canvas(&mut inner_canvas, inner_layout);
 
     if node_context.should_create_inline_layout() {
-      node_context.draw_inline(&inner_canvas, inner_layout);
+      node_context.draw_inline(&mut inner_canvas, inner_layout);
     } else {
       for child_id in taffy.children(node_id).unwrap() {
-        render_node(taffy, child_id, &inner_canvas, Point::zero(), transform);
+        render_node(taffy, child_id, &mut inner_canvas, Point::zero(), transform);
       }
     }
 
@@ -196,7 +196,7 @@ fn render_node<'g, Nodes: Node<Nodes>>(
 
   if overflow.should_clip_content() {
     // if theres no space for canvas to draw, just return.
-    let Some(inner_canvas) = overflow.create_clip_canvas(node_context.context.viewport, layout)
+    let Some(mut inner_canvas) = overflow.create_clip_canvas(node_context.context.viewport, layout)
     else {
       return;
     };
@@ -219,7 +219,7 @@ fn render_node<'g, Nodes: Node<Nodes>>(
 
     if node_context.should_create_inline_layout() {
       node_context.draw_inline(
-        &inner_canvas,
+        &mut inner_canvas,
         Layout {
           size: layout.content_box_size(),
           location: offset,
@@ -228,7 +228,7 @@ fn render_node<'g, Nodes: Node<Nodes>>(
       );
     } else {
       for child_id in taffy.children(node_id).unwrap() {
-        render_node(taffy, child_id, &inner_canvas, offset, transform);
+        render_node(taffy, child_id, &mut inner_canvas, offset, transform);
       }
     }
 

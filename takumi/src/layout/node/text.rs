@@ -36,7 +36,7 @@ impl<Nodes: Node<Nodes>> Node<Nodes> for TextNode {
     ))
   }
 
-  fn draw_content(&self, context: &RenderContext, canvas: &Canvas, layout: Layout) {
+  fn draw_content(&self, context: &RenderContext, canvas: &mut Canvas, layout: Layout) {
     let font_style = context.style.to_sized_font_style(context);
     let size = layout.content_box_size();
 

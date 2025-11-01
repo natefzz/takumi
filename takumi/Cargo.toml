@@ -11,7 +11,6 @@ readme = "README.md"
 rust-version = "1.85.1"
 
 [dependencies]
-merge = "0.2"
 cssparser = "0.35"
 csscolorparser = "0.7"
 zeno = "0.3"
@@ -20,8 +19,8 @@ derive_builder = "0.20"
 image-webp = "0.2"
 png = "0.18.0"
 serde-untagged = "0.1"
-fastnoise-lite = "1.1"
 data-url = "0.3"
+dashmap = "6.1.0"
 
 [dependencies.smallvec]
 version = "1.15"
@@ -91,7 +90,7 @@ avif = ["image/avif"]
 svg = ["dep:resvg"]
 woff2 = ["dep:wuff", "wuff/brotli"]
 woff = ["dep:wuff", "wuff/z"]
-rayon = ["dep:rayon", "image/rayon"]
+rayon = ["dep:rayon", "image/rayon", "dashmap/rayon"]
 
 [dev-dependencies]
 serde_json = "1"

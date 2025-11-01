@@ -3,12 +3,9 @@
 //! This module provides types and utilities for managing image resources,
 //! including loading states, error handling, and image processing operations.
 
-use std::{
-  borrow::Cow,
-  collections::HashMap,
-  sync::{Arc, RwLock},
-};
+use std::{borrow::Cow, sync::Arc};
 
+use dashmap::DashMap;
 use image::{
   RgbaImage,
   imageops::{FilterType, resize},
@@ -28,25 +25,7 @@ pub enum ImageSource {
 }
 
 /// Represents a persistent image store.
-#[derive(Default, Debug)]
-pub struct PersistentImageStore(RwLock<HashMap<String, Arc<ImageSource>>>);
-
-impl PersistentImageStore {
-  /// Get an image from the store.
-  pub fn get(&self, src: &str) -> Option<Arc<ImageSource>> {
-    self.0.read().unwrap().get(src).cloned()
-  }
-
-  /// Insert an image into the store.
-  pub fn insert(&self, src: &str, image: Arc<ImageSource>) {
-    self.0.write().unwrap().insert(src.to_string(), image);
-  }
-
-  /// Clear the store.
-  pub fn clear(&self) {
-    self.0.write().unwrap().clear();
-  }
-}
+pub type PersistentImageStore = DashMap<String, Arc<ImageSource>>;
 
 impl From<RgbaImage> for ImageSource {
   fn from(bitmap: RgbaImage) -> Self {

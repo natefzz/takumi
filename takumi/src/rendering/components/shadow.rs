@@ -66,7 +66,7 @@ impl SizedShadow {
 
   pub fn draw_outset(
     &self,
-    canvas: &Canvas,
+    canvas: &mut Canvas,
     spread_mask: Cow<[u8]>,
     spread_placement: Placement,
     offset: Point<f32>,
@@ -127,7 +127,7 @@ impl SizedShadow {
     &self,
     transform: Affine,
     border_radius: BorderProperties,
-    canvas: &Canvas,
+    canvas: &mut Canvas,
     layout: Layout,
   ) {
     let image = draw_inset_shadow(self, border_radius, layout);
