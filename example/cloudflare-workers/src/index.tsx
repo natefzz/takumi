@@ -1,17 +1,26 @@
 import ImageResponse from "@takumi-rs/image-response/wasm";
 import DocsTemplateV1 from "@takumi-rs/template/docs-template-v1";
-import { initSync } from "@takumi-rs/wasm";
+import { type ByteBuf, initSync } from "@takumi-rs/wasm";
 import module from "@takumi-rs/wasm/takumi_wasm_bg.wasm";
 import geist from "../../../assets/fonts/geist/Geist[wght].woff2";
-import { fetchLogo } from "./utils";
 
 initSync({ module });
 
-let logo: string;
+let fetchedResources: Promise<Map<string, ByteBuf>>;
+const logoUrl = "https://yeecord.com/img/logo.png";
+
+async function prepareResources() {
+  const map = new Map();
+  const logo = await fetch(logoUrl).then((r) => r.arrayBuffer());
+
+  map.set(logoUrl, logo);
+
+  return map;
+}
 
 export default {
   async fetch(request) {
-    logo ??= await fetchLogo();
+    fetchedResources ??= prepareResources();
 
     const { searchParams } = new URL(request.url);
 
@@ -23,7 +32,7 @@ export default {
         description="This is an example of rendering on Cloudflare Workers!"
         icon={
           <img
-            src={logo}
+            src={logoUrl}
             alt="Logo"
             style={{
               width: "6rem",
@@ -36,6 +45,7 @@ export default {
         primaryTextColor="#fff"
       />,
       {
+        fetchedResources: await fetchedResources,
         width: 1200,
         height: 630,
         format: "webp",
