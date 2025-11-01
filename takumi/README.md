@@ -40,12 +40,12 @@ let mut node = NodeKind::Container(ContainerNode {
 
 // Create a context for storing resources, font caches.
 // You should reuse the context to speed up the rendering.
-let context = GlobalContext::default();
+let mut global = GlobalContext::default();
 
 // Load fonts
 // pass an optional [`FontInfoOverride`](parley::FontInfoOverride) to override the font's metadata,
 // and an optional [`GenericFamily`](parley::GenericFamily) to specify the generic family of the font.
-context.font_context.load_and_store(include_bytes!("../../assets/fonts/geist/Geist[wght].woff2"), None, None);
+global.font_context.load_and_store(include_bytes!("../../assets/fonts/geist/Geist[wght].woff2"), None, None);
 
 // Create a viewport
 let viewport = Viewport::new(1200, 630);
@@ -54,7 +54,7 @@ let viewport = Viewport::new(1200, 630);
 let options = RenderOptionsBuilder::default()
   .viewport(viewport)
   .node(node)
-  .global(&context)
+  .global(&global)
   .build()
   .unwrap();
 
