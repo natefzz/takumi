@@ -19,7 +19,7 @@ const highlighter = await createHighlighterCore({
 });
 
 const tailwindTypings = `
-  declare namespace React {
+declare namespace React {
   interface HTMLAttributes<T> {
     tw?: string;
   }
