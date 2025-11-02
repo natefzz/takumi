@@ -17,10 +17,10 @@ zeno = "0.3"
 lru = "0.16"
 derive_builder = "0.20"
 image-webp = "0.2"
-png = "0.18.0"
+png = "0.18"
 serde-untagged = "0.1"
 data-url = "0.3"
-dashmap = "6.1.0"
+dashmap = "6.1"
 
 [dependencies.smallvec]
 version = "1.15"
