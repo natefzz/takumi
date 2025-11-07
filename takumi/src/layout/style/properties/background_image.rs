@@ -5,7 +5,9 @@ use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use ts_rs::TS;
 
-use crate::layout::style::{FromCss, LinearGradient, NoiseV1, ParseResult, RadialGradient};
+use crate::layout::style::{
+  FromCss, LinearGradient, NoiseV1, ParseResult, RadialGradient, tw::TailwindPropertyParser,
+};
 
 /// Background image variants supported by Takumi.
 #[derive(Debug, Clone, PartialEq, TS, Deserialize, Serialize)]
@@ -19,6 +21,13 @@ pub enum BackgroundImage {
   Noise(NoiseV1),
   /// Load external image resource.
   Url(Arc<str>),
+}
+
+impl TailwindPropertyParser for BackgroundImage {
+  fn parse_tw(_token: &str) -> Option<Self> {
+    // TODO: Implement
+    None
+  }
 }
 
 impl<'i> FromCss<'i> for BackgroundImage {

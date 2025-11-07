@@ -154,6 +154,8 @@ pub enum TailwindProperty {
   BackgroundSize(BackgroundSize),
   /// `background-repeat` property.
   BackgroundRepeat(BackgroundRepeat),
+  /// `background-image` property.
+  BackgroundImage(BackgroundImage),
   /// `gap` property.
   Gap(LengthUnit),
   /// `column-gap` property.
@@ -508,6 +510,10 @@ impl TailwindProperty {
       TailwindProperty::BackgroundRepeat(background_repeat) => {
         style.background_repeat =
           CssOption::some(BackgroundRepeats(vec![background_repeat])).into();
+      }
+      TailwindProperty::BackgroundImage(ref background_image) => {
+        style.background_image =
+          CssOption::some(BackgroundImages(smallvec![background_image.clone()])).into();
       }
       TailwindProperty::BorderWidth(tw_border_width) => {
         style.border_width = CssOption::some(Sides([tw_border_width.0; 4])).into();
