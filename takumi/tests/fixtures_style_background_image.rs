@@ -281,3 +281,25 @@ fn test_background_image_noise_v1_with_gradient() {
     "tests/fixtures/style_background_image_noise_v1_blend.webp",
   );
 }
+
+#[test]
+fn test_background_image_dotted_pattern() {
+  let images = BackgroundImages::from_str(
+    "radial-gradient(circle at 25px 25px, lightgray 2%, transparent 0%), radial-gradient(circle at 75px 75px, lightgray 2%, transparent 0%)",
+  )
+  .unwrap();
+
+  let mut container = create_container_with(
+    images,
+    Some(BackgroundSizes::from_str("100px 100px").unwrap()),
+    None,
+    Some(BackgroundRepeats::from_str("repeat").unwrap()),
+  );
+
+  container.style.as_mut().unwrap().background_color = ColorInput::Value(Color::black()).into();
+
+  run_style_width_test(
+    container.into(),
+    "tests/fixtures/style_background_image_dotted_pattern.webp",
+  );
+}

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use cssparser::Parser;
+use cssparser::{Parser, match_ignore_ascii_case};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use ts_rs::TS;
@@ -23,20 +23,21 @@ pub enum BackgroundImage {
 
 impl<'i> FromCss<'i> for BackgroundImage {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, BackgroundImage> {
-    if let Ok(gradient) = input.try_parse(LinearGradient::from_css) {
-      return Ok(BackgroundImage::Linear(gradient));
-    }
-    if let Ok(gradient) = input.try_parse(RadialGradient::from_css) {
-      return Ok(BackgroundImage::Radial(gradient));
-    }
-    if let Ok(noise) = input.try_parse(NoiseV1::from_css) {
-      return Ok(BackgroundImage::Noise(noise));
-    }
     if let Ok(url) = input.try_parse(Parser::expect_url) {
       return Ok(BackgroundImage::Url((&*url).into()));
     }
 
-    Err(input.new_error_for_next_token())
+    let start = input.state();
+    let function = input.expect_function()?.to_owned();
+
+    input.reset(&start);
+
+    match_ignore_ascii_case! {&function,
+      "linear-gradient" => Ok(BackgroundImage::Linear(LinearGradient::from_css(input)?)),
+      "radial-gradient" => Ok(BackgroundImage::Radial(RadialGradient::from_css(input)?)),
+      "noise-v1" => Ok(BackgroundImage::Noise(NoiseV1::from_css(input)?)),
+      _ => Err(input.new_error_for_next_token()),
+    }
   }
 }
 

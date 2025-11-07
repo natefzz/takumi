@@ -399,26 +399,23 @@ impl<'i> FromCss<'i> for LinearGradient {
     input.expect_function_matching("linear-gradient")?;
 
     input.parse_nested_block(|input| {
-      let angle = if let Ok(angle) = Angle::from_css(input) {
+      let angle = if let Ok(angle) = input.try_parse(Angle::from_css) {
+        input.try_parse(Parser::expect_comma).ok();
+
         angle
       } else {
         Angle::new(180.0)
       };
 
-      let mut steps = SmallVec::new();
+      let mut stops = SmallVec::new();
 
-      loop {
-        if input.try_parse(Parser::expect_comma).is_err() {
-          break;
-        }
+      stops.push(GradientStop::from_css(input)?);
 
-        steps.push(GradientStop::from_css(input)?);
+      while input.try_parse(Parser::expect_comma).is_ok() {
+        stops.push(GradientStop::from_css(input)?);
       }
 
-      Ok(LinearGradient {
-        angle,
-        stops: steps,
-      })
+      Ok(LinearGradient { angle, stops })
     })
   }
 }
@@ -747,15 +744,20 @@ mod tests {
     let gradient = LinearGradient::from_css(&mut parser);
 
     // Default angle is 180 degrees (to bottom)
-    // With the current parsing logic, only the first color is parsed
     assert_eq!(
       gradient,
       Ok(LinearGradient {
         angle: Angle::new(180.0),
-        stops: smallvec![GradientStop::ColorHint {
-          color: ColorInput::Value(Color([0, 0, 255, 255])), // Only the last color is parsed due to the parsing logic
-          hint: None,
-        },]
+        stops: smallvec![
+          GradientStop::ColorHint {
+            color: ColorInput::Value(Color::from_rgb(0xff0000)),
+            hint: None,
+          },
+          GradientStop::ColorHint {
+            color: ColorInput::Value(Color::from_rgb(0x0000ff)),
+            hint: None,
+          },
+        ]
       })
     );
   }

@@ -14,9 +14,11 @@ pub struct FontWeight(ParleyFontWeight);
 
 impl<'i> FromCss<'i> for FontWeight {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
-    Ok(FontWeight(
-      ParleyFontWeight::parse(input.current_line()).unwrap(),
-    ))
+    let Some(value) = ParleyFontWeight::parse(input.current_line()) else {
+      return Err(input.new_error_for_next_token());
+    };
+
+    Ok(FontWeight(value))
   }
 }
 

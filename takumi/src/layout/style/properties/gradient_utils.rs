@@ -1,6 +1,6 @@
 use smallvec::SmallVec;
 
-use super::{Color, GradientStop, LengthUnit, ResolvedGradientStop};
+use super::{Color, GradientStop, ResolvedGradientStop};
 use crate::rendering::RenderContext;
 
 /// Interpolates between two colors in RGBA space, if t is 0.0 or 1.0, returns the first or second color.
@@ -54,19 +54,7 @@ pub(crate) fn color_from_stops(position: f32, resolved_stops: &[ResolvedGradient
   }
 }
 
-/// Resolve a length value used in a gradient stop to an absolute pixel position along an axis.
-pub(crate) fn stop_length_to_axis_px(
-  length: LengthUnit,
-  axis_size_px: f32,
-  context: &RenderContext,
-) -> f32 {
-  length.resolve_to_px(context, axis_size_px).max(0.0)
-}
-
 /// Resolves gradient steps into color stops with positions expressed in pixels along an axis.
-/// The `treat_equal_as_non_increasing` flag controls whether equal neighbor positions should be
-/// treated as non-increasing (and thus distributed). Linear gradients allow equal positions to
-/// create hard color jumps, while radial gradients previously distributed equals.
 pub(crate) fn resolve_stops_along_axis(
   stops: &[GradientStop],
   axis_size_px: f32,
@@ -76,9 +64,16 @@ pub(crate) fn resolve_stops_along_axis(
   for (i, step) in stops.iter().enumerate() {
     match step {
       GradientStop::ColorHint { color, hint } => {
+        let last_position = resolved.last().map(|s| s.position).unwrap_or(0.0);
+
         let position = hint
-          .map(|sp| stop_length_to_axis_px(sp.0, axis_size_px, context))
-          .unwrap_or(-1.0);
+          .map(|position| {
+            position
+              .0
+              .resolve_to_px(context, axis_size_px)
+              .max(last_position)
+          })
+          .unwrap_or(last_position);
 
         resolved.push(ResolvedGradientStop {
           color: color.resolve(context.current_color, context.opacity),
@@ -103,7 +98,7 @@ pub(crate) fn resolve_stops_along_axis(
 
         resolved.push(ResolvedGradientStop {
           color: interpolated_color,
-          position: stop_length_to_axis_px(hint.0, axis_size_px, context),
+          position: hint.0.resolve_to_px(context, axis_size_px),
         });
       }
     }
@@ -176,10 +171,12 @@ pub(crate) fn resolve_stops_along_axis(
 
 #[cfg(test)]
 mod tests {
-
   use crate::{
     GlobalContext,
-    layout::{Viewport, style::StopPosition},
+    layout::{
+      Viewport,
+      style::{LengthUnit, StopPosition},
+    },
   };
 
   use super::*;
