@@ -1,5 +1,11 @@
 # takumi
 
+## 0.45.3
+
+### Patch Changes
+
+- 3cf3867: fix `bg-size-[…]`, `bg-position-[…]` arbitrary value parsing
+
 ## 0.45.2
 
 ### Patch Changes
