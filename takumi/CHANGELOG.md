@@ -1,5 +1,11 @@
 # takumi
 
+## 0.46.4
+
+### Patch Changes
+
+- 37610e0: bump `csscolorparser` to 0.8
+
 ## 0.46.3
 
 ## 0.46.2
