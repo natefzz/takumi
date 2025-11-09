@@ -12,11 +12,11 @@
     "@takumi-rs/helpers": "workspace:*",
     "@takumi-rs/image-response": "workspace:*",
     "@takumi-rs/template": "workspace:*",
-    "@tanstack/react-router": "^1.134.13",
-    "@tanstack/react-router-ssr-query": "^1.134.13",
-    "@tanstack/react-start": "^1.134.13",
-    "@tanstack/router-plugin": "^1.134.13",
-    "lucide-react": "^0.552.0",
+    "@tanstack/react-router": "^1.134.17",
+    "@tanstack/react-router-ssr-query": "^1.134.17",
+    "@tanstack/react-start": "^1.134.17",
+    "@tanstack/router-plugin": "^1.134.17",
+    "lucide-react": "catalog:",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "vite-tsconfig-paths": "^5.1.4"
@@ -29,6 +29,6 @@
     "@types/react-dom": "^19.0.3",
     "@vitejs/plugin-react": "^5.1.0",
     "typescript": "catalog:",
-    "vite": "^7.2.1"
+    "vite": "^7.2.2"
   }
 }
