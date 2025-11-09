@@ -318,9 +318,9 @@ impl<'i> FromCss<'i> for JustifyContent {
       "flex-end" => Ok(JustifyContent::FlexEnd),
       "center" => Ok(JustifyContent::Center),
       "stretch" => Ok(JustifyContent::Stretch),
-      "space-between" => Ok(JustifyContent::SpaceBetween),
-      "space-around" => Ok(JustifyContent::SpaceAround),
-      "space-evenly" => Ok(JustifyContent::SpaceEvenly),
+      "between" => Ok(JustifyContent::SpaceBetween),
+      "around" => Ok(JustifyContent::SpaceAround),
+      "evenly" => Ok(JustifyContent::SpaceEvenly),
       _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
     }
   }
