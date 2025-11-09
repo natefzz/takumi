@@ -77,29 +77,17 @@ const U24_MAX: u32 = 0xffffff;
 // Strip alpha channel into a tightly packed RGB buffer
 fn strip_alpha_channel(image: &RgbaImage) -> Vec<u8> {
   let raw = image.as_raw();
+
   let pixel_count = raw.len() / 4 * 3;
-  let mut rgb = vec![0u8; pixel_count];
+  let mut rgb = Vec::with_capacity(pixel_count);
 
-  #[cfg(feature = "rayon")]
-  {
-    rgb
-      .par_chunks_exact_mut(3)
-      .zip(raw.par_chunks_exact(4))
-      .for_each(|(dst, src)| {
-        dst.copy_from_slice(&src[..3]);
-      });
-    rgb
+  for chunk in raw.chunks_exact(4) {
+    rgb.push(chunk[0]);
+    rgb.push(chunk[1]);
+    rgb.push(chunk[2]);
   }
 
-  #[cfg(not(feature = "rayon"))]
-  {
-    for chunk in raw.chunks_exact(4) {
-      rgb.push(chunk[0]);
-      rgb.push(chunk[1]);
-      rgb.push(chunk[2]);
-    }
-    rgb
-  }
+  rgb
 }
 
 fn has_any_alpha_pixel(image: &RgbaImage) -> bool {
@@ -170,7 +158,7 @@ pub fn write_image<T: Write + std::io::Seek>(
 
       let mut writer = encoder.write_header()?;
 
-      writer.write_image_data(image_data.as_ref())?;
+      writer.write_image_data(&image_data)?;
 
       writer.finish()?;
     }
