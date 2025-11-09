@@ -245,7 +245,7 @@ pub fn encode_animated_webp<W: Write>(
           &frame.image,
           frame.image.width(),
           frame.image.height(),
-          ColorType::Rgba8,
+          image_webp::ColorType::Rgba8,
         )
         .map_err(|_| IoError(std::io::Error::other("WebP encode error")))?;
 
