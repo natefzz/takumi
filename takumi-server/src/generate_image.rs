@@ -48,30 +48,30 @@ pub async fn generate_image_handler(
       .build()
       .unwrap();
 
-    let image = render(options).map_err(|err| {
+    let image = render(options).map_err(|_| {
       (
         StatusCode::INTERNAL_SERVER_ERROR,
-        format!("Failed to render image: {err:?}"),
+        "Failed to render image.".to_string(),
       )
     })?;
 
     let mut buffer = Vec::new();
     let mut cursor = Cursor::new(&mut buffer);
 
-    write_image(&image, &mut cursor, format, query.quality).map_err(|err| {
+    write_image(&image, &mut cursor, format, query.quality).map_err(|_| {
       (
         StatusCode::INTERNAL_SERVER_ERROR,
-        format!("Failed to write image: {err}"),
+        "Failed to write image.".to_string(),
       )
     })?;
 
     Ok(buffer)
   })
   .await
-  .map_err(|err| {
+  .map_err(|_| {
     (
       StatusCode::INTERNAL_SERVER_ERROR,
-      format!("Image generation task panicked: {err}"),
+      "Image generation task panicked.".to_string(),
     )
   })??;
 
