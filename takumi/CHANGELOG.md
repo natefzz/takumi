@@ -1,5 +1,11 @@
 # takumi
 
+## 0.46.0
+
+### Minor Changes
+
+- 18bbc7c: support tailwind breakpoint & important parsing #273
+
 ## 0.45.3
 
 ### Patch Changes
