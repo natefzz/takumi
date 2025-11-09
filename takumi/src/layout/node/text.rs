@@ -3,9 +3,10 @@ use taffy::{AvailableSpace, Layout, Size};
 
 use crate::{
   layout::{
+    Viewport,
     inline::{InlineBrush, InlineContentKind, break_lines, create_inline_constraint},
     node::Node,
-    style::{InheritedStyle, SizedFontStyle, Style, TextOverflow, tw::TailwindProperties},
+    style::{InheritedStyle, SizedFontStyle, Style, TextOverflow, tw::TailwindValues},
   },
   rendering::{
     Canvas, MaxHeight, RenderContext, apply_text_transform, apply_white_space_collapse,
@@ -24,19 +25,19 @@ pub struct TextNode {
   /// The text content to be rendered
   pub text: String,
   /// The tailwind properties for this text node
-  pub tw: Option<TailwindProperties>,
+  pub tw: Option<TailwindValues>,
 }
 
 impl<Nodes: Node<Nodes>> Node<Nodes> for TextNode {
-  fn get_tailwind_properties(&self) -> Option<&TailwindProperties> {
-    self.tw.as_ref()
-  }
-
-  fn create_inherited_style(&mut self, parent_style: &InheritedStyle) -> InheritedStyle {
+  fn create_inherited_style(
+    &mut self,
+    parent_style: &InheritedStyle,
+    viewport: Viewport,
+  ) -> InheritedStyle {
     let mut style = self.style.take().unwrap_or_default();
 
     if let Some(tw) = self.tw.as_ref() {
-      tw.apply(&mut style);
+      tw.apply(&mut style, viewport);
     }
 
     style.inherit(parent_style)

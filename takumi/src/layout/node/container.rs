@@ -8,8 +8,9 @@ use std::fmt::Debug;
 use serde::Deserialize;
 
 use crate::layout::{
+  Viewport,
   node::Node,
-  style::{InheritedStyle, Style, tw::TailwindProperties},
+  style::{InheritedStyle, Style, tw::TailwindValues},
 };
 
 /// A container node that can hold child nodes.
@@ -23,23 +24,23 @@ pub struct ContainerNode<Nodes: Node<Nodes>> {
   /// The child nodes contained within this container
   pub children: Option<Vec<Nodes>>,
   /// The tailwind properties for this container node
-  pub tw: Option<TailwindProperties>,
+  pub tw: Option<TailwindValues>,
 }
 
 impl<Nodes: Node<Nodes>> Node<Nodes> for ContainerNode<Nodes> {
-  fn get_tailwind_properties(&self) -> Option<&TailwindProperties> {
-    self.tw.as_ref()
-  }
-
   fn children_ref(&self) -> Option<&[Nodes]> {
     self.children.as_deref()
   }
 
-  fn create_inherited_style(&mut self, parent_style: &InheritedStyle) -> InheritedStyle {
+  fn create_inherited_style(
+    &mut self,
+    parent_style: &InheritedStyle,
+    viewport: Viewport,
+  ) -> InheritedStyle {
     let mut style = self.style.take().unwrap_or_default();
 
     if let Some(tw) = self.tw.as_ref() {
-      tw.apply(&mut style);
+      tw.apply(&mut style, viewport);
     }
 
     style.inherit(parent_style)

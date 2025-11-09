@@ -1,17 +1,20 @@
 pub(crate) mod map;
 pub(crate) mod parser;
 
-use std::{ops::Neg, str::FromStr};
+use std::{cmp::Ordering, ops::Neg, str::FromStr};
 
-use serde::Deserializer;
+use serde::{Deserializer, de::Error as DeError};
 use smallvec::smallvec;
 
-use crate::layout::style::{
-  tw::{
-    map::{FIXED_PROPERTIES, PREFIX_PARSERS},
-    parser::*,
+use crate::layout::{
+  Viewport,
+  style::{
+    tw::{
+      map::{FIXED_PROPERTIES, PREFIX_PARSERS},
+      parser::*,
+    },
+    *,
   },
-  *,
 };
 
 /// Tailwind `--spacing` variable value.
@@ -19,48 +22,153 @@ pub const TW_VAR_SPACING: f32 = 0.25;
 
 /// Represents a collection of tailwind properties.
 #[derive(Debug, Clone)]
-pub struct TailwindProperties {
-  inner: Vec<TailwindProperty>,
+pub struct TailwindValues {
+  inner: Vec<TailwindValue>,
 }
 
-impl FromStr for TailwindProperties {
+impl FromStr for TailwindValues {
   type Err = String;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    Ok(TailwindProperties {
-      inner: TailwindProperty::parse_list(s).collect(),
-    })
+    let mut collected = s
+      .split_whitespace()
+      .filter_map(TailwindValue::parse)
+      .collect::<Vec<_>>();
+
+    // sort in reverse order by is important, then has breakpoint, then rest is last.
+    collected.sort_unstable_by(|a, b| {
+      // Not important comes before important
+      if !a.important && b.important {
+        return Ordering::Less;
+      }
+
+      if a.important && !b.important {
+        return Ordering::Greater;
+      }
+
+      // No breakpoint comes before breakpoint
+      match (&a.breakpoint, &b.breakpoint) {
+        (None, Some(_)) => Ordering::Less,
+        (Some(_), None) => Ordering::Greater,
+        _ => Ordering::Equal,
+      }
+    });
+
+    Ok(TailwindValues { inner: collected })
   }
 }
 
-impl TailwindProperties {
-  /// Iterate over the tailwind properties.
-  pub fn iter(&self) -> impl Iterator<Item = &TailwindProperty> {
+impl TailwindValues {
+  /// Iterate over the tailwind values.
+  pub fn iter(&self) -> impl Iterator<Item = &TailwindValue> {
     self.inner.iter()
   }
 
-  pub(crate) fn apply(&self, style: &mut Style) {
-    for property in self.iter() {
-      property.apply(style);
+  pub(crate) fn apply(&self, style: &mut Style, viewport: Viewport) {
+    for value in self.iter() {
+      value.apply(style, viewport);
     }
   }
 }
 
-impl<'de> Deserialize<'de> for TailwindProperties {
+impl<'de> Deserialize<'de> for TailwindValues {
   fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
   where
     D: Deserializer<'de>,
   {
     let string = String::deserialize(deserializer)?;
 
-    Ok(TailwindProperties {
-      inner: TailwindProperty::parse_list(&string).collect(),
+    TailwindValues::from_str(&string).map_err(D::Error::custom)
+  }
+}
+
+/// Represents a tailwind value.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TailwindValue {
+  /// The tailwind property.
+  pub property: TailwindProperty,
+  /// The breakpoint.
+  pub breakpoint: Option<Breakpoint>,
+  /// Whether the value is important.
+  pub important: bool,
+}
+
+impl TailwindValue {
+  pub(crate) fn apply(&self, style: &mut Style, viewport: Viewport) {
+    if let Some(breakpoint) = self.breakpoint
+      && !breakpoint.matches(viewport)
+    {
+      return;
+    }
+
+    self.property.apply(style);
+  }
+
+  /// Parse a tailwind value from a token.
+  pub fn parse(mut token: &str) -> Option<Self> {
+    let mut important = false;
+    let mut breakpoint = None;
+
+    // Breakpoint. sm:mt-0
+    if let Some((breakpoint_token, rest)) = token.split_once(':') {
+      breakpoint = Some(Breakpoint::parse(breakpoint_token)?);
+      token = rest;
+    }
+
+    // Check for important flag. !mt-0
+    if let Some(stripped) = token.strip_prefix('!') {
+      important = true;
+      token = stripped;
+    }
+
+    // Check for important flag. mt-0!
+    if let Some(stripped) = token.strip_suffix('!') {
+      important = true;
+      token = stripped;
+    }
+
+    Some(TailwindValue {
+      property: TailwindProperty::parse(token)?,
+      breakpoint,
+      important,
     })
+  }
+}
+
+/// Represents a breakpoint.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Breakpoint(pub(crate) LengthUnit);
+
+impl Breakpoint {
+  /// Parse a breakpoint from a token.
+  pub fn parse(token: &str) -> Option<Self> {
+    match_ignore_ascii_case! {token,
+      "sm" => Some(Breakpoint(LengthUnit::Rem(40.0))),
+      "md" => Some(Breakpoint(LengthUnit::Rem(48.0))),
+      "lg" => Some(Breakpoint(LengthUnit::Rem(64.0))),
+      "xl" => Some(Breakpoint(LengthUnit::Rem(80.0))),
+      "2xl" => Some(Breakpoint(LengthUnit::Rem(96.0))),
+      _ => None,
+    }
+  }
+
+  /// Check if the breakpoint matches the viewport width.
+  pub fn matches(&self, viewport: Viewport) -> bool {
+    let viewport_width = viewport.width as f32;
+    let breakpoint_width = match self.0 {
+      LengthUnit::Rem(value) => value * viewport.font_size,
+      LengthUnit::Px(value) => value,
+      LengthUnit::Vw(value) => (value / 100.0) * viewport_width,
+      _ => 0.0,
+    };
+
+    viewport_width >= breakpoint_width
   }
 }
 
 /// Represents a tailwind property.
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub enum TailwindProperty {
   /// `box-sizing` property.
   BoxSizing(BoxSizing),
@@ -336,11 +444,6 @@ impl Neg for TailwindProperty {
 }
 
 impl TailwindProperty {
-  /// Parse a list of tailwind properties from a string.
-  pub fn parse_list(property: &str) -> impl Iterator<Item = TailwindProperty> {
-    property.split_whitespace().filter_map(Self::parse)
-  }
-
   /// Parse a single tailwind property from a token.
   pub fn parse(token: &str) -> Option<TailwindProperty> {
     // Check fixed properties first
@@ -955,5 +1058,75 @@ mod tests {
         class
       );
     }
+  }
+
+  #[test]
+  fn test_breakpoint_matches() {
+    let viewport = Viewport {
+      width: 1000,
+      height: 1000,
+      font_size: 16.0,
+    };
+
+    assert!(Breakpoint::parse("sm").unwrap().matches(viewport));
+  }
+
+  #[test]
+  fn test_breakpoint_does_not_match() {
+    let viewport = Viewport {
+      width: 1000,
+      height: 1000,
+      font_size: 16.0,
+    };
+
+    // 80 * 16 = 1280 > 1000
+    assert!(!Breakpoint::parse("xl").unwrap().matches(viewport));
+  }
+
+  #[test]
+  fn test_value_parsing() {
+    assert_eq!(
+      TailwindValue::parse("md:!mt-4"),
+      Some(TailwindValue {
+        property: TailwindProperty::MarginTop(LengthUnit::Rem(1.0)),
+        breakpoint: Some(Breakpoint(LengthUnit::Rem(48.0))),
+        important: true,
+      })
+    );
+  }
+
+  #[test]
+  fn test_values_sorting() {
+    let values = TailwindValues::from_str("md:!mt-4 sm:mt-8 !mt-12 mt-16").unwrap();
+
+    assert_eq!(
+      values.inner.as_slice(),
+      &[
+        // mt-16
+        TailwindValue {
+          property: TailwindProperty::MarginTop(LengthUnit::Rem(4.0)),
+          breakpoint: None,
+          important: false,
+        },
+        // sm:mt-8
+        TailwindValue {
+          property: TailwindProperty::MarginTop(LengthUnit::Rem(2.0)),
+          breakpoint: Some(Breakpoint(LengthUnit::Rem(40.0))),
+          important: false,
+        },
+        // !mt-12
+        TailwindValue {
+          property: TailwindProperty::MarginTop(LengthUnit::Rem(3.0)),
+          breakpoint: None,
+          important: true,
+        },
+        // md:!mt-4
+        TailwindValue {
+          property: TailwindProperty::MarginTop(LengthUnit::Rem(1.0)),
+          breakpoint: Some(Breakpoint(LengthUnit::Rem(48.0))),
+          important: true,
+        },
+      ]
+    );
   }
 }

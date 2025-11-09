@@ -4,12 +4,13 @@ use data_url::DataUrl;
 use serde::Deserialize;
 use taffy::{AvailableSpace, Layout, Size};
 
+use crate::layout::Viewport;
 use crate::resources::image::{ImageResult, load_image_source_from_bytes};
 use crate::{
   layout::{
     inline::InlineContentKind,
     node::Node,
-    style::{InheritedStyle, Style, tw::TailwindProperties},
+    style::{InheritedStyle, Style, tw::TailwindValues},
   },
   rendering::{Canvas, RenderContext, draw_image},
   resources::{
@@ -30,25 +31,25 @@ pub struct ImageNode {
   /// The height of the image
   pub height: Option<f32>,
   /// The tailwind properties for this image node
-  pub tw: Option<TailwindProperties>,
+  pub tw: Option<TailwindValues>,
 }
 
 impl<Nodes: Node<Nodes>> Node<Nodes> for ImageNode {
-  fn get_tailwind_properties(&self) -> Option<&TailwindProperties> {
-    self.tw.as_ref()
-  }
-
   fn collect_fetch_tasks(&self, collection: &mut FetchTaskCollection) {
     if self.src.starts_with("https://") || self.src.starts_with("http://") {
       collection.insert(self.src.clone());
     }
   }
 
-  fn create_inherited_style(&mut self, parent_style: &InheritedStyle) -> InheritedStyle {
+  fn create_inherited_style(
+    &mut self,
+    parent_style: &InheritedStyle,
+    viewport: Viewport,
+  ) -> InheritedStyle {
     let mut style = self.style.take().unwrap_or_default();
 
     if let Some(tw) = self.tw.as_ref() {
-      tw.apply(&mut style);
+      tw.apply(&mut style, viewport);
     }
 
     style.inherit(parent_style)

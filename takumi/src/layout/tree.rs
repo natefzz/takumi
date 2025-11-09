@@ -77,7 +77,7 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
   }
 
   fn from_node_impl(parent_context: &RenderContext<'g>, mut node: N) -> Self {
-    let style = node.create_inherited_style(&parent_context.style);
+    let style = node.create_inherited_style(&parent_context.style, parent_context.viewport);
 
     let font_size = style
       .font_size
