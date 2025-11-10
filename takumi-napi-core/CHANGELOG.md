@@ -1,5 +1,11 @@
 # @takumi-rs/core
 
+## 0.46.5
+
+### Patch Changes
+
+- b97af12: fix failed to parse buffer input
+
 ## 0.46.4
 
 ## 0.46.3
