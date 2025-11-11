@@ -1,5 +1,11 @@
 # @takumi-rs/wasm
 
+## 0.46.6
+
+### Patch Changes
+
+- 73c07ff: fix `takumi_wasm_bg.wasm` import points to incorrect declartion file
+
 ## 0.46.5
 
 ## 0.46.4
