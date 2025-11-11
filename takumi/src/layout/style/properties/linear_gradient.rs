@@ -294,12 +294,7 @@ impl<'de> Deserialize<'de> for Angle {
     UntaggedEnumVisitor::new()
       .i32(|num| Ok(Angle::new(num as f32)))
       .f32(|num| Ok(Angle::new(num)))
-      .string(|str| {
-        let mut input = ParserInput::new(str);
-        let mut parser = Parser::new(&mut input);
-
-        Angle::from_css(&mut parser).map_err(|e| serde::de::Error::custom(e.to_string()))
-      })
+      .string(|str| Angle::from_str(str).map_err(|e| serde::de::Error::custom(e.to_string())))
       .deserialize(deserializer)
   }
 }
@@ -442,6 +437,13 @@ impl Angle {
 
 impl<'i> FromCss<'i> for Angle {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Angle> {
+    if input
+      .try_parse(|input| input.expect_ident_matching("none"))
+      .is_ok()
+    {
+      return Ok(Angle::zero());
+    }
+
     let is_direction_keyword = input
       .try_parse(|input| input.expect_ident_matching("to"))
       .is_ok();

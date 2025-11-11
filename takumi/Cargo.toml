@@ -11,8 +11,7 @@ readme = "README.md"
 rust-version = "1.88"
 
 [dependencies]
-cssparser = "0.35"
-csscolorparser = "0.8"
+cssparser = "0.36"
 zeno = "0.3"
 lru = "0.16"
 derive_builder = "0.20"
@@ -21,6 +20,7 @@ png = "0.18"
 serde-untagged = "0.1"
 data-url = "0.3"
 dashmap = "6.1"
+color = "0.3"
 
 [dependencies.phf]
 version = "0.13"

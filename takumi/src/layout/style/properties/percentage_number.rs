@@ -1,4 +1,4 @@
-use std::ops::Neg;
+use std::ops::{Deref, Neg};
 
 use cssparser::{Parser, ParserInput, Token};
 use serde::{Deserialize, Serialize};
@@ -21,6 +21,14 @@ pub struct PercentageNumber(pub f32);
 impl Default for PercentageNumber {
   fn default() -> Self {
     Self(1.0)
+  }
+}
+
+impl Deref for PercentageNumber {
+  type Target = f32;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
   }
 }
 

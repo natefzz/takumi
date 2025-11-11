@@ -1,7 +1,11 @@
 use std::fmt::Display;
 
-use csscolorparser::{NAMED_COLORS, ParseColorError};
-use cssparser::{Parser, ToCss, Token, match_ignore_ascii_case};
+use color::{Srgb, parse_color};
+use cssparser::{
+  Parser, Token,
+  color::{parse_hash_color, parse_named_color},
+  match_ignore_ascii_case,
+};
 use image::Rgba;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -427,19 +431,19 @@ impl<'i> FromCss<'i> for Color {
     let token = input.next()?;
 
     match *token {
-      Token::Hash(_) | Token::IDHash(_) => {
-        parse_color_string(&token.to_css_string()).map_err(|_| {
+      Token::Hash(ref value) | Token::IDHash(ref value) => parse_hash_color(value.as_bytes())
+        .map(|(r, g, b, a)| Color([r, g, b, (a * 255.0) as u8]))
+        .map_err(|_| {
           location
             .new_basic_unexpected_token_error(token.clone())
             .into()
-        })
-      }
+        }),
       Token::Ident(ref ident) => {
         if ident.eq_ignore_ascii_case("transparent") {
           return Ok(Color::transparent());
         }
 
-        let Some([r, g, b]) = NAMED_COLORS.get(ident.as_ref().into()) else {
+        let Ok((r, g, b)) = parse_named_color(ident) else {
           return Err(
             location
               .new_basic_unexpected_token_error(token.clone())
@@ -447,7 +451,7 @@ impl<'i> FromCss<'i> for Color {
           );
         };
 
-        Ok(Color([*r, *g, *b, 255]))
+        Ok(Color([r, g, b, 255]))
       }
       Token::Function(_) => {
         // Have to clone to persist token, and allow input to be borrowed
@@ -464,7 +468,8 @@ impl<'i> FromCss<'i> for Color {
           // Add closing parenthesis
           function.push(')');
 
-          parse_color_string(&function)
+          parse_color(&function)
+            .map(|color| Color(color.to_alpha_color::<Srgb>().to_rgba8().to_u8_array()))
             .map_err(|_| location.new_basic_unexpected_token_error(token).into())
         })
       }
@@ -475,10 +480,6 @@ impl<'i> FromCss<'i> for Color {
       ),
     }
   }
-}
-
-fn parse_color_string(string: &str) -> Result<Color, ParseColorError> {
-  csscolorparser::parse(string).map(|color| Color(color.to_rgba8()))
 }
 
 #[cfg(test)]
