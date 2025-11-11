@@ -1,5 +1,11 @@
 # @takumi-rs/core
 
+## 0.46.6
+
+### Patch Changes
+
+- 73c07ff: dont create ref if only buffer slice is needed
+
 ## 0.46.5
 
 ### Patch Changes
