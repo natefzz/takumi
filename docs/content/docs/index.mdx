@@ -115,11 +115,12 @@ module.exports = {
 Then, in your code, import the WASM file and initialize the module:
 
 ```ts
-import { initWasm, Renderer } from '@takumi-rs/image-response/wasm';
+import { initWasm } from '@takumi-rs/image-response/wasm';
 import wasmUrl from '@takumi-rs/wasm/takumi_wasm_bg.wasm';
 
 await initWasm(wasmUrl);
-const renderer = new Renderer();
+
+// ...
 ```
   </Accordion>
 </Accordions>
