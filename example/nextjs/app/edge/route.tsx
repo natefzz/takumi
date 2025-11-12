@@ -1,6 +1,20 @@
-import ImageResponse from "@takumi-rs/image-response";
+import { ImageResponse, initWasmSync } from "@takumi-rs/image-response/wasm";
 import DocsTemplateV1 from "@takumi-rs/template/docs-template-v1";
+import module from "@takumi-rs/wasm/next";
 import { Axe } from "lucide-react";
+
+initWasmSync(module);
+
+export const runtime = "edge";
+
+const fonts = [
+  {
+    name: "Geist",
+    data: await fetch("https://takumi.kane.tw/fonts/Geist.woff2").then((r) =>
+      r.arrayBuffer(),
+    ),
+  },
+];
 
 export function GET(request: Request) {
   const url = new URL(request.url);
@@ -19,6 +33,7 @@ export function GET(request: Request) {
       width: 1200,
       height: 630,
       format: "webp",
+      fonts,
     },
   );
 }
