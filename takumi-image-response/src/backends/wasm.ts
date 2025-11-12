@@ -1,10 +1,13 @@
 import { fromJsx } from "@takumi-rs/helpers/jsx";
-import {
+import init, {
   type ByteBuf,
   collectNodeFetchTasks,
   type Font,
+  type InitInput,
+  initSync,
   Renderer,
   type RenderOptions,
+  type SyncInitInput,
 } from "@takumi-rs/wasm";
 import type { ReactNode } from "react";
 
@@ -124,8 +127,16 @@ const contentTypeMapping = {
   webp: "image/webp",
 };
 
+let isWasmInitialized = false;
+
 export class ImageResponse extends Response {
   constructor(component: ReactNode, options?: ImageResponseOptions) {
+    if (!isWasmInitialized) {
+      throw new Error(
+        "WASM is not initialized, please call `initWasm` or `initWasmSync` first.",
+      );
+    }
+
     const stream = createStream(component, options);
     const headers = new Headers(options?.headers);
 
@@ -142,6 +153,26 @@ export class ImageResponse extends Response {
       headers,
     });
   }
+}
+
+export async function initWasm(source: Promise<InitInput> | InitInput) {
+  if (isWasmInitialized) return;
+
+  isWasmInitialized = true;
+
+  await init({
+    module_or_path: source,
+  });
+}
+
+export function initWasmSync(source: SyncInitInput) {
+  if (isWasmInitialized) return;
+
+  initSync({
+    module: source,
+  });
+
+  isWasmInitialized = true;
 }
 
 export default ImageResponse;

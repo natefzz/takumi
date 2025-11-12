@@ -94,16 +94,14 @@ Make sure you have the `@takumi-rs/wasm` package installed as well.
 
 ```tsx
 import { describe, expect, test } from "bun:test";
-import init from "@takumi-rs/wasm";
-import ImageResponse from "@takumi-rs/image-response/wasm";
+import { ImageResponse, initWasm } from "@takumi-rs/image-response/wasm";
 
 // Or with bundler specific WASM resolution process,
 // like cloudflare workers can be configured with wrangler.toml.
-await init({
-  module_or_path: fetch(
-    import.meta.resolve("@takumi-rs/wasm/takumi_wasm_bg.wasm"),
-  ),
-});
+await initWasm(fetch(import.meta.resolve("@takumi-rs/wasm/takumi_wasm_bg.wasm")));
+
+// For Next.js Runtime, you can use the bundled WASM file.
+await initWasm(import("@takumi-rs/wasm/next"));
 
 export default {
   fetch() {

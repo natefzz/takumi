@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import init from "@takumi-rs/wasm";
-import ImageResponse from "../src/backends/wasm";
+import { ImageResponse, initWasm } from "../src/backends/wasm";
 
-await init({
-  module_or_path: fetch(
+await initWasm(
+  new URL(
     import.meta.resolve("@takumi-rs/wasm/takumi_wasm_bg.wasm"),
+    import.meta.url,
   ),
-});
+);
 
 describe("ImageResponse", () => {
   test("should not crash", async () => {

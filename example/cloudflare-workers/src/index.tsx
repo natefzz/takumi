@@ -1,10 +1,10 @@
-import ImageResponse from "@takumi-rs/image-response/wasm";
+import { ImageResponse, initWasmSync } from "@takumi-rs/image-response/wasm";
 import DocsTemplateV1 from "@takumi-rs/template/docs-template-v1";
-import { type ByteBuf, initSync } from "@takumi-rs/wasm";
+import type { ByteBuf } from "@takumi-rs/wasm";
 import module from "@takumi-rs/wasm/takumi_wasm_bg.wasm";
 import geist from "../../../assets/fonts/geist/Geist[wght].woff2";
 
-initSync({ module });
+initWasmSync(module);
 
 let fetchedResources: Promise<Map<string, ByteBuf>>;
 const logoUrl = "https://yeecord.com/img/logo.png";

@@ -59,11 +59,10 @@ npm i @takumi-rs/wasm
 Wrangler's bundling process handles the wasm initialization for you by default, you can just load it in synchronous way.
 
 ```ts
-import ImageResponse from "@takumi-rs/image-response/wasm";
-import { initSync } from "@takumi-rs/wasm";
+import { initWasmSync, ImageResponse } from "@takumi-rs/image-response/wasm";
 import module from "@takumi-rs/wasm/takumi_wasm_bg.wasm";
 
-initSync({ module });
+initWasmSync(module);
 
 // ...
 ```
@@ -74,18 +73,25 @@ Check the [example project](https://github.com/kane50613/takumi/tree/master/exam
 Load the WASM file as an asset.
 
 ```tsx
-import init from "@takumi-rs/wasm";
+import { initWasm } from "@takumi-rs/image-response/wasm";
 import wasmUrl from "@takumi-rs/wasm/takumi_wasm_bg.wasm?url";
 
-await init(wasmUrl);
+await initWasm(wasmUrl);
 
 // ...
 ```
   </Accordion>
-  <Accordion title="Next.js Edge Runtime (Turbopack)">
-As of the time of writing, there's no support for asset loader like how Webpack used to do. The Node.js approach mentioned above is recommended instead.
+  <Accordion title="Next.js with Turbopack">
+This works in both Node.js and Edge runtime.
 
-Read more in [vercel/next.js #75430](https://github.com/vercel/next.js/discussions/75430).
+```ts
+import { initWasmSync, ImageResponse } from "@takumi-rs/image-response/wasm";
+import module from "@takumi-rs/wasm/next";
+
+initWasmSync(module);
+
+// ...
+```
   </Accordion>
   <Accordion title="Webpack">
 First, configure Webpack to recognize the WASM file as an asset.
@@ -109,16 +115,14 @@ module.exports = {
 Then, in your code, import the WASM file and initialize the module:
 
 ```ts
-import init, { Renderer } from '@takumi-rs/wasm';
+import { initWasm, Renderer } from '@takumi-rs/image-response/wasm';
 import wasmUrl from '@takumi-rs/wasm/takumi_wasm_bg.wasm';
 
-await init(wasmUrl);
+await initWasm(wasmUrl);
 const renderer = new Renderer();
 ```
   </Accordion>
 </Accordions>
-
-
 
 ## Usage
 
@@ -159,17 +163,12 @@ function Hello() {
 /** @jsxImportSource react */
 // ---cut-before---
 
-import { ImageResponse } from "@takumi-rs/image-response/wasm";
-import init from "@takumi-rs/wasm";
+import { ImageResponse, initWasm } from "@takumi-rs/image-response/wasm";
 import { serve } from "bun";
 
 // the wasm module has to be initialized before using the ImageResponse API
-await init({
-  // or with bundler magic like ?url to resolve the wasm file path
-  module_or_path: fetch(
-    import.meta.resolve("@takumi-rs/wasm/takumi_wasm_bg.wasm"),
-  ),
-});
+// Check the additional bundler setup section for more details.
+await initWasm(import.meta.resolve("@takumi-rs/wasm/takumi_wasm_bg.wasm"));
 
 export default {
   fetch() {

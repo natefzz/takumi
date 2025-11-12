@@ -35,10 +35,15 @@
     "./takumi_wasm_bg.wasm": {
       "types": "./pkg/takumi_wasm_bg.wasm.d.ts",
       "default": "./pkg/takumi_wasm_bg.wasm"
+    },
+    "./next": {
+      "types": "./bundlers/next.d.ts",
+      "default": "./bundlers/next.js"
     }
   },
   "files": [
     "README.md",
-    "pkg/takumi*"
+    "pkg/takumi*",
+    "bundlers/*"
   ]
 }
