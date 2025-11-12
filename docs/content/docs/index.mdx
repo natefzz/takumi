@@ -67,6 +67,21 @@ initWasmSync(module);
 // ...
 ```
 
+And make sure you have `wrangler.jsonc` / `wrangler.toml` setup to load assets. `compatibility_date` should be set to at least `2025-10-30`.
+
+```jsonc title="wrangler.jsonc"
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "compatibility_date": "2025-10-30", 
+  "rules": [
+    {
+      "type": "Data",
+      "globs": ["**/*.ttf", "**/*.woff2"],
+    }
+  ]
+}
+```
+
 Check the [example project](https://github.com/kane50613/takumi/tree/master/example/cloudflare-workers) with wrangler usage.
   </Accordion>
   <Accordion title="Vite">
