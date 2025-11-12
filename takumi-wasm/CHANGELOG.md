@@ -1,5 +1,11 @@
 # @takumi-rs/wasm
 
+## 0.48.0
+
+### Minor Changes
+
+- c3f1b7d: support optional width/height
+
 ## 0.47.0
 
 ## 0.46.6
