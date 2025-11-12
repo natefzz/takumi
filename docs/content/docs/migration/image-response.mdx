@@ -25,7 +25,11 @@ export const config = {
 
 ## Code changes
 
-```tsx
+```tsx twoslash
+/** @jsxImportSource react */
+// ---cut-before---
+
+// @noErrors
 import { ImageResponse } from "next/og"; // [!code --]
 import { ImageResponse } from "@takumi-rs/image-response"; // [!code ++]
 
@@ -61,16 +65,20 @@ export function GET(request: Request) {
 
 If you are using WASM environment, you can import from the `@takumi-rs/image-response/wasm` package.
 
-```tsx
-import { ImageResponse } from "@takumi-rs/image-response";
-import { ImageResponse } from "@takumi-rs/image-response/wasm";
-import init from "@takumi-rs/wasm";
+```tsx twoslash
+/** @jsxImportSource react */
+// ---cut-before---
 
-await init({
-  module_or_path: fetch(
-    import.meta.resolve("@takumi-rs/wasm/takumi_wasm_bg.wasm"),
-  ),
-});
+// @noErrors
+import { ImageResponse } from "@takumi-rs/image-response"; // [!code --]
+import { ImageResponse } from "@takumi-rs/image-response/wasm"; // [!code ++]
+import init from "@takumi-rs/wasm"; // [!code ++]
+
+await init({ // [!code ++]
+  module_or_path: fetch( // [!code ++]
+    import.meta.resolve("@takumi-rs/wasm/takumi_wasm_bg.wasm"), // [!code ++]
+  ), // [!code ++]
+}); // [!code ++]
 
 // Same as above ...
 ```

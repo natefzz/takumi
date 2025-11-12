@@ -41,9 +41,6 @@ export default defineConfig({
   ssr: {
     external: ["@takumi-rs/image-response"],
   },
-  optimizeDeps: {
-    exclude: ["@takumi-rs/image-response"],
-  },
 });
 ```
   </Accordion>
@@ -93,7 +90,7 @@ Read more in [vercel/next.js #75430](https://github.com/vercel/next.js/discussio
   <Accordion title="Webpack">
 First, configure Webpack to recognize the WASM file as an asset.
 
-```js title="webpack.config.js"
+```ts title="webpack.config.js"
 module.exports = {
   module: {
     rules: [
@@ -111,7 +108,7 @@ module.exports = {
 
 Then, in your code, import the WASM file and initialize the module:
 
-```js
+```ts
 import init, { Renderer } from '@takumi-rs/wasm';
 import wasmUrl from '@takumi-rs/wasm/takumi_wasm_bg.wasm';
 
@@ -131,7 +128,10 @@ It comes with pre-bundled full axis (which means 100-900 weights available) [Gei
 
 <Tabs items={["Node.js", "WASM"]}>
 <Tab>
-```tsx
+```tsx twoslash
+/** @jsxImportSource react */
+// ---cut-before---
+
 import { ImageResponse } from "@takumi-rs/image-response";
 import { serve } from "bun";
 
@@ -155,7 +155,10 @@ function Hello() {
 ```
 </Tab>
 <Tab>
-```tsx
+```tsx twoslash
+/** @jsxImportSource react */
+// ---cut-before---
+
 import { ImageResponse } from "@takumi-rs/image-response/wasm";
 import init from "@takumi-rs/wasm";
 import { serve } from "bun";
@@ -177,6 +180,14 @@ export default {
     });
   },
 }
+
+function Hello() {
+  return (
+    <div tw="bg-white w-full h-full flex items-center justify-center">
+      <h1 tw="text-4xl font-bold">Hello</h1>
+    </div>
+  );
+}
 ```
 </Tab>
 </Tabs>
@@ -189,7 +200,10 @@ If you don't have any idea about where to start, or just want quick and easy way
 npm i @takumi-rs/template
 ```
 
-```tsx
+```tsx twoslash
+/** @jsxImportSource react */
+// ---cut-before---
+
 import DocsTemplateV1 from "@takumi-rs/template/docs-template-v1";
 import { ImageResponse } from "@takumi-rs/image-response";
 import { Axe } from "lucide-react";

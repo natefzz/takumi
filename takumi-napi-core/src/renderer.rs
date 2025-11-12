@@ -34,11 +34,18 @@ pub struct Renderer {
 
 #[napi(object)]
 pub struct RenderOptions<'env> {
+  /// The width of the image. If not provided, the width will be automatically calculated based on the content.
   pub width: Option<u32>,
+  /// The height of the image. If not provided, the height will be automatically calculated based on the content.
   pub height: Option<u32>,
+  /// The format of the image.
   pub format: Option<OutputFormat>,
+  /// The quality of JPEG format (0-100).
   pub quality: Option<u8>,
+  /// Whether to draw debug borders.
   pub draw_debug_border: Option<bool>,
+  /// The fetch function to use to fetch resources.
+  /// @default global fetch function
   pub fetch: Option<FetchFn<'env>>,
 }
 

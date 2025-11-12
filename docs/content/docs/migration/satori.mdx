@@ -23,11 +23,15 @@ Make sure to mark `@takumi-rs/core` as `external` if you are using a bundler lik
 
 ## Code changes
 
-```tsx
-import satori from "satori";
-import { Resvg } from "@resvg/resvg-js";
-import { fromJsx } from "@takumi-rs/helpers/jsx";
-import { Renderer } from "@takumi-rs/core";
+```tsx twoslash
+/** @jsxImportSource react */
+// ---cut-before---
+
+// @noErrors
+import satori from "satori"; // [!code --]
+import { Resvg } from "@resvg/resvg-js"; // [!code --]
+import { fromJsx } from "@takumi-rs/helpers/jsx"; // [!code ++]
+import { Renderer } from "@takumi-rs/core"; // [!code ++]
 
 // You can use variable fonts with Takumi!
 // Takumi comes with full axis Geist and Geist Mono by default, 
@@ -41,21 +45,21 @@ const fonts = [
   }
 ];
 
-const svg = await satori(<OgImage title="Satori" />, {
-  fonts,
-});
-const buffer = new Resvg(svg).render().asPng();
+const svg = await satori(<OgImage title="Satori" />, { // [!code --]
+  fonts, // [!code --]
+}); // [!code --]
+const buffer = new Resvg(svg).render().asPng(); // [!code --]
 
-const renderer = new Renderer({
-  fonts,
-});
+const renderer = new Renderer({ // [!code ++]
+  fonts, // [!code ++]
+}); // [!code ++]
 
-const node = await fromJsx(<OgImage title="Takumi" />);
-const png = await renderer.render(node, {
-  width: 1200,
-  height: 630,
-  format: "png", // "webp" is recommended as well.
-});
+const node = await fromJsx(<OgImage title="Takumi" />); // [!code ++]
+const png = await renderer.render(node, { // [!code ++]
+  width: 1200, // [!code ++]
+  height: 630, // [!code ++]
+  format: "png", // "webp" is recommended as well. // [!code ++]
+}); // [!code ++]
 
 function OgImage({ title }: { title: string }) {
   return (

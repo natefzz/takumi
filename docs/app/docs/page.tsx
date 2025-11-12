@@ -5,6 +5,7 @@ import {
 } from "fumadocs-core/page-tree";
 import type { TOCItemType } from "fumadocs-core/toc";
 import { toClientRenderer } from "fumadocs-mdx/runtime/vite";
+import * as Twoslash from "fumadocs-twoslash/ui";
 import { Card, Cards } from "fumadocs-ui/components/card";
 import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
@@ -25,6 +26,7 @@ import type { Route } from "./+types/page";
 
 const components = {
   ...defaultMdxComponents,
+  ...Twoslash,
   Hand,
   BookOpen,
   ArrowBigRight,

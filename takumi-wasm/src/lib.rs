@@ -34,11 +34,29 @@ export type AnyNode = { type: string; [key: string]: any };
 export type ByteBuf = Uint8Array | ArrayBuffer | Buffer;
 
 export type RenderOptions = {
+  /**
+   * The width of the image. If not provided, the width will be automatically calculated based on the content.
+   */
   width?: number,
+  /**
+   * The height of the image. If not provided, the height will be automatically calculated based on the content.
+   */
   height?: number,
+  /**
+   * The format of the image.
+   */
   format?: "png" | "jpeg" | "webp",
+  /**
+   * The quality of JPEG format (0-100).
+   */
   quality?: number,
+  /**
+   * The resources fetched externally. You should collect the fetch tasks first using `collectNodeFetchTasks` and then pass the resources here.
+   */
   fetchedResources?: Map<string, ByteBuf>,
+  /**
+   * Whether to draw debug borders.
+   */
   drawDebugBorder?: boolean,
 };
 
@@ -335,6 +353,7 @@ impl Renderer {
   }
 }
 
+/// Collects the fetch task urls from the node.
 #[wasm_bindgen(js_name = collectNodeFetchTasks)]
 pub fn collect_node_fetch_tasks(node: AnyNode) -> Vec<String> {
   panic_hook();

@@ -6,13 +6,8 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import * as MdxConfig from "./source.config";
 
 export default defineConfig({
-  build: {
-    rollupOptions: {
-      external: ["shiki"],
-    },
-  },
   ssr: {
-    external: ["@takumi-rs/image-response"],
+    external: ["@takumi-rs/image-response", "typescript", "twoslash", "shiki"],
   },
   plugins: [mdx(MdxConfig), tailwindcss(), reactRouter(), tsconfigPaths()],
 });
