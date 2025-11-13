@@ -1,5 +1,17 @@
 # @takumi-rs/image-response
 
+## 0.50.0
+
+### Minor Changes
+
+- d02bb3e: **drop `initWasm`**, add `module` option\*\*
+
+### Patch Changes
+
+- @takumi-rs/core@0.50.0
+- @takumi-rs/wasm@0.50.0
+- @takumi-rs/helpers@0.50.0
+
 ## 0.49.1
 
 ### Patch Changes
