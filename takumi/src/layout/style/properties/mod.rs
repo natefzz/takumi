@@ -51,6 +51,7 @@ pub use border::*;
 pub use box_shadow::*;
 pub use clip_path::*;
 pub use color::*;
+use fast_image_resize::ResizeAlg;
 pub use filter::*;
 pub use flex::*;
 pub use flex_grow::*;
@@ -626,6 +627,20 @@ impl From<ImageScalingAlgorithm> for FilterType {
       ImageScalingAlgorithm::Auto => FilterType::CatmullRom,
       ImageScalingAlgorithm::Smooth => FilterType::Lanczos3,
       ImageScalingAlgorithm::Pixelated => FilterType::Nearest,
+    }
+  }
+}
+
+impl From<ImageScalingAlgorithm> for ResizeAlg {
+  fn from(algorithm: ImageScalingAlgorithm) -> Self {
+    match algorithm {
+      ImageScalingAlgorithm::Auto => {
+        ResizeAlg::Convolution(fast_image_resize::FilterType::CatmullRom)
+      }
+      ImageScalingAlgorithm::Smooth => {
+        ResizeAlg::Convolution(fast_image_resize::FilterType::Lanczos3)
+      }
+      ImageScalingAlgorithm::Pixelated => ResizeAlg::Nearest,
     }
   }
 }

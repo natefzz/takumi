@@ -37,7 +37,6 @@ impl Canvas {
   pub(crate) fn overlay_image(
     &mut self,
     image: &RgbaImage,
-    offset: Point<i32>,
     border: BorderProperties,
     transform: Affine,
     algorithm: ImageScalingAlgorithm,
@@ -47,15 +46,7 @@ impl Canvas {
       return;
     }
 
-    overlay_image(
-      &mut self.0,
-      image,
-      offset,
-      border,
-      transform,
-      algorithm,
-      filters,
-    );
+    overlay_image(&mut self.0, image, border, transform, algorithm, filters);
   }
 
   /// Draws a mask with the specified color onto the canvas.
@@ -76,7 +67,6 @@ impl Canvas {
   /// Fills a rectangular area with the specified color and optional border radius.
   pub(crate) fn fill_color(
     &mut self,
-    offset: Point<i32>,
     size: Size<u32>,
     color: Color,
     border: BorderProperties,
@@ -86,7 +76,7 @@ impl Canvas {
       return;
     }
 
-    fill_color(&mut self.0, size, offset, color, border, transform);
+    fill_color(&mut self.0, size, color, border, transform);
   }
 }
 
@@ -128,7 +118,6 @@ pub(crate) fn apply_mask_alpha_to_pixel(mut pixel: Rgba<u8>, alpha: u8) -> Rgba<
 pub(crate) fn fill_color<C: Into<Rgba<u8>>>(
   image: &mut RgbaImage,
   size: Size<u32>,
-  offset: Point<i32>,
   color: C,
   radius: BorderProperties,
   transform: Affine,
@@ -139,8 +128,6 @@ pub(crate) fn fill_color<C: Into<Rgba<u8>>>(
   if transform.is_identity()
     && radius.is_zero()
     && color.0[3] == 255
-    && offset.x == 0
-    && offset.y == 0
     && size.width == image.width()
     && size.height == image.height()
   {
@@ -159,8 +146,8 @@ pub(crate) fn fill_color<C: Into<Rgba<u8>>>(
   // Fast path: if no sub-pixel interpolation is needed, we can just draw the color directly
   if can_direct_draw {
     let transformed_offset = Point {
-      x: (offset.x as f32 + translation.x).round() as i32,
-      y: (offset.y as f32 + translation.y).round() as i32,
+      x: translation.x.round() as i32,
+      y: translation.y.round() as i32,
     };
 
     for y in 0..size.height {
@@ -183,10 +170,7 @@ pub(crate) fn fill_color<C: Into<Rgba<u8>>>(
 
   radius.append_mask_commands(&mut paths);
 
-  let (mask, mut placement) = Mask::new(&paths).transform(Some(*transform)).render();
-
-  placement.left += offset.x;
-  placement.top += offset.y;
+  let (mask, placement) = Mask::new(&paths).transform(Some(*transform)).render();
 
   draw_mask(image, &mask, placement, color, None);
 }
@@ -232,7 +216,6 @@ pub(crate) fn draw_mask<C: Into<Rgba<u8>>>(
 pub(crate) fn overlay_image(
   canvas: &mut RgbaImage,
   image: &RgbaImage,
-  offset: Point<i32>,
   border: BorderProperties,
   transform: Affine,
   algorithm: ImageScalingAlgorithm,
@@ -255,8 +238,8 @@ pub(crate) fn overlay_image(
 
   if can_direct_draw {
     let transformed_offset = Point {
-      x: (offset.x as f32 + translation.x).round() as i32,
-      y: (offset.y as f32 + translation.y).round() as i32,
+      x: translation.x.round() as i32,
+      y: translation.y.round() as i32,
     };
 
     for y in 0..image.height() {
@@ -296,8 +279,8 @@ pub(crate) fn overlay_image(
         continue;
       }
 
-      let canvas_x = x as i32 + offset.x + placement.left;
-      let canvas_y = y as i32 + offset.y + placement.top;
+      let canvas_x = x as i32 + placement.left;
+      let canvas_y = y as i32 + placement.top;
 
       if canvas_x < 0 || canvas_y < 0 {
         continue;

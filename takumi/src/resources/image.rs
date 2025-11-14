@@ -6,10 +6,9 @@
 use std::{borrow::Cow, sync::Arc};
 
 use dashmap::DashMap;
-use image::{
-  RgbaImage,
-  imageops::{FilterType, resize},
-};
+use image::RgbaImage;
+
+use crate::{layout::style::ImageScalingAlgorithm, rendering::fast_resize};
 
 /// Represents the state of an image resource.
 pub type ImageResult = Result<Arc<ImageSource>, ImageResourceError>;
@@ -48,7 +47,7 @@ impl ImageSource {
     &'i self,
     width: u32,
     height: u32,
-    filter_type: FilterType,
+    algorithm: ImageScalingAlgorithm,
   ) -> Cow<'i, RgbaImage> {
     match self {
       ImageSource::Bitmap(bitmap) => {
@@ -56,7 +55,7 @@ impl ImageSource {
           return Cow::Borrowed(bitmap);
         }
 
-        Cow::Owned(resize(bitmap, width, height, filter_type))
+        Cow::Owned(fast_resize(bitmap, width, height, algorithm))
       }
       #[cfg(feature = "svg")]
       ImageSource::Svg(svg) => {

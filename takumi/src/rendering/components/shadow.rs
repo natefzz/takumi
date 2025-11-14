@@ -64,32 +64,16 @@ impl SizedShadow {
     }
   }
 
-  pub fn draw_outset(
+  /// Draws the outset mask of the shadow.
+  pub fn draw_outset_mask(
     &self,
     canvas: &mut Canvas,
     spread_mask: Cow<[u8]>,
     spread_placement: Placement,
-    offset: Point<f32>,
   ) {
-    let offset_with_radius = Point {
-      x: (spread_placement.left as f32 + offset.x + self.offset_x
-        - self.blur_radius
-        - self.spread_radius) as i32,
-      y: (spread_placement.top as f32 + offset.y + self.offset_y
-        - self.blur_radius
-        - self.spread_radius) as i32,
-    };
-
     // Fast path: if the blur radius is 0, we can just draw the spread mask
     if self.blur_radius <= 0.0 {
-      let placement = Placement {
-        left: offset_with_radius.x,
-        top: offset_with_radius.y,
-        width: spread_placement.width,
-        height: spread_placement.height,
-      };
-
-      return canvas.draw_mask(&spread_mask, placement, self.color, None);
+      return canvas.draw_mask(&spread_mask, spread_placement, self.color, None);
     }
 
     // Create a new image with the spread mask on, blurred by the blur radius
@@ -115,9 +99,12 @@ impl SizedShadow {
 
     canvas.overlay_image(
       &image,
-      offset_with_radius,
       BorderProperties::zero(),
-      Affine::identity(),
+      zeno::Transform::translation(
+        spread_placement.left as f32 - self.blur_radius,
+        spread_placement.top as f32 - self.blur_radius,
+      )
+      .into(),
       ImageScalingAlgorithm::Auto,
       None,
     );
@@ -130,14 +117,10 @@ impl SizedShadow {
     canvas: &mut Canvas,
     layout: Layout,
   ) {
-    let image = draw_inset_shadow(self, border_radius, layout);
+    let image = draw_inset_shadow(self, border_radius, layout.size);
 
     canvas.overlay_image(
       &image,
-      Point {
-        x: layout.location.x as i32,
-        y: layout.location.y as i32,
-      },
       border_radius,
       transform,
       ImageScalingAlgorithm::Auto,
@@ -146,21 +129,22 @@ impl SizedShadow {
   }
 }
 
-fn draw_inset_shadow(shadow: &SizedShadow, border: BorderProperties, layout: Layout) -> RgbaImage {
+fn draw_inset_shadow(
+  shadow: &SizedShadow,
+  mut border: BorderProperties,
+  border_box: Size<f32>,
+) -> RgbaImage {
   let mut shadow_image = RgbaImage::from_pixel(
-    layout.size.width as u32,
-    layout.size.height as u32,
+    border_box.width as u32,
+    border_box.height as u32,
     shadow.color.into(),
   );
 
   let mut paths = Vec::new();
 
-  let border = BorderProperties {
-    offset: Point {
-      x: shadow.offset_x,
-      y: shadow.offset_y,
-    },
-    ..border
+  border.offset = Point {
+    x: shadow.offset_x,
+    y: shadow.offset_y,
   };
 
   border.append_mask_commands(&mut paths);

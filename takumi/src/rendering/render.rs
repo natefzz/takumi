@@ -92,7 +92,6 @@ pub fn render<'g, N: Node<N>>(options: RenderOptions<'g, N>) -> Result<RgbaImage
     &mut taffy,
     root_node_id,
     &mut canvas,
-    Point::ZERO,
     Affine::identity(),
     root_size,
   );
@@ -139,20 +138,18 @@ fn render_node<'g, Nodes: Node<Nodes>>(
   taffy: &mut TaffyTree<NodeTree<'g, Nodes>>,
   node_id: NodeId,
   canvas: &mut Canvas,
-  offset: Point<f32>,
   mut transform: Affine,
   root_size: Size<u32>,
 ) {
-  let mut layout = *taffy.layout(node_id).unwrap();
+  let layout = *taffy.layout(node_id).unwrap();
   let node_context = taffy.get_node_context_mut(node_id).unwrap();
 
   if node_context.context.opacity == 0.0 || node_context.context.style.display == Display::None {
     return;
   }
 
-  layout.location = layout.location + offset;
-
   transform = transform
+    .then_translate(layout.location.x, layout.location.y)
     .then(&create_transform(
       &node_context.context.style,
       layout.size,
@@ -168,13 +165,16 @@ fn render_node<'g, Nodes: Node<Nodes>>(
     node_context.context.transform = node_context
       .context
       .transform
-      .pre_translate(-translation.x, -translation.y)
+      .then_translate(-translation.x, -translation.y)
       .into();
 
     let (mask, mut placement) = clip.render_mask(&node_context.context, layout.size);
 
-    node_context.context.transform.x = -placement.left as f32;
-    node_context.context.transform.y = -placement.top as f32;
+    node_context.context.transform = node_context
+      .context
+      .transform
+      .then_translate(-placement.left as f32, -placement.top as f32)
+      .into();
 
     let mut inner_canvas = Canvas::new(Size {
       width: placement.width,
@@ -192,19 +192,12 @@ fn render_node<'g, Nodes: Node<Nodes>>(
       node_context.draw_inline(&mut inner_canvas, inner_layout);
     } else {
       for child_id in taffy.children(node_id).unwrap() {
-        render_node(
-          taffy,
-          child_id,
-          &mut inner_canvas,
-          Point::zero(),
-          transform,
-          root_size,
-        );
+        render_node(taffy, child_id, &mut inner_canvas, transform, root_size);
       }
     }
 
-    placement.left += (layout.location.x + translation.x) as i32;
-    placement.top += (layout.location.y + translation.y) as i32;
+    placement.left += translation.x as i32;
+    placement.top += translation.y as i32;
 
     return canvas.draw_mask(
       &mask,
@@ -251,31 +244,12 @@ fn render_node<'g, Nodes: Node<Nodes>>(
       );
     } else {
       for child_id in taffy.children(node_id).unwrap() {
-        render_node(
-          taffy,
-          child_id,
-          &mut inner_canvas,
-          offset,
-          transform,
-          root_size,
-        );
+        render_node(taffy, child_id, &mut inner_canvas, transform, root_size);
       }
     }
 
     return canvas.overlay_image(
       &inner_canvas.into_inner(),
-      Point {
-        x: if overflow.0.x == Overflow::Visible {
-          0
-        } else {
-          layout.location.x as i32
-        },
-        y: if overflow.0.y == Overflow::Visible {
-          0
-        } else {
-          layout.location.y as i32
-        },
-      },
       BorderProperties::zero(),
       transform,
       image_rendering,
@@ -287,14 +261,7 @@ fn render_node<'g, Nodes: Node<Nodes>>(
     node_context.draw_inline(canvas, layout);
   } else {
     for child_id in taffy.children(node_id).unwrap() {
-      render_node(
-        taffy,
-        child_id,
-        canvas,
-        layout.location,
-        transform,
-        root_size,
-      );
+      render_node(taffy, child_id, canvas, transform, root_size);
     }
   }
 }

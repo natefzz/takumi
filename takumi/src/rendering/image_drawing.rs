@@ -1,11 +1,14 @@
 use std::borrow::Cow;
 
+use fast_image_resize::images::TypedImageRef;
+use fast_image_resize::{ImageView, PixelTrait, ResizeOptions};
+use fast_image_resize::{IntoImageView, PixelType, Resizer, images::Image};
 use image::RgbaImage;
 use image::imageops::crop_imm;
 use taffy::{Layout, Point, Rect, Size};
 
 use crate::{
-  layout::style::{LengthUnit, ObjectFit},
+  layout::style::{ImageScalingAlgorithm, LengthUnit, ObjectFit},
   rendering::{BorderProperties, Canvas, RenderContext},
   resources::image::ImageSource,
 };
@@ -43,14 +46,12 @@ pub fn process_image_for_object_fit<'i>(
   let object_position_y =
     LengthUnit::from(context.style.object_position.0.y).resolve_to_px(context, content_box.height);
 
-  let filter_type = context.style.image_rendering.into();
-
   match context.style.object_fit {
     ObjectFit::Fill => (
       image.render_to_rgba_image(
         content_box.width as u32,
         content_box.height as u32,
-        filter_type,
+        context.style.image_rendering,
       ),
       Point::zero(),
     ),
@@ -71,7 +72,11 @@ pub fn process_image_for_object_fit<'i>(
         calculate_object_position_offset(available_y, content_box.height, object_position_y);
 
       (
-        image.render_to_rgba_image(new_width as u32, new_height as u32, filter_type),
+        image.render_to_rgba_image(
+          new_width as u32,
+          new_height as u32,
+          context.style.image_rendering,
+        ),
         Point {
           x: offset_x,
           y: offset_y,
@@ -86,7 +91,11 @@ pub fn process_image_for_object_fit<'i>(
       let new_width = image_width * scale;
       let new_height = image_height * scale;
 
-      let resized = image.render_to_rgba_image(new_width as u32, new_height as u32, filter_type);
+      let resized = image.render_to_rgba_image(
+        new_width as u32,
+        new_height as u32,
+        context.style.image_rendering,
+      );
 
       let available_crop_x = new_width - content_box.width;
       let available_crop_y = new_height - content_box.height;
@@ -116,9 +125,17 @@ pub fn process_image_for_object_fit<'i>(
       let new_height = image_height * scale;
 
       let processed_image = if scale < 1.0 {
-        image.render_to_rgba_image(new_width as u32, new_height as u32, filter_type)
+        image.render_to_rgba_image(
+          new_width as u32,
+          new_height as u32,
+          context.style.image_rendering,
+        )
       } else {
-        image.render_to_rgba_image(image_width as u32, image_height as u32, filter_type)
+        image.render_to_rgba_image(
+          image_width as u32,
+          image_height as u32,
+          context.style.image_rendering,
+        )
       };
 
       let available_x = content_box.width - new_width;
@@ -149,7 +166,11 @@ pub fn process_image_for_object_fit<'i>(
           calculate_object_position_offset(available_y, content_box.height, object_position_y);
 
         return (
-          image.render_to_rgba_image(image_width as u32, image_height as u32, filter_type),
+          image.render_to_rgba_image(
+            image_width as u32,
+            image_height as u32,
+            context.style.image_rendering,
+          ),
           Point {
             x: offset_x,
             y: offset_y,
@@ -168,8 +189,11 @@ pub fn process_image_for_object_fit<'i>(
       let crop_width = content_box.width.min(image_width);
       let crop_height = content_box.height.min(image_height);
 
-      let source_image =
-        image.render_to_rgba_image(image_width as u32, image_height as u32, filter_type);
+      let source_image = image.render_to_rgba_image(
+        image_width as u32,
+        image_height as u32,
+        context.style.image_rendering,
+      );
 
       let cropped = crop_imm(
         source_image.as_ref(),
@@ -215,29 +239,72 @@ pub fn draw_image(
   let (image, offset) = process_image_for_object_fit(image, context, layout.content_box_size());
 
   // manually apply the border and padding to ensure rotation with origin is applied correctly
-  let transform_offset_x = layout.border.left + layout.padding.left;
-  let transform_offset_y = layout.border.top + layout.padding.top;
-
   let transform_with_content_offset = context
     .transform
-    .pre_translate(transform_offset_x, transform_offset_y)
+    .then_translate(
+      layout.border.left + layout.padding.left + offset.x,
+      layout.border.top + layout.padding.top + offset.y,
+    )
     .into();
 
   // First inset the border by the border width to get the correct inner radius, THEN set the offset to zero.
   // Since we already applied the border width to `transform_with_content_offset`, we have to avoid double-applying it.
-  let mut border = BorderProperties::from_context(context, &layout).inset_by_border_width();
-  border.offset = Point::zero();
+  let mut border =
+    BorderProperties::from_context(context, layout.size, layout.border).inset_by_border_width();
+  border.offset = Point::ZERO;
   border.width = Rect::zero();
 
   canvas.overlay_image(
     &image,
-    Point {
-      x: (offset.x + layout.location.x) as i32,
-      y: (offset.y + layout.location.y) as i32,
-    },
     border,
     transform_with_content_offset,
     context.style.image_rendering,
     context.style.filter.0.as_ref(),
   );
+}
+
+pub(crate) fn fast_resize(
+  image: &RgbaImage,
+  width: u32,
+  height: u32,
+  algorithm: ImageScalingAlgorithm,
+) -> RgbaImage {
+  let mut resizer = Resizer::new();
+  let mut dest = Image::new(width, height, PixelType::U8x4);
+
+  resizer
+    .resize(
+      &RgbaImageView(image),
+      &mut dest,
+      Some(&ResizeOptions::default().resize_alg(algorithm.into())),
+    )
+    .unwrap();
+
+  RgbaImage::from_raw(dest.width(), dest.height(), dest.into_vec()).unwrap()
+}
+
+struct RgbaImageView<'a>(&'a RgbaImage);
+
+impl<'a> IntoImageView for RgbaImageView<'a> {
+  fn pixel_type(&self) -> Option<PixelType> {
+    Some(PixelType::U8x4)
+  }
+
+  fn width(&self) -> u32 {
+    self.0.width()
+  }
+
+  fn height(&self) -> u32 {
+    self.0.height()
+  }
+
+  fn image_view<P: PixelTrait>(&self) -> Option<impl ImageView<Pixel = P>> {
+    if P::pixel_type() == PixelType::U8x4 {
+      Some(
+        TypedImageRef::<P>::from_buffer(self.0.width(), self.0.height(), self.0.as_raw()).unwrap(),
+      )
+    } else {
+      None
+    }
+  }
 }

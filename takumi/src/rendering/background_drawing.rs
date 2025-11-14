@@ -1,11 +1,8 @@
 use std::iter::successors;
 
-use image::{
-  RgbaImage,
-  imageops::{FilterType, resize},
-};
+use image::RgbaImage;
 use smallvec::{SmallVec, smallvec};
-use taffy::{Layout, Point};
+use taffy::Layout;
 
 use crate::{
   layout::style::{
@@ -13,7 +10,7 @@ use crate::{
     BackgroundRepeatStyle, BackgroundRepeats, BackgroundSize, BackgroundSizes, Gradient,
     ImageScalingAlgorithm, LengthUnit, PositionComponent, PositionKeywordX, PositionKeywordY,
   },
-  rendering::{BorderProperties, Canvas, RenderContext},
+  rendering::{BorderProperties, Canvas, RenderContext, fast_resize},
 };
 
 pub(crate) type ImageTiles = (RgbaImage, SmallVec<[i32; 1]>, SmallVec<[i32; 1]>);
@@ -109,7 +106,7 @@ pub(crate) fn render_gradient_tile(
       .get(url)
       .map(|source| {
         source
-          .render_to_rgba_image(tile_w, tile_h, context.style.image_rendering.into())
+          .render_to_rgba_image(tile_w, tile_h, context.style.image_rendering)
           .into_owned()
       })
       .unwrap_or_else(|| RgbaImage::new(tile_w, tile_h)),
@@ -152,7 +149,7 @@ pub(crate) fn resolve_layer_tiles(
       let (px, new_w) = collect_stretched_tile_positions(area_w, tile_w);
       if new_w != tile_w {
         tile_w = new_w;
-        tile_image = resize(&tile_image, tile_w, tile_h, FilterType::CatmullRom);
+        tile_image = fast_resize(&tile_image, tile_w, tile_h, context.style.image_rendering);
       }
       px
     }
@@ -172,7 +169,7 @@ pub(crate) fn resolve_layer_tiles(
       let (py, new_h) = collect_stretched_tile_positions(area_h, tile_h);
       if new_h != tile_h {
         tile_h = new_h;
-        tile_image = resize(&tile_image, tile_w, tile_h, FilterType::CatmullRom);
+        tile_image = fast_resize(&tile_image, tile_w, tile_h, context.style.image_rendering);
       }
       py
     }
@@ -305,7 +302,6 @@ pub(crate) fn draw_background_layers(
   radius: BorderProperties,
   context: &RenderContext,
   canvas: &mut Canvas,
-  layout: Layout,
 ) {
   for (tile_image, xs, ys) in tiles {
     for y in &ys {
@@ -313,12 +309,11 @@ pub(crate) fn draw_background_layers(
         // radius is Copy, pass by value
         canvas.overlay_image(
           &tile_image,
-          Point {
-            x: *x + layout.location.x as i32,
-            y: *y + layout.location.y as i32,
-          },
           radius,
-          context.transform,
+          context
+            .transform
+            .then_translate(*x as f32, *y as f32)
+            .into(),
           ImageScalingAlgorithm::Auto,
           context.style.filter.0.as_ref(),
         );

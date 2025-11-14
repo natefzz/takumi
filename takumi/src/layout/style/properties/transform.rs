@@ -55,6 +55,14 @@ impl Affine {
     }
   }
 
+  /// Decomposes the scale part of the transform
+  pub fn decompose_scale(self) -> Size<f32> {
+    Size {
+      width: (self.xx * self.xx + self.xy * self.xy).sqrt(),
+      height: (self.yx * self.yx + self.yy * self.yy).sqrt(),
+    }
+  }
+
   /// Returns true if the transform is only a translation
   pub(crate) fn only_translation(self) -> bool {
     self.xx == Self::identity().xx

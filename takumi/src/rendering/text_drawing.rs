@@ -2,7 +2,7 @@ use std::{borrow::Cow, ops::Range};
 
 use image::RgbaImage;
 use parley::{Glyph, GlyphRun};
-use taffy::{Layout, Point, Size};
+use taffy::{Layout, Size};
 use zeno::{Command, Join, Mask, PathData, Placement, Stroke};
 
 use crate::{
@@ -27,17 +27,13 @@ pub(crate) fn draw_decoration(
   transform: Affine,
 ) {
   let transform = transform
-    .pre_translate(
+    .then_translate(
       layout.border.left + layout.padding.left + glyph_run.offset(),
       layout.border.top + layout.padding.top + offset,
     )
     .into();
 
   canvas.fill_color(
-    Point {
-      x: layout.location.x as i32,
-      y: layout.location.y as i32,
-    },
     Size {
       width: glyph_run.advance().round() as u32,
       height: size.round() as u32,
@@ -56,11 +52,11 @@ pub(crate) fn draw_glyph(
   style: &SizedFontStyle,
   layout: Layout,
   image_fill: Option<&RgbaImage>,
-  transform: Affine,
+  mut transform: Affine,
   text_style: &parley::Style<InlineBrush>,
 ) {
-  let transform = transform
-    .pre_translate(
+  transform = transform
+    .then_translate(
       layout.border.left + layout.padding.left + glyph.x,
       layout.border.top + layout.padding.top + glyph.y,
     )
@@ -75,10 +71,9 @@ pub(crate) fn draw_glyph(
       ..Default::default()
     };
 
-    let offset = Point {
-      x: layout.location.x as i32 + bitmap.placement.left,
-      y: layout.location.y as i32 - bitmap.placement.top,
-    };
+    let transform = transform
+      .then_translate(bitmap.placement.left as f32, -bitmap.placement.top as f32)
+      .into();
 
     if let Some(image_fill) = image_fill {
       let mask = bitmap
@@ -89,19 +84,12 @@ pub(crate) fn draw_glyph(
         .copied()
         .collect::<Vec<_>>();
 
-      let placement = Placement {
-        left: 0,
-        top: 0,
-        width: bitmap.placement.width,
-        height: bitmap.placement.height,
-      };
-
-      let mut bottom = RgbaImage::new(placement.width, placement.height);
+      let mut bottom = RgbaImage::new(bitmap.placement.width, bitmap.placement.height);
 
       let mut i = 0;
 
-      for y in 0..placement.height {
-        for x in 0..placement.width {
+      for y in 0..bitmap.placement.height {
+        for x in 0..bitmap.placement.width {
           let alpha = mask[i];
           i += 1;
 
@@ -124,7 +112,6 @@ pub(crate) fn draw_glyph(
 
       return canvas.overlay_image(
         &bottom,
-        offset,
         border,
         transform,
         ImageScalingAlgorithm::Auto,
@@ -139,14 +126,7 @@ pub(crate) fn draw_glyph(
     )
     .unwrap();
 
-    return canvas.overlay_image(
-      &image,
-      offset,
-      border,
-      transform,
-      ImageScalingAlgorithm::Auto,
-      None,
-    );
+    return canvas.overlay_image(&image, border, transform, ImageScalingAlgorithm::Auto, None);
   }
 
   if let ResolvedGlyph::Outline(outline) = glyph_content {
@@ -169,11 +149,22 @@ pub(crate) fn draw_glyph(
       })
       .collect::<Vec<_>>();
 
-    let (mask, mut placement) = Mask::new(&paths).transform(Some(*transform)).render();
+    let (mask, placement) = Mask::new(&paths).transform(Some(*transform)).render();
 
     if let Some(ref shadows) = style.text_shadow {
       for shadow in shadows.iter() {
-        shadow.draw_outset(canvas, Cow::Borrowed(&mask), placement, layout.location);
+        // theres no spread radius for text shadows
+        let offset_transformed =
+          transform.transform_vector((shadow.offset_x, shadow.offset_y).into());
+
+        let transformed_placement = Placement {
+          left: placement.left + offset_transformed.x as i32,
+          top: placement.top + offset_transformed.y as i32,
+          width: placement.width,
+          height: placement.height,
+        };
+
+        shadow.draw_outset_mask(canvas, Cow::Borrowed(&mask), transformed_placement);
       }
     }
 
@@ -201,9 +192,6 @@ pub(crate) fn draw_glyph(
       bottom
     });
 
-    placement.left += layout.location.x as i32;
-    placement.top += layout.location.y as i32;
-
     canvas.draw_mask(&mask, placement, text_style.brush.color, cropped_fill_image);
 
     if style.stroke_width > 0.0 {
@@ -211,13 +199,10 @@ pub(crate) fn draw_glyph(
       stroke.scale = false;
       stroke.join = Join::Bevel;
 
-      let (stroke_mask, mut stroke_placement) = Mask::new(&paths)
+      let (stroke_mask, stroke_placement) = Mask::new(&paths)
         .transform(Some(*transform))
         .style(stroke)
         .render();
-
-      stroke_placement.left += layout.location.x as i32;
-      stroke_placement.top += layout.location.y as i32;
 
       canvas.draw_mask(
         &stroke_mask,

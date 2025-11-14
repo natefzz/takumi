@@ -48,7 +48,7 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
 
     // Then handle the inline boxes directly by zipping the node refs with their positioned boxes
     for ((node, context, _), positioned) in boxes.iter().zip(positioned_inline_boxes.iter()) {
-      draw_inline_box(positioned, *node, context, layout, canvas);
+      draw_inline_box(positioned, *node, context, canvas);
     }
   }
 

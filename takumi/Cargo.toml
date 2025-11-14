@@ -22,6 +22,10 @@ data-url = "0.3"
 dashmap = "6.1"
 color = "0.3"
 
+[dependencies.fast_image_resize]
+version = "5.3"
+features = ["only_u8x4"]
+
 [dependencies.phf]
 version = "0.13"
 features = ["macros"]
@@ -94,7 +98,7 @@ avif = ["image/avif"]
 svg = ["dep:resvg"]
 woff2 = ["dep:wuff", "wuff/brotli"]
 woff = ["dep:wuff", "wuff/z"]
-rayon = ["dep:rayon", "image/rayon", "dashmap/rayon"]
+rayon = ["dep:rayon", "image/rayon", "dashmap/rayon", "fast_image_resize/rayon"]
 
 [dev-dependencies]
 serde_json = "1"

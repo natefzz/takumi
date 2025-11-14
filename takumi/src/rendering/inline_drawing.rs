@@ -1,12 +1,12 @@
 use image::RgbaImage;
 use parley::{GlyphRun, PositionedInlineBox, PositionedLayoutItem};
-use taffy::{Layout, Point, Size};
+use taffy::{Layout, Rect, Size};
 
 use crate::{
   layout::{
     inline::{InlineBrush, InlineLayout},
     node::Node,
-    style::{Affine, SizedFontStyle, TextDecorationLine},
+    style::{SizedFontStyle, TextDecorationLine},
   },
   rendering::{
     Canvas, RenderContext, draw_decoration, draw_glyph, overlay_image, resolve_layers_tiles,
@@ -97,19 +97,11 @@ pub(crate) fn draw_inline_box<N: Node<N>>(
   inline_box: &PositionedInlineBox,
   node: &N,
   context: &RenderContext,
-  mut layout: Layout,
   canvas: &mut Canvas,
 ) {
   if context.opacity == 0.0 {
     return;
   }
-
-  let translated = Affine::from(context.transform.pre_translate(inline_box.x, inline_box.y));
-
-  let translation_diff = translated.decompose_translation()
-    + context.transform.decompose_translation().map(|axis| -axis);
-
-  layout.location = layout.location + translation_diff;
 
   node.draw_on_canvas(
     context,
@@ -119,7 +111,12 @@ pub(crate) fn draw_inline_box<N: Node<N>>(
         width: inline_box.width,
         height: inline_box.height,
       },
-      location: layout.location,
+      padding: Rect {
+        top: inline_box.x,
+        left: inline_box.y,
+        right: 0.0,
+        bottom: 0.0,
+      },
       ..Default::default()
     },
   );
@@ -188,9 +185,8 @@ fn create_fill_image(
         overlay_image(
           &mut composed,
           &tile_image,
-          Point { x: *x, y: *y },
           Default::default(),
-          Affine::identity(),
+          zeno::Transform::translation(*x as f32, *y as f32).into(),
           context.style.image_rendering,
           context.style.filter.as_ref(),
         )
