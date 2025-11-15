@@ -6,7 +6,7 @@ use zeno::{Fill, Mask, Placement};
 
 use crate::{
   layout::style::{Affine, BoxShadow, Color, ImageScalingAlgorithm, TextShadow},
-  rendering::{BorderProperties, Canvas, RenderContext, apply_mask_alpha_to_pixel, draw_mask},
+  rendering::{BorderProperties, Canvas, RenderContext, draw_mask},
 };
 
 /// Applies a fast blur to an image using image-rs's optimized implementation.
@@ -155,28 +155,7 @@ fn draw_inset_shadow(
 
   let (mask, placement) = Mask::new(&paths).style(Fill::EvenOdd).render();
 
-  let mut i = 0;
-
-  for y in 0..placement.height {
-    for x in 0..placement.width {
-      let alpha = mask[i];
-
-      i += 1;
-
-      if alpha == u8::MAX {
-        continue;
-      }
-
-      let x = x as i32 + placement.left;
-      let y = y as i32 + placement.top;
-
-      let color = apply_mask_alpha_to_pixel(shadow.color.0.into(), alpha);
-
-      if let Some(pixel) = shadow_image.get_pixel_mut_checked(x as u32, y as u32) {
-        *pixel = color;
-      }
-    }
-  }
+  draw_mask(&mut shadow_image, &mask, placement, shadow.color, None);
 
   apply_fast_blur(&mut shadow_image, shadow.blur_radius);
 

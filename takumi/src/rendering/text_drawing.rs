@@ -1,6 +1,6 @@
 use std::{borrow::Cow, ops::Range};
 
-use image::RgbaImage;
+use image::{RgbaImage, imageops::crop_imm};
 use parley::{Glyph, GlyphRun};
 use taffy::{Layout, Size};
 use zeno::{Command, Join, Mask, PathData, Placement, Stroke};
@@ -27,7 +27,7 @@ pub(crate) fn draw_decoration(
   transform: Affine,
 ) {
   let transform = transform
-    .then_translate(
+    .pre_translate(
       layout.border.left + layout.padding.left + glyph_run.offset(),
       layout.border.top + layout.padding.top + offset,
     )
@@ -56,7 +56,7 @@ pub(crate) fn draw_glyph(
   text_style: &parley::Style<InlineBrush>,
 ) {
   transform = transform
-    .then_translate(
+    .pre_translate(
       layout.border.left + layout.padding.left + glyph.x,
       layout.border.top + layout.padding.top + glyph.y,
     )
@@ -71,7 +71,7 @@ pub(crate) fn draw_glyph(
       ..Default::default()
     };
 
-    let transform = transform
+    transform = transform
       .then_translate(bitmap.placement.left as f32, -bitmap.placement.top as f32)
       .into();
 
@@ -169,27 +169,14 @@ pub(crate) fn draw_glyph(
     }
 
     let cropped_fill_image = image_fill.map(|image| {
-      let mut bottom = RgbaImage::new(placement.width, placement.height);
-
-      for y in 0..placement.height {
-        let dest_y = y + placement.top as u32;
-
-        if dest_y >= image.height() {
-          continue;
-        }
-
-        for x in 0..placement.width {
-          let dest_x = x + placement.left as u32;
-
-          if dest_x >= image.width() {
-            continue;
-          }
-
-          bottom.put_pixel(x, y, *image.get_pixel(dest_x, dest_y));
-        }
-      }
-
-      bottom
+      crop_imm(
+        image,
+        placement.left as u32,
+        placement.top as u32,
+        placement.width,
+        placement.height,
+      )
+      .to_image()
     });
 
     canvas.draw_mask(&mask, placement, text_style.brush.color, cropped_fill_image);

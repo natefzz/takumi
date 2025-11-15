@@ -9,14 +9,24 @@ import reactJsxRuntimeTypings from "../../../node_modules/@types/react/jsx-runti
 import cssTypings from "../../../node_modules/csstype/index.d.ts?raw";
 import playgroundOptionsTypings from "../../playground/options.ts?raw";
 
-const highlighter = await createHighlighterCore({
-  themes: [import("shiki/themes/github-dark-default.mjs")],
-  langs: [import("shiki/langs/tsx.mjs")],
-  engine: createOnigurumaEngine(import("shiki/wasm")),
-  langAlias: {
-    typescript: "tsx",
-  },
-});
+function createHighlighter() {
+  return createHighlighterCore({
+    themes: [import("shiki/themes/github-dark-default.mjs")],
+    langs: [import("shiki/langs/tsx.mjs")],
+    engine: createOnigurumaEngine(import("shiki/wasm")),
+    langAlias: {
+      typescript: "tsx",
+    },
+  });
+}
+
+type GlobalThis = typeof globalThis & {
+  shikiInstance: ReturnType<typeof createHighlighter>;
+};
+
+(globalThis as GlobalThis).shikiInstance ??= createHighlighter();
+
+const highlighter = await (globalThis as GlobalThis).shikiInstance;
 
 const tailwindTypings = `
 declare namespace React {

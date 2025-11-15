@@ -1,6 +1,6 @@
 use image::RgbaImage;
 use parley::{GlyphRun, PositionedInlineBox, PositionedLayoutItem};
-use taffy::{Layout, Rect, Size};
+use taffy::{Layout, Point, Rect, Size};
 
 use crate::{
   layout::{
@@ -189,6 +189,7 @@ fn create_fill_image(
           zeno::Transform::translation(*x as f32, *y as f32).into(),
           context.style.image_rendering,
           context.style.filter.as_ref(),
+          Point::zero(),
         )
       }
     }

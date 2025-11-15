@@ -142,54 +142,46 @@ fn render_node<'g, Nodes: Node<Nodes>>(
   root_size: Size<u32>,
 ) {
   let layout = *taffy.layout(node_id).unwrap();
-  let node_context = taffy.get_node_context_mut(node_id).unwrap();
+  let node = taffy.get_node_context_mut(node_id).unwrap();
 
-  if node_context.context.opacity == 0.0 || node_context.context.style.display == Display::None {
+  if node.context.opacity == 0.0 || node.context.style.display == Display::None {
     return;
   }
 
   transform = transform
-    .then_translate(layout.location.x, layout.location.y)
     .then(&create_transform(
-      &node_context.context.style,
+      &node.context.style,
       layout.size,
-      &node_context.context,
+      &node.context,
     ))
     .into();
 
-  node_context.context.transform = transform;
+  node.context.transform = transform;
 
-  if let Some(clip) = &node_context.context.style.clip_path.0 {
-    let translation = node_context.context.transform.decompose_translation();
+  canvas.add_offset(layout.location);
 
-    node_context.context.transform = node_context
-      .context
-      .transform
-      .then_translate(-translation.x, -translation.y)
-      .into();
+  if let Some(clip) = &node.context.style.clip_path.0 {
+    let translation = transform.decompose_translation();
 
-    let (mask, mut placement) = clip.render_mask(&node_context.context, layout.size);
+    node.context.transform.x = 0.0;
+    node.context.transform.y = 0.0;
 
-    node_context.context.transform = node_context
-      .context
-      .transform
-      .then_translate(-placement.left as f32, -placement.top as f32)
-      .into();
+    let (mask, mut placement) = clip.render_mask(&node.context, layout.size);
 
     let mut inner_canvas = Canvas::new(Size {
       width: placement.width,
       height: placement.height,
     });
 
-    let inner_layout = Layout {
-      location: Point::zero(),
-      ..layout
-    };
+    inner_canvas.add_offset(Point {
+      x: -placement.left as f32,
+      y: -placement.top as f32,
+    });
 
-    node_context.draw_on_canvas(&mut inner_canvas, inner_layout);
+    node.draw_on_canvas(&mut inner_canvas, layout);
 
-    if node_context.should_create_inline_layout() {
-      node_context.draw_inline(&mut inner_canvas, inner_layout);
+    if node.should_create_inline_layout() {
+      node.draw_inline(&mut inner_canvas, layout);
     } else {
       for child_id in taffy.children(node_id).unwrap() {
         render_node(taffy, child_id, &mut inner_canvas, transform, root_size);
@@ -199,17 +191,19 @@ fn render_node<'g, Nodes: Node<Nodes>>(
     placement.left += translation.x as i32;
     placement.top += translation.y as i32;
 
-    return canvas.draw_mask(
+    canvas.draw_mask(
       &mask,
       placement,
       Color::transparent(),
       Some(inner_canvas.into_inner()),
     );
+
+    return canvas.add_offset(layout.location.map(|axis| -axis));
   }
 
-  node_context.draw_on_canvas(canvas, layout);
+  node.draw_on_canvas(canvas, layout);
 
-  let overflow = node_context.context.style.resolve_overflows();
+  let overflow = node.context.style.resolve_overflows();
 
   if overflow.should_clip_content() {
     // if theres no space for canvas to draw, just return.
@@ -217,8 +211,8 @@ fn render_node<'g, Nodes: Node<Nodes>>(
       return;
     };
 
-    let image_rendering = node_context.context.style.image_rendering;
-    let filters = node_context.context.style.filter.0.clone();
+    let image_rendering = node.context.style.image_rendering;
+    let filters = node.context.style.filter.0.clone();
 
     let offset = Point {
       x: if overflow.0.x == Overflow::Visible {
@@ -233,8 +227,8 @@ fn render_node<'g, Nodes: Node<Nodes>>(
       },
     };
 
-    if node_context.should_create_inline_layout() {
-      node_context.draw_inline(
+    if node.should_create_inline_layout() {
+      node.draw_inline(
         &mut inner_canvas,
         Layout {
           size: layout.content_box_size(),
@@ -248,20 +242,24 @@ fn render_node<'g, Nodes: Node<Nodes>>(
       }
     }
 
-    return canvas.overlay_image(
+    canvas.overlay_image(
       &inner_canvas.into_inner(),
       BorderProperties::zero(),
       transform,
       image_rendering,
       filters.as_ref(),
     );
+
+    return canvas.add_offset(layout.location.map(|axis| -axis));
   }
 
-  if node_context.should_create_inline_layout() {
-    node_context.draw_inline(canvas, layout);
+  if node.should_create_inline_layout() {
+    node.draw_inline(canvas, layout);
   } else {
     for child_id in taffy.children(node_id).unwrap() {
       render_node(taffy, child_id, canvas, transform, root_size);
     }
   }
+
+  canvas.add_offset(layout.location.map(|axis| -axis));
 }

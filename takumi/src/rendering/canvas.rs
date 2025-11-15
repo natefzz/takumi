@@ -3,7 +3,7 @@
 //! This module provides performance-optimized canvas operations including
 //! fast image blending and pixel manipulation operations.
 
-use std::borrow::Cow;
+use std::{borrow::Cow, ops::Neg};
 
 use image::{
   Pixel, Rgba, RgbaImage,
@@ -21,16 +21,26 @@ use crate::{
 ///
 /// This struct wraps a channel sender that can be cloned and used to send
 /// drawing commands to a canvas rendering loop without blocking the main thread.
-pub struct Canvas(RgbaImage);
+pub struct Canvas {
+  image: RgbaImage,
+  offset: Point<f32>,
+}
 
 impl Canvas {
   /// Creates a new canvas handle from a draw command sender.
   pub(crate) fn new(size: Size<u32>) -> Self {
-    Self(RgbaImage::new(size.width, size.height))
+    Self {
+      image: RgbaImage::new(size.width, size.height),
+      offset: Point::zero(),
+    }
   }
 
   pub(crate) fn into_inner(self) -> RgbaImage {
-    self.0
+    self.image
+  }
+
+  pub(crate) fn add_offset(&mut self, offset: Point<f32>) {
+    self.offset = self.offset + offset;
   }
 
   /// Overlays an image onto the canvas with optional border radius.
@@ -46,14 +56,22 @@ impl Canvas {
       return;
     }
 
-    overlay_image(&mut self.0, image, border, transform, algorithm, filters);
+    overlay_image(
+      &mut self.image,
+      image,
+      border,
+      transform,
+      algorithm,
+      filters,
+      self.offset,
+    );
   }
 
   /// Draws a mask with the specified color onto the canvas.
   pub(crate) fn draw_mask(
     &mut self,
     mask: &[u8],
-    placement: Placement,
+    mut placement: Placement,
     color: Color,
     image: Option<RgbaImage>,
   ) {
@@ -61,7 +79,10 @@ impl Canvas {
       return;
     }
 
-    draw_mask(&mut self.0, mask, placement, color, image.as_ref());
+    placement.left += self.offset.x as i32;
+    placement.top += self.offset.y as i32;
+
+    draw_mask(&mut self.image, mask, placement, color, image.as_ref());
   }
 
   /// Fills a rectangular area with the specified color and optional border radius.
@@ -76,7 +97,41 @@ impl Canvas {
       return;
     }
 
-    fill_color(&mut self.0, size, color, border, transform);
+    // Fast path: if drawing on the entire canvas, we can just replace the entire canvas with the color
+    if transform.is_identity()
+      && border.is_zero()
+      && color.0[3] == 255
+      && self.offset.x == 0.0
+      && self.offset.y == 0.0
+      && size.width == self.image.width()
+      && size.height == self.image.height()
+    {
+      let image_mut = self.image.as_mut();
+
+      for chunk in image_mut.chunks_exact_mut(4) {
+        chunk.copy_from_slice(&color.0);
+      }
+
+      return;
+    }
+
+    let can_direct_draw = transform.only_translation() && border.is_zero();
+
+    // Fast path: if no sub-pixel interpolation is needed, we can just draw the color directly
+    if can_direct_draw {
+      let transformed_offset = transform.decompose_translation() + self.offset;
+
+      let color: Rgba<u8> = color.into();
+      return overlay_area(&mut self.image, transformed_offset, size, |_, _| color);
+    }
+
+    let mut paths = Vec::new();
+
+    border.append_mask_commands(&mut paths);
+
+    let (mask, placement) = Mask::new(&paths).transform(Some(*transform)).render();
+
+    self.draw_mask(&mask, placement, color, None);
   }
 }
 
@@ -114,67 +169,6 @@ pub(crate) fn apply_mask_alpha_to_pixel(mut pixel: Rgba<u8>, alpha: u8) -> Rgba<
   }
 }
 
-/// Draws a filled rectangle with a solid color.
-pub(crate) fn fill_color<C: Into<Rgba<u8>>>(
-  image: &mut RgbaImage,
-  size: Size<u32>,
-  color: C,
-  radius: BorderProperties,
-  transform: Affine,
-) {
-  let color: Rgba<u8> = color.into();
-
-  // Fast path: if drawing on the entire canvas, we can just replace the entire canvas with the color
-  if transform.is_identity()
-    && radius.is_zero()
-    && color.0[3] == 255
-    && size.width == image.width()
-    && size.height == image.height()
-  {
-    let image_mut = image.as_mut();
-
-    for chunk in image_mut.chunks_exact_mut(4) {
-      chunk.copy_from_slice(&color.0);
-    }
-
-    return;
-  }
-
-  let translation = transform.decompose_translation();
-  let can_direct_draw = transform.only_translation() && radius.is_zero();
-
-  // Fast path: if no sub-pixel interpolation is needed, we can just draw the color directly
-  if can_direct_draw {
-    let transformed_offset = Point {
-      x: translation.x.round() as i32,
-      y: translation.y.round() as i32,
-    };
-
-    for y in 0..size.height {
-      for x in 0..size.width {
-        let dest_x = x as i32 + transformed_offset.x;
-        let dest_y = y as i32 + transformed_offset.y;
-
-        if dest_x < 0 || dest_y < 0 {
-          continue;
-        }
-
-        draw_pixel(image, dest_x as u32, dest_y as u32, color);
-      }
-    }
-
-    return;
-  }
-
-  let mut paths = Vec::new();
-
-  radius.append_mask_commands(&mut paths);
-
-  let (mask, placement) = Mask::new(&paths).transform(Some(*transform)).render();
-
-  draw_mask(image, &mask, placement, color, None);
-}
-
 pub(crate) fn draw_mask<C: Into<Rgba<u8>>>(
   canvas: &mut RgbaImage,
   mask: &[u8],
@@ -182,35 +176,28 @@ pub(crate) fn draw_mask<C: Into<Rgba<u8>>>(
   color: C,
   image: Option<&RgbaImage>,
 ) {
-  let color: Rgba<u8> = color.into();
-  let mut i = 0;
+  let offset = Point {
+    x: placement.left as f32,
+    y: placement.top as f32,
+  };
+  let top_size = Size {
+    width: placement.width,
+    height: placement.height,
+  };
 
-  for y in 0..placement.height {
-    for x in 0..placement.width {
-      let alpha = mask[i];
-      i += 1;
+  let color = color.into();
 
-      if alpha == 0 {
-        continue;
-      }
+  overlay_area(canvas, offset, top_size, |x, y| {
+    let alpha = mask[mask_index_from_coord(x, y, placement.width)];
 
-      let dest_x = x as i32 + placement.left;
-      let dest_y = y as i32 + placement.top;
-
-      if dest_x < 0 || dest_y < 0 {
-        continue;
-      }
-
-      let pixel = image
-        .map(|image| {
-          let pixel = *image.get_pixel(x, y);
-          apply_mask_alpha_to_pixel(pixel, alpha)
-        })
-        .unwrap_or_else(|| apply_mask_alpha_to_pixel(color, alpha));
-
-      draw_pixel(canvas, dest_x as u32, dest_y as u32, pixel);
+    if alpha == 0 {
+      return Color::transparent().into();
     }
-  }
+
+    let pixel = image.map(|image| *image.get_pixel(x, y)).unwrap_or(color);
+
+    apply_mask_alpha_to_pixel(pixel, alpha)
+  });
 }
 
 pub(crate) fn overlay_image(
@@ -220,8 +207,8 @@ pub(crate) fn overlay_image(
   transform: Affine,
   algorithm: ImageScalingAlgorithm,
   filters: Option<&Filters>,
+  offset: Point<f32>,
 ) {
-  let translation = transform.decompose_translation();
   let can_direct_draw = transform.only_translation() && border.is_zero();
 
   let mut image = Cow::Borrowed(image);
@@ -237,25 +224,17 @@ pub(crate) fn overlay_image(
   }
 
   if can_direct_draw {
-    let transformed_offset = Point {
-      x: translation.x.round() as i32,
-      y: translation.y.round() as i32,
-    };
+    let transformed_offset = transform.decompose_translation() + offset;
 
-    for y in 0..image.height() {
-      for x in 0..image.width() {
-        let dest_x = x as i32 + transformed_offset.x;
-        let dest_y = y as i32 + transformed_offset.y;
-
-        if dest_x < 0 || dest_y < 0 {
-          continue;
-        }
-
-        draw_pixel(canvas, dest_x as u32, dest_y as u32, *image.get_pixel(x, y));
-      }
-    }
-
-    return;
+    return overlay_area(
+      canvas,
+      transformed_offset,
+      Size {
+        width: image.width(),
+        height: image.height(),
+      },
+      |x, y| *image.get_pixel(x, y),
+    );
   }
 
   let Some(inverse) = transform.invert() else {
@@ -268,44 +247,77 @@ pub(crate) fn overlay_image(
 
   let (mask, placement) = Mask::new(&paths).transform(Some(*transform)).render();
 
-  let mut i = 0;
+  let get_original_pixel = |x, y| {
+    let alpha = mask[mask_index_from_coord(x, y, image.width())];
 
-  for y in 0..placement.height {
-    for x in 0..placement.width {
-      let alpha = mask[i];
-      i += 1;
+    if alpha == 0 {
+      return Color::transparent().into();
+    }
 
-      if alpha == 0 {
-        continue;
-      }
+    let point = inverse.transform_point(
+      (
+        x as f32 + placement.left as f32,
+        y as f32 + placement.top as f32,
+      )
+        .into(),
+    );
 
-      let canvas_x = x as i32 + placement.left;
-      let canvas_y = y as i32 + placement.top;
+    let sampled_pixel = match algorithm {
+      ImageScalingAlgorithm::Pixelated => interpolate_nearest(&*image, point.x, point.y),
+      _ => interpolate_bilinear(&*image, point.x, point.y),
+    };
 
-      if canvas_x < 0 || canvas_y < 0 {
-        continue;
-      }
+    let Some(mut pixel) = sampled_pixel else {
+      return Color::transparent().into();
+    };
 
-      let point = inverse.transform_point(
-        (
-          x as f32 + placement.left as f32,
-          y as f32 + placement.top as f32,
-        )
-          .into(),
-      );
+    if alpha != u8::MAX {
+      pixel = apply_mask_alpha_to_pixel(pixel, alpha);
+    }
 
-      let sampled_pixel = match algorithm {
-        ImageScalingAlgorithm::Pixelated => interpolate_nearest(&*image, point.x, point.y),
-        _ => interpolate_bilinear(&*image, point.x, point.y),
-      };
+    pixel
+  };
 
-      if let Some(mut pixel) = sampled_pixel {
-        if alpha != u8::MAX {
-          pixel = apply_mask_alpha_to_pixel(pixel, alpha);
-        }
+  overlay_area(
+    canvas,
+    offset,
+    Size {
+      width: image.width(),
+      height: image.height(),
+    },
+    get_original_pixel,
+  );
+}
 
-        draw_pixel(canvas, canvas_x as u32, canvas_y as u32, pixel);
-      }
+#[inline(always)]
+pub(crate) fn mask_index_from_coord(x: u32, y: u32, width: u32) -> usize {
+  (y * width + x) as usize
+}
+
+pub(crate) fn overlay_area(
+  bottom: &mut RgbaImage,
+  offset: Point<f32>,
+  top_size: Size<u32>,
+  f: impl Fn(u32, u32) -> Rgba<u8>,
+) {
+  let top_start_x = offset.x.neg().max(0.0) as u32;
+  let top_start_y = offset.y.neg().max(0.0) as u32;
+
+  let top_steps_x = top_size
+    .width
+    .min((bottom.width() as f32 - offset.x) as u32);
+  let top_steps_y = top_size
+    .height
+    .min((bottom.height() as f32 - offset.y) as u32);
+
+  for y in top_start_y..top_steps_y {
+    for x in top_start_x..top_steps_x {
+      let pixel = f(x, y);
+
+      let dest_x = x + offset.x as u32;
+      let dest_y = y + offset.y as u32;
+
+      draw_pixel(bottom, dest_x, dest_y, pixel);
     }
   }
 }
