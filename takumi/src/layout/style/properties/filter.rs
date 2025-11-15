@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use cssparser::{Parser, Token, match_ignore_ascii_case};
 use image::{
   Pixel, RgbaImage,
@@ -44,7 +46,15 @@ pub(crate) enum FiltersValue {
 #[ts(as = "FiltersValue")]
 #[serde(try_from = "FiltersValue")]
 /// A list of filter operations
-pub struct Filters(pub SmallVec<[Filter; 4]>);
+pub struct Filters(SmallVec<[Filter; 4]>);
+
+impl Deref for Filters {
+  type Target = SmallVec<[Filter; 4]>;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
 
 impl Filters {
   pub(crate) fn apply_to(&self, image: &mut RgbaImage) {

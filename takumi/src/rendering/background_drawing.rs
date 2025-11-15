@@ -315,7 +315,7 @@ pub(crate) fn draw_background_layers(
             .then_translate(*x as f32, *y as f32)
             .into(),
           ImageScalingAlgorithm::Auto,
-          context.style.filter.0.as_ref(),
+          context.style.filter.as_ref(),
         );
       }
     }

@@ -3,7 +3,7 @@
 //! This module provides performance-optimized canvas operations including
 //! fast image blending and pixel manipulation operations.
 
-use std::{borrow::Cow, ops::Neg};
+use std::borrow::Cow;
 
 use image::{
   Pixel, Rgba, RgbaImage,
@@ -214,7 +214,7 @@ pub(crate) fn overlay_image(
   let mut image = Cow::Borrowed(image);
 
   if let Some(filters) = filters
-    && !filters.0.is_empty()
+    && !filters.is_empty()
   {
     let mut owned_image = image.into_owned();
 
@@ -300,22 +300,33 @@ pub(crate) fn overlay_area(
   top_size: Size<u32>,
   f: impl Fn(u32, u32) -> Rgba<u8>,
 ) {
-  let top_start_x = offset.x.neg().max(0.0) as u32;
-  let top_start_y = offset.y.neg().max(0.0) as u32;
+  for y in 0..top_size.height {
+    let dest_y = y as i32 + offset.y as i32;
 
-  let top_steps_x = top_size
-    .width
-    .min((bottom.width() as f32 - offset.x) as u32);
-  let top_steps_y = top_size
-    .height
-    .min((bottom.height() as f32 - offset.y) as u32);
+    if dest_y < 0 {
+      continue;
+    }
 
-  for y in top_start_y..top_steps_y {
-    for x in top_start_x..top_steps_x {
+    let dest_y = dest_y as u32;
+
+    if dest_y >= bottom.height() {
+      break;
+    }
+
+    for x in 0..top_size.width {
+      let dest_x = x as i32 + offset.x as i32;
+
+      if dest_x < 0 {
+        continue;
+      }
+
+      let dest_x = dest_x as u32;
+
+      if dest_x >= bottom.width() {
+        break;
+      }
+
       let pixel = f(x, y);
-
-      let dest_x = x + offset.x as u32;
-      let dest_y = y + offset.y as u32;
 
       draw_pixel(bottom, dest_x, dest_y, pixel);
     }
