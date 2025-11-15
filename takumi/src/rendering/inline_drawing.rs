@@ -1,12 +1,12 @@
 use image::RgbaImage;
 use parley::{GlyphRun, PositionedInlineBox, PositionedLayoutItem};
-use taffy::{Layout, Point, Rect, Size};
+use taffy::{Layout, Point, Size};
 
 use crate::{
   layout::{
     inline::{InlineBrush, InlineLayout},
     node::Node,
-    style::{SizedFontStyle, TextDecorationLine},
+    style::{Affine, SizedFontStyle, TextDecorationLine},
   },
   rendering::{
     Canvas, RenderContext, draw_decoration, draw_glyph, overlay_image, resolve_layers_tiles,
@@ -103,6 +103,13 @@ pub(crate) fn draw_inline_box<N: Node<N>>(
     return;
   }
 
+  let offset = Point {
+    x: inline_box.x,
+    y: inline_box.y,
+  };
+
+  canvas.add_offset(offset);
+
   node.draw_on_canvas(
     context,
     canvas,
@@ -111,15 +118,11 @@ pub(crate) fn draw_inline_box<N: Node<N>>(
         width: inline_box.width,
         height: inline_box.height,
       },
-      padding: Rect {
-        top: inline_box.x,
-        left: inline_box.y,
-        right: 0.0,
-        bottom: 0.0,
-      },
       ..Default::default()
     },
   );
+
+  canvas.add_offset(offset.map(|axis| -axis));
 }
 
 pub(crate) fn draw_inline_layout(
@@ -186,10 +189,13 @@ fn create_fill_image(
           &mut composed,
           &tile_image,
           Default::default(),
-          zeno::Transform::translation(*x as f32, *y as f32).into(),
+          Affine::identity(),
           context.style.image_rendering,
           context.style.filter.as_ref(),
-          Point::zero(),
+          Point {
+            x: *x as f32,
+            y: *y as f32,
+          },
         )
       }
     }
