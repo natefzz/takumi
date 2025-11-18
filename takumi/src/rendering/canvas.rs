@@ -438,7 +438,7 @@ pub(crate) fn overlay_image(
   let (mask, placement) = Mask::new(&paths).transform(Some(transform.into())).render();
 
   let get_original_pixel = |x, y| {
-    let alpha = mask[mask_index_from_coord(x, y, image.width())];
+    let alpha = mask[mask_index_from_coord(x, y, placement.width)];
 
     if alpha == 0 {
       return Color::transparent().into();
@@ -472,8 +472,8 @@ pub(crate) fn overlay_image(
       y: placement.top as f32,
     },
     Size {
-      width: image.width(),
-      height: image.height(),
+      width: placement.width,
+      height: placement.height,
     },
     constrain,
     get_original_pixel,
