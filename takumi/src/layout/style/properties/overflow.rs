@@ -7,7 +7,7 @@ use ts_rs::TS;
 
 use crate::{
   layout::style::{Affine, FromCss, ParseResult, SpacePair, tw::TailwindPropertyParser},
-  rendering::OverflowConstrain,
+  rendering::CanvasConstrain,
 };
 
 /// How children overflowing their container should affect layout
@@ -98,7 +98,7 @@ impl Overflows {
     &self,
     layout: Layout,
     transform: Affine,
-  ) -> Option<OverflowConstrain> {
+  ) -> Option<CanvasConstrain> {
     let clip_x = self.x != Overflow::Visible;
     let clip_y = self.y != Overflow::Visible;
 
@@ -134,10 +134,11 @@ impl Overflows {
       },
     };
 
-    Some(OverflowConstrain {
+    Some(CanvasConstrain {
       from,
       to,
       inverse_transform: transform.invert()?,
+      mask: None,
     })
   }
 }

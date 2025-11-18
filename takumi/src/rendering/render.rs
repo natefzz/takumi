@@ -203,7 +203,7 @@ fn render_node<'g, Nodes: Node<Nodes>>(
       return;
     };
 
-    canvas.push_overflow_constrain(overflow_constrain);
+    canvas.push_constrain(overflow_constrain);
   }
 
   if node.should_create_inline_layout() {
@@ -215,6 +215,6 @@ fn render_node<'g, Nodes: Node<Nodes>>(
   }
 
   if overflow.should_clip_content() {
-    canvas.pop_overflow_constrain();
+    canvas.pop_constrain();
   }
 }
