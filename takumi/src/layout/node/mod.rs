@@ -7,7 +7,7 @@ pub use image::*;
 pub use text::*;
 
 use serde::Deserialize;
-use taffy::{AvailableSpace, Layout, Size};
+use taffy::{AvailableSpace, Layout, Point, Size};
 use zeno::Mask;
 
 use crate::{
@@ -17,7 +17,7 @@ use crate::{
     style::{BackgroundImage, CssOption, CssValue, InheritedStyle, Style},
   },
   rendering::{
-    BorderProperties, Canvas, RenderContext, SizedShadow, draw_background_layers, draw_border,
+    BorderProperties, Canvas, RenderContext, SizedShadow, draw_background_layers,
     resolve_layers_tiles,
   },
   resources::task::FetchTaskCollection,
@@ -232,7 +232,14 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
 
       border_radius
         .expand_by(shadow.spread_radius)
-        .append_mask_commands(&mut paths);
+        .append_mask_commands(
+          &mut paths,
+          layout.size,
+          Point {
+            x: -shadow.spread_radius,
+            y: -shadow.spread_radius,
+          },
+        );
 
       let (mask, placement) = Mask::new(&paths)
         .transform(Some(context.transform.into()))
@@ -263,10 +270,7 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
     let radius = BorderProperties::from_context(context, layout.size, layout.border);
 
     canvas.fill_color(
-      Size {
-        width: layout.size.width as u32,
-        height: layout.size.height as u32,
-      },
+      layout.size,
       context
         .style
         .background_color
@@ -306,9 +310,9 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
 
   /// Draws the border of the node.
   fn draw_border(&self, context: &RenderContext, canvas: &mut Canvas, layout: Layout) {
-    draw_border(
+    BorderProperties::from_context(context, layout.size, layout.border).draw(
       canvas,
-      BorderProperties::from_context(context, layout.size, layout.border),
+      layout.size,
       context.transform,
     );
   }

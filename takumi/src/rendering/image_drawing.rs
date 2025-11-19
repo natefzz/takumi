@@ -5,7 +5,7 @@ use fast_image_resize::{ImageView, PixelTrait, ResizeOptions};
 use fast_image_resize::{IntoImageView, PixelType, Resizer, images::Image};
 use image::RgbaImage;
 use image::imageops::crop_imm;
-use taffy::{Layout, Point, Rect, Size};
+use taffy::{Layout, Point, Size};
 
 use crate::layout::style::Affine;
 use crate::{
@@ -245,10 +245,8 @@ pub fn draw_image(
     layout.border.top + layout.padding.top + offset.y,
   ) * context.transform;
 
-  let mut border =
+  let border =
     BorderProperties::from_context(context, layout.size, layout.border).inset_by_border_width();
-  border.offset = Point::zero();
-  border.width = Rect::zero();
 
   canvas.overlay_image(
     &image,

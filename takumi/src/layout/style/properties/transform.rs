@@ -141,8 +141,8 @@ impl Affine {
   #[inline(always)]
   pub fn transform_point(self, point: Point<f32>) -> Point<f32> {
     Point {
-      x: self.a * point.x + self.b * point.y + self.x,
-      y: self.c * point.x + self.d * point.y + self.y,
+      x: self.a * point.x + self.c * point.y + self.x,
+      y: self.b * point.x + self.d * point.y + self.y,
     }
   }
 

@@ -142,12 +142,16 @@ impl CanvasConstrain {
         to,
         inverse_transform,
       } => {
-        let original_point = inverse_transform
-          .transform_point(Point {
-            x: x as f32,
-            y: y as f32,
-          })
-          .map(|point| point as u32);
+        let original_point = inverse_transform.transform_point(Point {
+          x: x as f32,
+          y: y as f32,
+        });
+
+        if original_point.x < 0.0 || original_point.y < 0.0 {
+          return 0;
+        }
+
+        let original_point = original_point.map(|point| point as u32);
 
         let is_contained = original_point.x >= from.x
           && original_point.x < to.x
@@ -257,7 +261,7 @@ impl Canvas {
   /// Fills a rectangular area with the specified color and optional border radius.
   pub(crate) fn fill_color(
     &mut self,
-    size: Size<u32>,
+    size: Size<f32>,
     color: Color,
     border: BorderProperties,
     transform: Affine,
@@ -273,8 +277,8 @@ impl Canvas {
       && border.is_zero()
       && constrain.is_none()
       && color.0[3] == 255
-      && size.width == self.image.width()
-      && size.height == self.image.height()
+      && size.width as u32 == self.image.width()
+      && size.height as u32 == self.image.height()
     {
       let image_mut = self.image.as_mut();
 
@@ -292,12 +296,18 @@ impl Canvas {
       let translation = transform.decompose_translation();
 
       let color: Rgba<u8> = color.into();
-      return overlay_area(&mut self.image, translation, size, constrain, |_, _| color);
+      return overlay_area(
+        &mut self.image,
+        translation,
+        size.map(|size| size as u32),
+        constrain,
+        |_, _| color,
+      );
     }
 
     let mut paths = Vec::new();
 
-    border.append_mask_commands(&mut paths);
+    border.append_mask_commands(&mut paths, size, Point::ZERO);
 
     let (mask, placement) = Mask::new(&paths).transform(Some(transform.into())).render();
 
@@ -433,7 +443,14 @@ pub(crate) fn overlay_image(
 
   let mut paths = Vec::new();
 
-  border.append_mask_commands(&mut paths);
+  border.append_mask_commands(
+    &mut paths,
+    Size {
+      width: image.width() as f32,
+      height: image.height() as f32,
+    },
+    Point::ZERO,
+  );
 
   let (mask, placement) = Mask::new(&paths).transform(Some(transform.into())).render();
 
@@ -444,10 +461,17 @@ pub(crate) fn overlay_image(
       return Color::transparent().into();
     }
 
-    let point = inverse.transform_point(Point {
-      x: x as f32 + placement.left as f32,
-      y: y as f32 + placement.top as f32,
-    });
+    let transformed_point = Point {
+      x: (x as f32 + placement.left as f32).round(),
+      y: (y as f32 + placement.top as f32).round(),
+    };
+
+    let point = inverse.transform_point(transformed_point);
+
+    println!(
+      "({}, {}) -> ({}, {})",
+      transformed_point.x, transformed_point.y, point.x, point.y
+    );
 
     let sampled_pixel = match algorithm {
       ImageScalingAlgorithm::Pixelated => interpolate_nearest(&*image, point.x, point.y),

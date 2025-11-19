@@ -34,8 +34,8 @@ pub(crate) fn draw_decoration(
 
   canvas.fill_color(
     Size {
-      width: glyph_run.advance().round() as u32,
-      height: size.round() as u32,
+      width: glyph_run.advance(),
+      height: size,
     },
     color,
     BorderProperties::default(),
@@ -60,13 +60,7 @@ pub(crate) fn draw_glyph(
   ) * transform;
 
   if let ResolvedGlyph::Image(bitmap) = glyph_content {
-    let border = BorderProperties {
-      size: Size {
-        width: bitmap.placement.width as f32,
-        height: bitmap.placement.height as f32,
-      },
-      ..Default::default()
-    };
+    let border = BorderProperties::default();
 
     transform =
       Affine::translation(bitmap.placement.left as f32, -bitmap.placement.top as f32) * transform;

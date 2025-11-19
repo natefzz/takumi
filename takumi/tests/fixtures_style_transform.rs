@@ -12,6 +12,40 @@ use test_utils::run_style_width_test;
 const ROTATED_ANGLES: &[f32] = &[0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0];
 
 #[test]
+fn test_rotate_image() {
+  let image = ContainerNode {
+    style: Some(
+      StyleBuilder::default()
+        .width(Percentage(100.0))
+        .height(Percentage(100.0))
+        .background_color(ColorInput::Value(Color::white()))
+        .justify_content(JustifyContent::Center)
+        .align_items(AlignItems::Center)
+        .build()
+        .unwrap(),
+    ),
+    tw: None,
+    children: Some(vec![
+      ImageNode {
+        style: Some(
+          StyleBuilder::default()
+            .rotate(CssOption::some(Angle::new(90.0)))
+            .build()
+            .unwrap(),
+        ),
+        tw: None,
+        src: "assets/images/yeecord.png".into(),
+        width: None,
+        height: None,
+      }
+      .into(),
+    ]),
+  };
+
+  run_style_width_test(image.into(), "tests/fixtures/style_rotate_image.webp");
+}
+
+#[test]
 fn test_rotate() {
   let container = ContainerNode {
     tw: None,

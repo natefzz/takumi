@@ -214,10 +214,6 @@ impl BasicShape {
 
         let border = BorderProperties {
           width: Rect::zero(),
-          size: Size {
-            width: size.width - inset.grid_axis_sum(AbsoluteAxis::Horizontal),
-            height: size.height - inset.grid_axis_sum(AbsoluteAxis::Vertical),
-          },
           color: Color::transparent(),
           radius: shape
             .border_radius
@@ -229,13 +225,19 @@ impl BasicShape {
               )
             })
             .unwrap_or_default(),
-          offset: Point {
+        };
+
+        border.append_mask_commands(
+          &mut paths,
+          Size {
+            width: size.width - inset.grid_axis_sum(AbsoluteAxis::Horizontal),
+            height: size.height - inset.grid_axis_sum(AbsoluteAxis::Vertical),
+          },
+          Point {
             x: inset.left,
             y: inset.top,
           },
-        };
-
-        border.append_mask_commands(&mut paths);
+        );
       }
       BasicShape::Ellipse(shape) => {
         let distance = Size {

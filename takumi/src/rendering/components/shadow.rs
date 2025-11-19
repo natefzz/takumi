@@ -134,7 +134,7 @@ impl SizedShadow {
 
 fn draw_inset_shadow(
   shadow: &SizedShadow,
-  mut border: BorderProperties,
+  border: BorderProperties,
   border_box: Size<f32>,
 ) -> RgbaImage {
   let mut shadow_image = RgbaImage::from_pixel(
@@ -145,16 +145,26 @@ fn draw_inset_shadow(
 
   let mut paths = Vec::new();
 
-  border.offset = Point {
+  let offset = Point {
     x: shadow.offset_x,
     y: shadow.offset_y,
   };
 
-  border.append_mask_commands(&mut paths);
+  border.append_mask_commands(&mut paths, border_box, offset);
 
-  border
-    .expand_by(-shadow.spread_radius)
-    .append_mask_commands(&mut paths);
+  border.expand_by(shadow.spread_radius).append_mask_commands(
+    &mut paths,
+    border_box
+      - Size {
+        width: shadow.spread_radius * 2.0,
+        height: shadow.spread_radius * 2.0,
+      },
+    offset
+      + Point {
+        x: shadow.spread_radius,
+        y: shadow.spread_radius,
+      },
+  );
 
   let (mask, placement) = Mask::new(&paths).style(Fill::EvenOdd).render();
 
