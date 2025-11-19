@@ -1,5 +1,11 @@
 # takumi
 
+## 0.52.2
+
+### Patch Changes
+
+- 563bf31: optimize transform to reduce multiplications
+
 ## 0.52.1
 
 ### Patch Changes
