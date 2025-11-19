@@ -461,27 +461,21 @@ pub(crate) fn overlay_image(
       return Color::transparent().into();
     }
 
-    let transformed_point = Point {
+    let point = inverse.transform_point(Point {
       x: (x as f32 + placement.left as f32).round(),
       y: (y as f32 + placement.top as f32).round(),
-    };
-
-    let point = inverse.transform_point(transformed_point);
+    });
 
     let sampled_pixel = match algorithm {
       ImageScalingAlgorithm::Pixelated => interpolate_nearest(&*image, point.x, point.y),
       _ => interpolate_bilinear(&*image, point.x, point.y),
     };
 
-    let Some(mut pixel) = sampled_pixel else {
+    let Some(pixel) = sampled_pixel else {
       return Color::transparent().into();
     };
 
-    if alpha != u8::MAX {
-      pixel = apply_mask_alpha_to_pixel(pixel, alpha);
-    }
-
-    pixel
+    apply_mask_alpha_to_pixel(pixel, alpha)
   };
 
   overlay_area(
