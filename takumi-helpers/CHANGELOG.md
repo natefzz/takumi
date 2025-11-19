@@ -1,5 +1,11 @@
 # @takumi-rs/helpers
 
+## 0.52.0
+
+### Patch Changes
+
+- 776a18e: pass `img`, `svg` width/height/tw property when parsing
+
 ## 0.51.1
 
 ## 0.51.0

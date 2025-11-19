@@ -1,5 +1,16 @@
 # takumi
 
+## 0.52.0
+
+### Minor Changes
+
+- ed409d4: refactor `overflow` & `clip-path` rendering to avoid extra allocations
+- b9b0a85: speed up out of viewport image rendering
+
+### Patch Changes
+
+- ed409d4: make transform behave correctly
+
 ## 0.51.1
 
 ### Patch Changes
