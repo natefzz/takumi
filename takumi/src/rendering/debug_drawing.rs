@@ -6,9 +6,6 @@ use crate::{
 };
 
 /// Draws debug borders around the node's layout areas.
-///
-/// This function draws colored rectangles to visualize the content box
-/// (red) and the full layout box (green) for debugging purposes.
 pub fn draw_debug_border(canvas: &mut Canvas, layout: Layout, transform: Affine) {
   // border-box
   BorderProperties {
