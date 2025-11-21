@@ -112,4 +112,4 @@ impl<T: Default, const DEFAULT_INHERIT: bool> CssValue<T, DEFAULT_INHERIT> {
   }
 }
 
-impl<T: Copy> Copy for CssValue<T> {}
+impl<T: Copy, const DEFAULT_INHERIT: bool> Copy for CssValue<T, DEFAULT_INHERIT> {}
