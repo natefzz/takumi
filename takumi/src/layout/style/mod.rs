@@ -29,7 +29,7 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Deserialize<'de>
     D: Deserializer<'de>,
   {
     UntaggedEnumVisitor::new()
-      .expecting("`initial`, `inherit` or T")
+      .expecting(r#"#initial# | #inherit# | string | number"#)
       .string(|str| {
         match_ignore_ascii_case! {str,
           "initial" => Ok(CssValue::Initial),
@@ -59,7 +59,7 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Deserialize<'de>
     D: Deserializer<'de>,
   {
     UntaggedEnumVisitor::new()
-      .expecting("`initial`, `inherit`, `none` or T")
+      .expecting(r#"#initial# | #inherit# | #none# | string | number"#)
       .string(|str| {
         match_ignore_ascii_case! {str,
           "none" => Ok(CssValue::Value(None)),

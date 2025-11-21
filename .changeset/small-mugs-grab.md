@@ -2,4 +2,4 @@
 "takumi": minor
 ---
 
-drop `ts_ts` support
+drop `ts_rs` support
