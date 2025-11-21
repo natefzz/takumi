@@ -1,5 +1,11 @@
 # @takumi-rs/helpers
 
+## 0.53.0
+
+### Minor Changes
+
+- 364fa11: **deprecate `PartialStyle`, use `CSSProperties` instead.**
+
 ## 0.52.2
 
 ## 0.52.1

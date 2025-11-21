@@ -1,5 +1,12 @@
 # takumi
 
+## 0.53.0
+
+### Minor Changes
+
+- 7740504: drop `ts_rs` support
+- 4623702: **`textStroke` related properties will have prefix `WebkitTextStroke`**
+
 ## 0.52.2
 
 ### Patch Changes
