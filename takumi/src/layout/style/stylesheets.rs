@@ -24,7 +24,7 @@ macro_rules! define_style {
     pub struct Style {
       $(
         #[allow(missing_docs)]
-        pub $property: CssValue<$type, $($inherit)?>,
+        pub $property: CssValue<$type$(, $inherit)?>,
       )*
     }
 
@@ -48,7 +48,7 @@ macro_rules! define_style {
 // property: type = node default value => viewport default value
 define_style!(
   // For convenience, we default to border-box
-  box_sizing: BoxSizing where inherit = true,
+  box_sizing: BoxSizing,
   opacity: PercentageNumber,
   display: Display,
   width: LengthUnit,
@@ -102,7 +102,7 @@ define_style!(
   mask_size: Option<BackgroundSizes>,
   mask_position: Option<BackgroundPositions>,
   mask_repeat: Option<BackgroundRepeats>,
-  gap: SpacePair<LengthUnit<false>>,
+  gap: SpacePair<LengthUnit<false>, true>,
   column_gap: Option<LengthUnit<false>>,
   row_gap: Option<LengthUnit<false>>,
   flex: Option<Flex>,
@@ -130,7 +130,7 @@ define_style!(
   background_position: Option<BackgroundPositions>,
   background_size: Option<BackgroundSizes>,
   background_repeat: Option<BackgroundRepeats>,
-  background_color: ColorInput,
+  background_color: ColorInput<false>,
   box_shadow: Option<BoxShadows>,
   grid_auto_columns: Option<GridTrackSizes>,
   grid_auto_rows: Option<GridTrackSizes>,
@@ -140,7 +140,7 @@ define_style!(
   grid_template_columns: Option<GridTemplateComponents>,
   grid_template_rows: Option<GridTemplateComponents>,
   grid_template_areas: Option<GridTemplateAreas>,
-  text_overflow: TextOverflow where inherit = true,
+  text_overflow: TextOverflow,
   text_transform: TextTransform where inherit = true,
   font_style: FontStyle where inherit = true,
   border_color: Option<ColorInput>,
@@ -166,7 +166,7 @@ define_style!(
   image_rendering: ImageScalingAlgorithm where inherit = true,
   overflow_wrap: OverflowWrap where inherit = true,
   word_break: WordBreak where inherit = true,
-  clip_path: Option<BasicShape> where inherit = true,
+  clip_path: Option<BasicShape>,
   clip_rule: FillRule where inherit = true,
   white_space: WhiteSpace where inherit = true,
   white_space_collapse: Option<WhiteSpaceCollapse> where inherit = true,
@@ -433,10 +433,10 @@ impl InheritedStyle {
   }
 
   #[inline]
-  fn resolved_gap(&self) -> SpacePair<LengthUnit<false>, true> {
+  fn resolved_gap(&self) -> SpacePair<LengthUnit<false>> {
     SpacePair::from_pair(
-      self.column_gap.unwrap_or(self.gap.y),
       self.row_gap.unwrap_or(self.gap.x),
+      self.column_gap.unwrap_or(self.gap.y),
     )
   }
 

@@ -1,13 +1,7 @@
-import type { ColorInput } from "./bindings/ColorInput";
-import type {
-  AnyNode,
-  ContainerNode,
-  ImageNode,
-  PartialStyle,
-  TextNode,
-} from "./types";
+import type { CSSProperties } from "react";
+import type { AnyNode, ContainerNode, ImageNode, TextNode } from "./types";
 
-function applyStyle(node: AnyNode, style?: PartialStyle) {
+function applyStyle(node: AnyNode, style?: CSSProperties) {
   if (style && Object.keys(style).length > 0) {
     node.style = style;
   }
@@ -25,12 +19,12 @@ export function container(props: Omit<ContainerNode, "type">): ContainerNode {
   return node;
 }
 
-export function text(text: string, style?: PartialStyle): TextNode;
+export function text(text: string, style?: CSSProperties): TextNode;
 export function text(props: Omit<TextNode, "type">): TextNode;
 
 export function text(
   props: Omit<TextNode, "type"> | string,
-  style?: PartialStyle,
+  style?: CSSProperties,
 ): TextNode {
   if (typeof props === "string") {
     const node: TextNode = {
@@ -68,51 +62,34 @@ export function image(props: Omit<ImageNode, "type">): ImageNode {
   return node;
 }
 
-export function style(style: PartialStyle) {
+export function style(style: CSSProperties) {
   return style;
 }
 
-/**
- * Convert a number to a percentage struct.
- * @param percentage - The percentage to convert (0.0 - 100.0).
- * @returns The percentage struct.
- */
 export function percentage(percentage: number) {
-  return {
-    percentage,
-  };
+  return `${percentage}%` as const;
 }
 
 export function vw(vw: number) {
-  return {
-    vw,
-  };
+  return `${vw}vw` as const;
 }
 
 export function vh(vh: number) {
-  return {
-    vh,
-  };
+  return `${vh}vh` as const;
 }
 
 export function em(em: number) {
-  return {
-    em,
-  };
+  return `${em}em` as const;
 }
 
 export function rem(rem: number) {
-  return {
-    rem,
-  };
+  return `${rem}rem` as const;
 }
 
 export function fr(fr: number) {
-  return {
-    fr,
-  };
+  return `${fr}fr` as const;
 }
 
-export function rgba(r: number, g: number, b: number, a = 1): ColorInput {
-  return [r, g, b, a];
+export function rgba(r: number, g: number, b: number, a = 1) {
+  return `rgb(${r} ${g} ${b} / ${a})` as const;
 }

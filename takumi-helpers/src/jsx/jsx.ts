@@ -5,7 +5,7 @@ import type {
   ReactNode,
 } from "react";
 import { container, image, percentage, text } from "../helpers";
-import type { Node, PartialStyle } from "../types";
+import type { Node } from "../types";
 import { stylePresets } from "./style-presets";
 import { serializeSvg } from "./svg";
 import {
@@ -184,7 +184,7 @@ async function processReactElement(element: ReactElementLike): Promise<Node[]> {
     return [createSvgElement(element)];
   }
 
-  const style = extractStyle(element) as PartialStyle;
+  const style = extractStyle(element);
   const tw = extractTw(element);
 
   const textChildren = await tryCollectTextChildren(element);
@@ -215,7 +215,7 @@ function createImageElement(
     throw new Error("Image element must have a 'src' prop.");
   }
 
-  const style = extractStyle(element) as PartialStyle;
+  const style = extractStyle(element);
   const tw = extractTw(element);
 
   return image({
@@ -226,7 +226,7 @@ function createImageElement(
 }
 
 function createSvgElement(element: ReactElement<ComponentProps<"svg">, "svg">) {
-  const style = extractStyle(element) as PartialStyle;
+  const style = extractStyle(element);
   const tw = extractTw(element);
   const svg = serializeSvg(element);
 
@@ -242,9 +242,9 @@ const webkitPropertiesMapping = {
   WebkitTextStroke: "textStroke",
   WebkitTextStrokeWidth: "textStrokeWidth",
   WebkitTextStrokeColor: "textStrokeColor",
-} satisfies Partial<Record<keyof CSSProperties, keyof PartialStyle>>;
+} satisfies Partial<Record<keyof CSSProperties, string>>;
 
-function extractStyle(element: ReactElementLike): PartialStyle {
+function extractStyle(element: ReactElementLike): CSSProperties {
   const base = {};
 
   if (typeof element.type === "string" && element.type in stylePresets) {

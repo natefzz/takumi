@@ -304,7 +304,7 @@ pub enum TailwindProperty {
   /// `opacity` property.
   Opacity(PercentageNumber),
   /// `background-color` property.
-  BackgroundColor(ColorInput),
+  BackgroundColor(ColorInput<false>),
   /// `border-color` property.
   BorderColor(ColorInput),
   /// `border-top-width` property.

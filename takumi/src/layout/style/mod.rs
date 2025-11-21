@@ -12,7 +12,7 @@ pub use stylesheets::*;
 
 /// Represents a CSS property value that can be explicitly set, inherited from parent, or reset to initial value.
 #[derive(Clone, Debug, PartialEq)]
-pub enum CssValue<T, const DEFAULT_INHERIT: bool = true> {
+pub enum CssValue<T, const DEFAULT_INHERIT: bool = false> {
   /// Use the initial value of the property
   Initial,
   /// Inherit the computed value from the parent element

@@ -1,11 +1,10 @@
 // Modified from https://github.com/vercel/satori/blob/2a0878a7f329bdba3a17ad68f71186a47add0dde/src/handler/presets.ts
 // Reference from https://chromium.googlesource.com/chromium/blink/+/master/Source/core/css/html.css
 
-import type { JSX } from "react";
-import type { PartialStyle } from "../types";
+import type { CSSProperties, JSX } from "react";
 
 export const stylePresets: Partial<
-  Record<keyof JSX.IntrinsicElements, PartialStyle>
+  Record<keyof JSX.IntrinsicElements, CSSProperties>
 > = {
   body: {
     margin: 8,
@@ -124,7 +123,7 @@ export const stylePresets: Partial<
   },
   mark: {
     backgroundColor: "yellow",
-    color: 0,
+    color: "black",
     display: "inline",
   },
   big: {

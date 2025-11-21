@@ -15,16 +15,25 @@ use crate::layout::style::{FromCss, ParseResult, tw::TailwindPropertyParser};
 pub struct Color(pub [u8; 4]);
 
 /// Represents a color input value.
-#[derive(Debug, Default, Clone, PartialEq, Copy)]
-pub enum ColorInput {
-  #[default]
+#[derive(Debug, Clone, PartialEq, Copy)]
+pub enum ColorInput<const DEFAULT_CURRENT_COLOR: bool = true> {
   /// Inherit from the `color` value.
   CurrentColor,
   /// A color value.
   Value(Color),
 }
 
-impl ColorInput {
+impl<const DEFAULT_CURRENT_COLOR: bool> Default for ColorInput<DEFAULT_CURRENT_COLOR> {
+  fn default() -> Self {
+    if DEFAULT_CURRENT_COLOR {
+      ColorInput::CurrentColor
+    } else {
+      ColorInput::Value(Color::transparent())
+    }
+  }
+}
+
+impl<const DEFAULT_CURRENT_COLOR: bool> ColorInput<DEFAULT_CURRENT_COLOR> {
   /// Resolves the color input to a color.
   pub fn resolve(self, current_color: Color, opacity: f32) -> Color {
     match self {
@@ -34,7 +43,9 @@ impl ColorInput {
   }
 }
 
-impl TailwindPropertyParser for ColorInput {
+impl<const DEFAULT_CURRENT_COLOR: bool> TailwindPropertyParser
+  for ColorInput<DEFAULT_CURRENT_COLOR>
+{
   fn parse_tw(token: &str) -> Option<Self> {
     if token.eq_ignore_ascii_case("current") {
       return Some(ColorInput::CurrentColor);
@@ -227,7 +238,7 @@ impl TailwindPropertyParser for Color {
   }
 }
 
-impl From<Color> for ColorInput {
+impl<const DEFAULT_CURRENT_COLOR: bool> From<Color> for ColorInput<DEFAULT_CURRENT_COLOR> {
   fn from(color: Color) -> Self {
     ColorInput::Value(color)
   }
@@ -286,7 +297,7 @@ impl Color {
   }
 }
 
-impl<'i> FromCss<'i> for ColorInput {
+impl<'i, const DEFAULT_CURRENT_COLOR: bool> FromCss<'i> for ColorInput<DEFAULT_CURRENT_COLOR> {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
     if input
       .try_parse(|input| input.expect_ident_matching("currentcolor"))
@@ -434,7 +445,7 @@ mod tests {
   #[test]
   fn test_parse_arbitrary_color_from_str() {
     // Test that ColorInput::from_str can parse arbitrary color names like deepskyblue
-    let result = ColorInput::from_str("deepskyblue").unwrap();
+    let result = ColorInput::<false>::from_str("deepskyblue").unwrap();
     match result {
       ColorInput::Value(color) => {
         // deepskyblue is rgb(0, 191, 255)
