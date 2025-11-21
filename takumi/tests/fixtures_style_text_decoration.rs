@@ -2,7 +2,7 @@ use smallvec::smallvec;
 use takumi::layout::{
   node::TextNode,
   style::{
-    Color, ColorInput, CssOption,
+    Color, ColorInput,
     LengthUnit::{Percentage, Px},
     StyleBuilder, TextAlign, TextDecoration, TextDecorationLine, TextDecorationLines,
   },
@@ -20,7 +20,7 @@ fn test_style_text_decoration() {
         .width(Percentage(100.0))
         .text_align(TextAlign::Center)
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
-        .font_size(CssOption::some(Px(72.0)))
+        .font_size(Some(Px(72.0)))
         .text_decoration(TextDecoration {
           line: TextDecorationLines(smallvec![
             TextDecorationLine::Underline,

@@ -71,7 +71,7 @@ impl CanvasConstrain {
     transform: Affine,
   ) -> CanvasConstrainResult {
     // Clip path would just clip everything, and behaves like overflow: hidden.
-    if let Some(clip_path) = &*style.clip_path {
+    if let Some(clip_path) = &style.clip_path {
       let (mask, placement) = clip_path.render_mask(context, layout.size);
 
       let end_x = placement.left + placement.width as i32;

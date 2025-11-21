@@ -13,7 +13,7 @@ fn create_luma_logo_container() -> ContainerNode<NodeKind> {
       StyleBuilder::default()
         .width(Percentage(100.0))
         .height(Percentage(100.0))
-        .background_image(CssOption::some(
+        .background_image(Some(
           BackgroundImages::from_str("linear-gradient(135deg, #2d3748 0%, #1a202c 100%)").unwrap(),
         ))
         .display(Display::Flex)

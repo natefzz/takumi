@@ -1,25 +1,22 @@
-import type { Style } from "./bindings/Style";
-
-export type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+import type { CSSProperties } from "react";
 
 export type AnyNode = {
   type: string;
-  [key: string]: JsonValue;
+  style?: CSSProperties;
+  tw?: string;
+  [key: string]: unknown;
 };
 
-export type PartialStyle = Partial<Style>;
+/**
+ * @deprecated Use {import("csstype").Properties} or {import("react").CSSProperties} instead
+ */
+export type PartialStyle = CSSProperties;
 
 export type Node = ContainerNode | TextNode | ImageNode | AnyNode;
 
 export type ContainerNode = {
   type: "container";
-  style?: PartialStyle;
+  style?: CSSProperties;
   children?: Node[];
   tw?: string;
 };
@@ -27,7 +24,7 @@ export type ContainerNode = {
 export type TextNode = {
   type: "text";
   text: string;
-  style?: PartialStyle;
+  style?: CSSProperties;
   tw?: string;
 };
 
@@ -36,6 +33,6 @@ export type ImageNode = {
   src: string;
   width?: number;
   height?: number;
-  style?: PartialStyle;
+  style?: CSSProperties;
   tw?: string;
 };

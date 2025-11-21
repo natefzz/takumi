@@ -1,12 +1,9 @@
 use cssparser::{Parser, Token};
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::layout::style::{FromCss, ParseResult};
 
 /// Represents a grid placement with serde support
-#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(untagged)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum GridPlacement {
   /// Keyword placement
   Keyword(GridPlacementKeyword),
@@ -37,8 +34,7 @@ impl GridPlacement {
 }
 
 /// Represents a grid placement keyword
-#[derive(Debug, Clone, Deserialize, Serialize, TS, Default, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub enum GridPlacementKeyword {
   /// Auto placement
   #[default]
@@ -46,8 +42,7 @@ pub enum GridPlacementKeyword {
 }
 
 /// Represents a grid placement span
-#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, PartialEq)]
 pub enum GridPlacementSpan {
   /// Span count
   Span(u16),

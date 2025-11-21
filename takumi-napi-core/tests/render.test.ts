@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
-import { container, image, percentage, rem, text } from "@takumi-rs/helpers";
+import { container, image, text } from "@takumi-rs/helpers";
 import { Glob } from "bun";
 import { Renderer } from "../index";
 
@@ -40,7 +40,7 @@ const node = container({
       width: 96,
       height: 96,
       style: {
-        borderRadius: percentage(50),
+        borderRadius: "50%",
       },
     }),
     text("Remote"),
@@ -49,7 +49,7 @@ const node = container({
       width: 96,
       height: 96,
       style: {
-        borderRadius: percentage(25),
+        borderRadius: "25%",
       },
     }),
     text("Local"),
@@ -58,7 +58,7 @@ const node = container({
       width: 96,
       height: 96,
       style: {
-        borderRadius: percentage(25),
+        borderRadius: "25%",
       },
     }),
     text("Data URI"),
@@ -66,10 +66,10 @@ const node = container({
   style: {
     justifyContent: "center",
     alignItems: "center",
-    gap: rem(1.5),
-    backgroundColor: 0xffffff,
-    width: percentage(100),
-    height: percentage(100),
+    gap: "1.5rem",
+    backgroundColor: "white",
+    width: "100%",
+    height: "100%",
   },
 });
 

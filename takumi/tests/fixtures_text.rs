@@ -31,7 +31,7 @@ fn fixtures_text_typography_regular_24px() {
     style: Some(
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
-        .font_size(CssOption::some(Px(24.0)))
+        .font_size(Some(Px(24.0)))
         .build()
         .unwrap(),
     ),
@@ -53,7 +53,7 @@ fn fixtures_text_typography_variable_weight() {
         tw: None,
         style: Some(
           StyleBuilder::default()
-            .font_size(CssOption::some(Px(48.0)))
+            .font_size(Some(Px(48.0)))
             .font_weight(FontWeight::from(weight as f32))
             .build()
             .unwrap(),
@@ -69,7 +69,7 @@ fn fixtures_text_typography_variable_weight() {
     style: Some(
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
-        .font_size(CssOption::some(Px(24.0)))
+        .font_size(Some(Px(24.0)))
         .gap(SpacePair::from_pair(Px(0.0), Px(24.0)))
         .flex_wrap(FlexWrap::Wrap)
         .build()
@@ -91,7 +91,7 @@ fn fixtures_text_typography_medium_weight_500() {
     style: Some(
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
-        .font_size(CssOption::some(Px(24.0)))
+        .font_size(Some(Px(24.0)))
         .font_weight(FontWeight::from(500.0))
         .build()
         .unwrap(),
@@ -112,7 +112,7 @@ fn fixtures_text_typography_line_height_40px() {
     style: Some(
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
-        .font_size(CssOption::some(Px(24.0)))
+        .font_size(Some(Px(24.0)))
         .line_height(LineHeight(Px(40.0)))
         .build()
         .unwrap(),
@@ -133,8 +133,8 @@ fn fixtures_text_typography_letter_spacing_2px() {
     style: Some(
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
-        .font_size(CssOption::some(Px(24.0)))
-        .letter_spacing(CssOption::some(Px(2.0)))
+        .font_size(Some(Px(24.0)))
+        .letter_spacing(Some(Px(2.0)))
         .build()
         .unwrap(),
     ),
@@ -155,7 +155,7 @@ fn fixtures_text_align_start() {
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
         .width(Percentage(100.0))
-        .font_size(CssOption::some(Px(24.0)))
+        .font_size(Some(Px(24.0)))
         .text_align(TextAlign::Start)
         .build()
         .unwrap(),
@@ -174,7 +174,7 @@ fn fixtures_text_align_center() {
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
         .width(Percentage(100.0))
-        .font_size(CssOption::some(Px(24.0)))
+        .font_size(Some(Px(24.0)))
         .text_align(TextAlign::Center)
         .build()
         .unwrap(),
@@ -193,7 +193,7 @@ fn fixtures_text_align_right() {
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
         .width(Percentage(100.0))
-        .font_size(CssOption::some(Px(24.0)))
+        .font_size(Some(Px(24.0)))
         .text_align(TextAlign::Right)
         .build()
         .unwrap(),
@@ -215,8 +215,8 @@ Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliqu
     style: Some(
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
-        .font_size(CssOption::some(Px(48.0)))
-        .line_clamp(CssOption::some(3.into()))
+        .font_size(Some(Px(48.0)))
+        .line_clamp(Some(3.into()))
         .text_align(TextAlign::Justify)
         .text_overflow(TextOverflow::Clip)
         .build()
@@ -238,9 +238,9 @@ fn fixtures_text_ellipsis_line_clamp_2() {
       StyleBuilder::default()
         .width(Percentage(100.0))
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
-        .font_size(CssOption::some(Px(48.0)))
+        .font_size(Some(Px(48.0)))
         .text_overflow(TextOverflow::Ellipsis)
-        .line_clamp(CssOption::some(2.into()))
+        .line_clamp(Some(2.into()))
         .build()
         .unwrap(),
     ),
@@ -271,7 +271,7 @@ fn fixtures_text_transform_all() {
         style: Some(
           StyleBuilder::default()
             .width(Percentage(100.0))
-            .font_size(CssOption::some(Px(28.0)))
+            .font_size(Some(Px(28.0)))
             .text_transform(TextTransform::None)
             .build()
             .unwrap(),
@@ -284,7 +284,7 @@ fn fixtures_text_transform_all() {
         style: Some(
           StyleBuilder::default()
             .width(Percentage(100.0))
-            .font_size(CssOption::some(Px(28.0)))
+            .font_size(Some(Px(28.0)))
             .text_transform(TextTransform::Uppercase)
             .build()
             .unwrap(),
@@ -297,7 +297,7 @@ fn fixtures_text_transform_all() {
         style: Some(
           StyleBuilder::default()
             .width(Percentage(100.0))
-            .font_size(CssOption::some(Px(28.0)))
+            .font_size(Some(Px(28.0)))
             .text_transform(TextTransform::Lowercase)
             .build()
             .unwrap(),
@@ -310,7 +310,7 @@ fn fixtures_text_transform_all() {
         style: Some(
           StyleBuilder::default()
             .width(Percentage(100.0))
-            .font_size(CssOption::some(Px(28.0)))
+            .font_size(Some(Px(28.0)))
             .text_transform(TextTransform::Capitalize)
             .build()
             .unwrap(),
@@ -337,17 +337,11 @@ fn fixtures_text_mask_image_gradient_and_emoji() {
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
         .width(Percentage(100.0))
-        .font_size(CssOption::some(Px(72.0)))
-        .mask_image(CssOption::some(gradient_images))
-        .mask_size(CssOption::some(
-          BackgroundSizes::from_str("100% 100%").unwrap(),
-        ))
-        .mask_position(CssOption::some(
-          BackgroundPositions::from_str("0 0").unwrap(),
-        ))
-        .mask_repeat(CssOption::some(
-          BackgroundRepeats::from_str("no-repeat").unwrap(),
-        ))
+        .font_size(Some(Px(72.0)))
+        .mask_image(Some(gradient_images))
+        .mask_size(Some(BackgroundSizes::from_str("100% 100%").unwrap()))
+        .mask_position(Some(BackgroundPositions::from_str("0 0").unwrap()))
+        .mask_repeat(Some(BackgroundRepeats::from_str("no-repeat").unwrap()))
         .build()
         .unwrap(),
     ),
@@ -368,9 +362,9 @@ fn fixtures_text_stroke_black_red() {
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
         .color(ColorInput::Value(Color([0, 0, 0, 255]))) // Black text
-        .font_size(CssOption::some(Px(72.0)))
-        .text_stroke_width(Px(2.0))
-        .text_stroke_color(CssOption::some(ColorInput::Value(Color([255, 0, 0, 255])))) // Red stroke
+        .font_size(Some(Px(72.0)))
+        .webkit_text_stroke_width(Some(Px(2.0)))
+        .webkit_text_stroke_color(Some(ColorInput::Value(Color([255, 0, 0, 255])))) // Red stroke
         .build()
         .unwrap(),
     ),
@@ -396,8 +390,8 @@ fn fixtures_text_shadow() {
     style: Some(
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
-        .font_size(CssOption::some(Px(48.0)))
-        .text_shadow(CssOption::some(shadows))
+        .font_size(Some(Px(48.0)))
+        .text_shadow(Some(shadows))
         .build()
         .unwrap(),
     ),
@@ -422,8 +416,8 @@ fn fixtures_text_shadow_no_blur_radius() {
     style: Some(
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
-        .font_size(CssOption::some(Px(72.0)))
-        .text_shadow(CssOption::some(shadows))
+        .font_size(Some(Px(72.0)))
+        .text_shadow(Some(shadows))
         .build()
         .unwrap(),
     ),
@@ -445,7 +439,7 @@ fn fixtures_text_wrap_nowrap() {
     style: Some(
       StyleBuilder::default()
         .background_color(ColorInput::Value(Color([255, 255, 255, 255])))
-        .font_size(CssOption::some(Px(32.0)))
+        .font_size(Some(Px(32.0)))
         .width(Percentage(100.0))
         .height(Percentage(100.0))
         .display(Display::Flex)
@@ -461,7 +455,7 @@ fn fixtures_text_wrap_nowrap() {
         tw: None,
         style: Some(
           StyleBuilder::default()
-            .text_wrap(CssOption::some(TextWrapMode::Wrap))
+            .text_wrap(Some(TextWrapMode::Wrap))
             .build()
             .unwrap(),
         ),
@@ -472,7 +466,7 @@ fn fixtures_text_wrap_nowrap() {
         tw: None,
         style: Some(
           StyleBuilder::default()
-            .text_wrap(CssOption::some(TextWrapMode::NoWrap))
+            .text_wrap(Some(TextWrapMode::NoWrap))
             .build()
             .unwrap(),
         ),
@@ -494,7 +488,7 @@ fn fixtures_text_whitespace_collapse() {
         .background_color(ColorInput::Value(Color([255, 255, 255, 255])))
         .display(Display::Flex)
         .flex_direction(FlexDirection::Column)
-        .font_size(CssOption::some(Px(32.0)))
+        .font_size(Some(Px(32.0)))
         .width(Percentage(100.0))
         .height(Percentage(100.0))
         .gap(SpacePair::from_single(Px(20.0)))
@@ -507,7 +501,7 @@ fn fixtures_text_whitespace_collapse() {
         tw: None,
         style: Some(
           StyleBuilder::default()
-            .white_space_collapse(CssOption::some(WhiteSpaceCollapse::Collapse))
+            .white_space_collapse(Some(WhiteSpaceCollapse::Collapse))
             .build()
             .unwrap(),
         ),
@@ -518,7 +512,7 @@ fn fixtures_text_whitespace_collapse() {
         tw: None,
         style: Some(
           StyleBuilder::default()
-            .white_space_collapse(CssOption::some(WhiteSpaceCollapse::Preserve))
+            .white_space_collapse(Some(WhiteSpaceCollapse::Preserve))
             .build()
             .unwrap(),
         ),
@@ -529,7 +523,7 @@ fn fixtures_text_whitespace_collapse() {
         tw: None,
         style: Some(
           StyleBuilder::default()
-            .white_space_collapse(CssOption::some(WhiteSpaceCollapse::PreserveSpaces))
+            .white_space_collapse(Some(WhiteSpaceCollapse::PreserveSpaces))
             .build()
             .unwrap(),
         ),
@@ -540,7 +534,7 @@ fn fixtures_text_whitespace_collapse() {
         tw: None,
         style: Some(
           StyleBuilder::default()
-            .white_space_collapse(CssOption::some(WhiteSpaceCollapse::PreserveBreaks))
+            .white_space_collapse(Some(WhiteSpaceCollapse::PreserveBreaks))
             .build()
             .unwrap(),
         ),

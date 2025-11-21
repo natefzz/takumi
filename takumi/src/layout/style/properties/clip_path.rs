@@ -1,7 +1,5 @@
 use cssparser::{Parser, Token, match_ignore_ascii_case};
-use serde::{Deserialize, Serialize};
 use taffy::{AbsoluteAxis, Point, Rect, Size};
-use ts_rs::TS;
 use zeno::{Fill, Mask, PathBuilder, PathData, Placement};
 
 use crate::{
@@ -12,8 +10,7 @@ use crate::{
 /// Represents the fill rule used for determining the interior of shapes.
 ///
 /// Corresponds to the SVG fill-rule attribute and is used in polygon(), path(), and shape() functions.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq, Default)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum FillRule {
   /// The default rule - counts the number of times a ray from the point crosses the shape's edges
   #[default]
@@ -32,9 +29,7 @@ impl From<FillRule> for Fill {
 }
 
 /// Represents radius values for circle() and ellipse() functions.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum ShapeRadius {
   /// Uses the length from the center to the closest side of the reference box
   #[default]
@@ -42,13 +37,11 @@ pub enum ShapeRadius {
   /// Uses the length from the center to the farthest side of the reference box
   FarthestSide,
   /// A specific length value
-  #[serde(untagged)]
   Length(LengthUnit),
 }
 
 /// Represents a position for circle() and ellipse() functions.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, TS)]
-#[serde(transparent)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ShapePosition(pub SpacePair<LengthUnit>);
 
 impl Default for ShapePosition {
@@ -61,8 +54,7 @@ impl Default for ShapePosition {
 ///
 /// The inset() function creates an inset rectangle, with its size defined by the offset distance
 /// of each of the four sides of its container and, optionally, rounded corners.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, PartialEq)]
 pub struct InsetShape {
   /// Sides of the inset.
   pub inset: Sides<LengthUnit>,
@@ -71,8 +63,7 @@ pub struct InsetShape {
 }
 
 /// Represents a circle() shape.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CircleShape {
   /// The radius of the circle
   pub radius: ShapeRadius,
@@ -81,8 +72,7 @@ pub struct CircleShape {
 }
 
 /// Represents an ellipse() shape.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EllipseShape {
   /// The horizontal radius
   pub radius_x: ShapeRadius,
@@ -96,8 +86,7 @@ pub struct EllipseShape {
 pub type PolygonCoordinate = SpacePair<LengthUnit>;
 
 /// Represents a polygon() shape.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PolygonShape {
   /// The fill rule to use
   pub fill_rule: Option<FillRule>,
@@ -106,8 +95,7 @@ pub struct PolygonShape {
 }
 
 /// Represents a path() shape using an SVG path string.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PathShape {
   /// The fill rule to use
   pub fill_rule: Option<FillRule>,
@@ -116,9 +104,7 @@ pub struct PathShape {
 }
 
 /// Represents a basic shape function for clip-path.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
-#[ts(as = "BasicShapeValue")]
-#[serde(try_from = "BasicShapeValue")]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BasicShape {
   /// inset() function
   Inset(InsetShape),
@@ -128,44 +114,6 @@ pub enum BasicShape {
   Polygon(PolygonShape),
   /// path() function
   Path(PathShape),
-}
-
-/// Proxy type for CSS deserialization that accepts either structured data or CSS strings.
-#[derive(Debug, Clone, Deserialize, TS)]
-#[serde(tag = "type", rename_all = "camelCase")]
-pub(crate) enum BasicShapeValue {
-  /// inset() function
-  Inset(InsetShape),
-  /// circle() function
-  Circle(CircleShape),
-  /// ellipse() function
-  Ellipse(EllipseShape),
-  /// polygon() function
-  Polygon(PolygonShape),
-  /// path() function
-  Path(PathShape),
-  #[serde(untagged)]
-  /// Raw CSS string to be parsed
-  Css(String),
-}
-
-impl TryFrom<BasicShapeValue> for BasicShape {
-  type Error = String;
-
-  fn try_from(value: BasicShapeValue) -> Result<Self, Self::Error> {
-    match value {
-      BasicShapeValue::Inset(shape) => Ok(BasicShape::Inset(shape)),
-      BasicShapeValue::Circle(shape) => Ok(BasicShape::Ellipse(EllipseShape {
-        radius_x: shape.radius,
-        radius_y: shape.radius,
-        position: shape.position,
-      })),
-      BasicShapeValue::Ellipse(shape) => Ok(BasicShape::Ellipse(shape)),
-      BasicShapeValue::Polygon(shape) => Ok(BasicShape::Polygon(shape)),
-      BasicShapeValue::Path(shape) => Ok(BasicShape::Path(shape)),
-      BasicShapeValue::Css(css) => BasicShape::from_str(&css).map_err(|e| e.to_string()),
-    }
-  }
 }
 
 fn resolve_radius(

@@ -268,11 +268,11 @@ pub enum TailwindProperty {
   /// `background-image` property.
   BackgroundImage(BackgroundImage),
   /// `gap` property.
-  Gap(LengthUnit),
+  Gap(LengthUnit<false>),
   /// `column-gap` property.
-  GapX(LengthUnit),
+  GapX(LengthUnit<false>),
   /// `row-gap` property.
-  GapY(LengthUnit),
+  GapY(LengthUnit<false>),
   /// `grid-auto-flow` property.
   GridAutoFlow(GridAutoFlow),
   /// `grid-auto-columns` property.
@@ -304,7 +304,7 @@ pub enum TailwindProperty {
   /// `opacity` property.
   Opacity(PercentageNumber),
   /// `background-color` property.
-  BackgroundColor(ColorInput),
+  BackgroundColor(ColorInput<false>),
   /// `border-color` property.
   BorderColor(ColorInput),
   /// `border-top-width` property.
@@ -358,33 +358,33 @@ pub enum TailwindProperty {
   /// `transform-origin` property.
   TransformOrigin(BackgroundPosition),
   /// `margin` property.
-  Margin(LengthUnit),
+  Margin(LengthUnit<false>),
   /// `margin-inline` property.
-  MarginX(LengthUnit),
+  MarginX(LengthUnit<false>),
   /// `margin-block` property.
-  MarginY(LengthUnit),
+  MarginY(LengthUnit<false>),
   /// `margin-top` property.
-  MarginTop(LengthUnit),
+  MarginTop(LengthUnit<false>),
   /// `margin-right` property.
-  MarginRight(LengthUnit),
+  MarginRight(LengthUnit<false>),
   /// `margin-bottom` property.
-  MarginBottom(LengthUnit),
+  MarginBottom(LengthUnit<false>),
   /// `margin-left` property.
-  MarginLeft(LengthUnit),
+  MarginLeft(LengthUnit<false>),
   /// `padding` property.
-  Padding(LengthUnit),
+  Padding(LengthUnit<false>),
   /// `padding-inline` property.
-  PaddingX(LengthUnit),
+  PaddingX(LengthUnit<false>),
   /// `padding-block` property.
-  PaddingY(LengthUnit),
+  PaddingY(LengthUnit<false>),
   /// `padding-top` property.
-  PaddingTop(LengthUnit),
+  PaddingTop(LengthUnit<false>),
   /// `padding-right` property.
-  PaddingRight(LengthUnit),
+  PaddingRight(LengthUnit<false>),
   /// `padding-bottom` property.
-  PaddingBottom(LengthUnit),
+  PaddingBottom(LengthUnit<false>),
   /// `padding-left` property.
-  PaddingLeft(LengthUnit),
+  PaddingLeft(LengthUnit<false>),
   /// `inset` property.
   Inset(LengthUnit),
   /// `inset-inline` property.
@@ -495,19 +495,19 @@ impl TailwindProperty {
         style.gap = SpacePair::from_single(gap).into();
       }
       TailwindProperty::GapX(gap_x) => {
-        style.column_gap = CssOption::some(gap_x).into();
+        style.column_gap = Some(gap_x).into();
       }
       TailwindProperty::GapY(gap_y) => {
-        style.row_gap = CssOption::some(gap_y).into();
+        style.row_gap = Some(gap_y).into();
       }
       TailwindProperty::BoxSizing(box_sizing) => {
         style.box_sizing = box_sizing.into();
       }
       TailwindProperty::FlexGrow(flex_grow) => {
-        style.flex_grow = CssOption::some(flex_grow).into();
+        style.flex_grow = Some(flex_grow).into();
       }
       TailwindProperty::FlexShrink(flex_shrink) => {
-        style.flex_shrink = CssOption::some(flex_shrink).into();
+        style.flex_shrink = Some(flex_shrink).into();
       }
       TailwindProperty::Aspect(ratio) => {
         style.aspect_ratio = ratio.into();
@@ -531,13 +531,13 @@ impl TailwindProperty {
         style.flex_wrap = flex_wrap.into();
       }
       TailwindProperty::Flex(flex) => {
-        style.flex = CssOption::some(flex).into();
+        style.flex = Some(flex).into();
       }
       TailwindProperty::FlexBasis(flex_basis) => {
-        style.flex_basis = CssOption::some(flex_basis).into();
+        style.flex_basis = Some(flex_basis).into();
       }
       TailwindProperty::Overflow(overflow) => {
-        style.overflow = Overflows(SpacePair::from_single(overflow)).into();
+        style.overflow = SpacePair::from_single(overflow).into();
       }
       TailwindProperty::Position(position) => {
         style.position = position.into();
@@ -549,10 +549,10 @@ impl TailwindProperty {
         style.font_weight = font_weight.into();
       }
       TailwindProperty::FontFamily(ref font_family) => {
-        style.font_family = CssOption::some(font_family.clone()).into();
+        style.font_family = Some(font_family.clone()).into();
       }
       TailwindProperty::LineClamp(ref line_clamp) => {
-        style.line_clamp = CssOption::some(line_clamp.clone()).into();
+        style.line_clamp = Some(line_clamp.clone()).into();
       }
       TailwindProperty::TextAlign(text_align) => {
         style.text_align = text_align.into();
@@ -561,7 +561,7 @@ impl TailwindProperty {
         style.text_decoration = text_decoration.clone().into();
       }
       TailwindProperty::TextDecorationColor(color_input) => {
-        style.text_decoration_color = CssOption::some(color_input).into();
+        style.text_decoration_color = Some(color_input).into();
       }
       TailwindProperty::TextTransform(text_transform) => {
         style.text_transform = text_transform.into();
@@ -589,16 +589,16 @@ impl TailwindProperty {
         style.max_height = max_height.into();
       }
       TailwindProperty::Shadow(box_shadow) => {
-        style.box_shadow = CssOption::some(BoxShadows(smallvec![box_shadow])).into();
+        style.box_shadow = Some(BoxShadows(smallvec![box_shadow])).into();
       }
       TailwindProperty::Display(display) => {
         style.display = display.into();
       }
       TailwindProperty::OverflowX(overflow) => {
-        style.overflow_x = CssOption::some(overflow).into();
+        style.overflow_x = Some(overflow).into();
       }
       TailwindProperty::OverflowY(overflow) => {
-        style.overflow_y = CssOption::some(overflow).into();
+        style.overflow_y = Some(overflow).into();
       }
       TailwindProperty::ObjectPosition(background_position) => {
         style.object_position = background_position.into();
@@ -607,22 +607,19 @@ impl TailwindProperty {
         style.object_fit = object_fit.into();
       }
       TailwindProperty::BackgroundPosition(background_position) => {
-        style.background_position =
-          CssOption::some(BackgroundPositions(vec![background_position])).into();
+        style.background_position = Some(BackgroundPositions(vec![background_position])).into();
       }
       TailwindProperty::BackgroundSize(background_size) => {
-        style.background_size = CssOption::some(BackgroundSizes(vec![background_size])).into();
+        style.background_size = Some(BackgroundSizes(vec![background_size])).into();
       }
       TailwindProperty::BackgroundRepeat(background_repeat) => {
-        style.background_repeat =
-          CssOption::some(BackgroundRepeats(vec![background_repeat])).into();
+        style.background_repeat = Some(BackgroundRepeats(vec![background_repeat])).into();
       }
       TailwindProperty::BackgroundImage(ref background_image) => {
-        style.background_image =
-          CssOption::some(BackgroundImages(smallvec![background_image.clone()])).into();
+        style.background_image = Some(BackgroundImages(smallvec![background_image.clone()])).into();
       }
       TailwindProperty::BorderWidth(tw_border_width) => {
-        style.border_width = CssOption::some(Sides([tw_border_width.0; 4])).into();
+        style.border_width = Some(Sides([tw_border_width.0; 4])).into();
       }
       TailwindProperty::JustifySelf(align_items) => {
         style.justify_self = align_items.into();
@@ -640,58 +637,58 @@ impl TailwindProperty {
         style.background_color = color_input.into();
       }
       TailwindProperty::BorderColor(color_input) => {
-        style.border_color = CssOption::some(color_input).into();
+        style.border_color = Some(color_input).into();
       }
       TailwindProperty::BorderTopWidth(tw_border_width) => {
-        style.border_top_width = CssOption::some(tw_border_width.0).into();
+        style.border_top_width = Some(tw_border_width.0).into();
       }
       TailwindProperty::BorderRightWidth(tw_border_width) => {
-        style.border_right_width = CssOption::some(tw_border_width.0).into();
+        style.border_right_width = Some(tw_border_width.0).into();
       }
       TailwindProperty::BorderBottomWidth(tw_border_width) => {
-        style.border_bottom_width = CssOption::some(tw_border_width.0).into();
+        style.border_bottom_width = Some(tw_border_width.0).into();
       }
       TailwindProperty::BorderLeftWidth(tw_border_width) => {
-        style.border_left_width = CssOption::some(tw_border_width.0).into();
+        style.border_left_width = Some(tw_border_width.0).into();
       }
       TailwindProperty::BorderXWidth(tw_border_width) => {
-        style.border_left_width = CssOption::some(tw_border_width.0).into();
-        style.border_right_width = CssOption::some(tw_border_width.0).into();
+        style.border_left_width = Some(tw_border_width.0).into();
+        style.border_right_width = Some(tw_border_width.0).into();
       }
       TailwindProperty::BorderYWidth(tw_border_width) => {
-        style.border_top_width = CssOption::some(tw_border_width.0).into();
-        style.border_bottom_width = CssOption::some(tw_border_width.0).into();
+        style.border_top_width = Some(tw_border_width.0).into();
+        style.border_bottom_width = Some(tw_border_width.0).into();
       }
       TailwindProperty::Rounded(rounded) => {
         style.border_radius = Sides([rounded.0; 4]).into();
       }
       TailwindProperty::RoundedTopLeft(rounded) => {
-        style.border_top_left_radius = CssOption::some(rounded.0).into();
+        style.border_top_left_radius = Some(rounded.0).into();
       }
       TailwindProperty::RoundedTopRight(rounded) => {
-        style.border_top_right_radius = CssOption::some(rounded.0).into();
+        style.border_top_right_radius = Some(rounded.0).into();
       }
       TailwindProperty::RoundedBottomRight(rounded) => {
-        style.border_bottom_right_radius = CssOption::some(rounded.0).into();
+        style.border_bottom_right_radius = Some(rounded.0).into();
       }
       TailwindProperty::RoundedBottomLeft(rounded) => {
-        style.border_bottom_left_radius = CssOption::some(rounded.0).into();
+        style.border_bottom_left_radius = Some(rounded.0).into();
       }
       TailwindProperty::RoundedTop(rounded) => {
-        style.border_top_left_radius = CssOption::some(rounded.0).into();
-        style.border_top_right_radius = CssOption::some(rounded.0).into();
+        style.border_top_left_radius = Some(rounded.0).into();
+        style.border_top_right_radius = Some(rounded.0).into();
       }
       TailwindProperty::RoundedRight(rounded) => {
-        style.border_top_right_radius = CssOption::some(rounded.0).into();
-        style.border_bottom_right_radius = CssOption::some(rounded.0).into();
+        style.border_top_right_radius = Some(rounded.0).into();
+        style.border_bottom_right_radius = Some(rounded.0).into();
       }
       TailwindProperty::RoundedBottom(rounded) => {
-        style.border_bottom_left_radius = CssOption::some(rounded.0).into();
-        style.border_bottom_right_radius = CssOption::some(rounded.0).into();
+        style.border_bottom_left_radius = Some(rounded.0).into();
+        style.border_bottom_right_radius = Some(rounded.0).into();
       }
       TailwindProperty::RoundedLeft(rounded) => {
-        style.border_top_left_radius = CssOption::some(rounded.0).into();
-        style.border_bottom_left_radius = CssOption::some(rounded.0).into();
+        style.border_top_left_radius = Some(rounded.0).into();
+        style.border_bottom_left_radius = Some(rounded.0).into();
       }
       TailwindProperty::TextOverflow(ref text_overflow) => {
         style.text_overflow = text_overflow.clone().into();
@@ -703,10 +700,10 @@ impl TailwindProperty {
           white_space_collapse: WhiteSpaceCollapse::Collapse,
         }
         .into();
-        style.overflow = Overflows(SpacePair::from_single(Overflow::Hidden)).into();
+        style.overflow = SpacePair::from_single(Overflow::Hidden).into();
       }
       TailwindProperty::TextWrap(text_wrap_mode) => {
-        style.text_wrap_mode = CssOption::some(text_wrap_mode).into();
+        style.text_wrap_mode = Some(text_wrap_mode).into();
       }
       TailwindProperty::WhiteSpace(white_space) => {
         style.white_space = white_space.into();
@@ -718,7 +715,7 @@ impl TailwindProperty {
         style.overflow_wrap = overflow_wrap.into();
       }
       TailwindProperty::FontSize(font_size) => {
-        style.font_size = CssOption::some(font_size.font_size).into();
+        style.font_size = Some(font_size.font_size).into();
 
         if let Some(line_height) = font_size.line_height {
           style.line_height = line_height.into();
@@ -728,143 +725,143 @@ impl TailwindProperty {
         style.line_height = line_height.into();
       }
       TailwindProperty::Translate(length_unit) => {
-        style.translate = CssOption::some(SpacePair::from_single(length_unit)).into();
+        style.translate = Some(SpacePair::from_single(length_unit)).into();
       }
       TailwindProperty::TranslateX(length_unit) => {
-        style.translate_x = CssOption::some(length_unit).into();
+        style.translate_x = Some(length_unit).into();
       }
       TailwindProperty::TranslateY(length_unit) => {
-        style.translate_y = CssOption::some(length_unit).into();
+        style.translate_y = Some(length_unit).into();
       }
       TailwindProperty::Rotate(angle) => {
-        style.rotate = CssOption::some(angle).into();
+        style.rotate = Some(angle).into();
       }
       TailwindProperty::Scale(percentage_number) => {
-        style.scale = CssOption::some(SpacePair::from_single(percentage_number)).into();
+        style.scale = Some(SpacePair::from_single(percentage_number)).into();
       }
       TailwindProperty::ScaleX(percentage_number) => {
-        style.scale_x = CssOption::some(percentage_number).into();
+        style.scale_x = Some(percentage_number).into();
       }
       TailwindProperty::ScaleY(percentage_number) => {
-        style.scale_y = CssOption::some(percentage_number).into();
+        style.scale_y = Some(percentage_number).into();
       }
       TailwindProperty::TransformOrigin(background_position) => {
-        style.transform_origin = CssOption::some(background_position).into();
+        style.transform_origin = Some(background_position).into();
       }
       TailwindProperty::Margin(length_unit) => {
         style.margin = Sides([length_unit; 4]).into();
       }
       TailwindProperty::MarginX(length_unit) => {
-        style.margin_inline = CssOption::some(SpacePair::from_single(length_unit)).into();
+        style.margin_inline = Some(SpacePair::from_single(length_unit)).into();
       }
       TailwindProperty::MarginY(length_unit) => {
-        style.margin_block = CssOption::some(SpacePair::from_single(length_unit)).into();
+        style.margin_block = Some(SpacePair::from_single(length_unit)).into();
       }
       TailwindProperty::MarginTop(length_unit) => {
-        style.margin_top = CssOption::some(length_unit).into();
+        style.margin_top = Some(length_unit).into();
       }
       TailwindProperty::MarginRight(length_unit) => {
-        style.margin_right = CssOption::some(length_unit).into();
+        style.margin_right = Some(length_unit).into();
       }
       TailwindProperty::MarginBottom(length_unit) => {
-        style.margin_bottom = CssOption::some(length_unit).into();
+        style.margin_bottom = Some(length_unit).into();
       }
       TailwindProperty::MarginLeft(length_unit) => {
-        style.margin_left = CssOption::some(length_unit).into();
+        style.margin_left = Some(length_unit).into();
       }
       TailwindProperty::Padding(length_unit) => {
         style.padding = Sides([length_unit; 4]).into();
       }
       TailwindProperty::PaddingX(length_unit) => {
-        style.padding_inline = CssOption::some(SpacePair::from_single(length_unit)).into();
+        style.padding_inline = Some(SpacePair::from_single(length_unit)).into();
       }
       TailwindProperty::PaddingY(length_unit) => {
-        style.padding_block = CssOption::some(SpacePair::from_single(length_unit)).into();
+        style.padding_block = Some(SpacePair::from_single(length_unit)).into();
       }
       TailwindProperty::PaddingTop(length_unit) => {
-        style.padding_top = CssOption::some(length_unit).into();
+        style.padding_top = Some(length_unit).into();
       }
       TailwindProperty::PaddingRight(length_unit) => {
-        style.padding_right = CssOption::some(length_unit).into();
+        style.padding_right = Some(length_unit).into();
       }
       TailwindProperty::PaddingBottom(length_unit) => {
-        style.padding_bottom = CssOption::some(length_unit).into();
+        style.padding_bottom = Some(length_unit).into();
       }
       TailwindProperty::PaddingLeft(length_unit) => {
-        style.padding_left = CssOption::some(length_unit).into();
+        style.padding_left = Some(length_unit).into();
       }
       TailwindProperty::Inset(length_unit) => {
         style.inset = Sides([length_unit; 4]).into();
       }
       TailwindProperty::InsetX(length_unit) => {
-        style.inset_inline = CssOption::some(SpacePair::from_single(length_unit)).into();
+        style.inset_inline = Some(SpacePair::from_single(length_unit)).into();
       }
       TailwindProperty::InsetY(length_unit) => {
-        style.inset_block = CssOption::some(SpacePair::from_single(length_unit)).into();
+        style.inset_block = Some(SpacePair::from_single(length_unit)).into();
       }
       TailwindProperty::Top(length_unit) => {
-        style.top = CssOption::some(length_unit).into();
+        style.top = Some(length_unit).into();
       }
       TailwindProperty::Right(length_unit) => {
-        style.right = CssOption::some(length_unit).into();
+        style.right = Some(length_unit).into();
       }
       TailwindProperty::Bottom(length_unit) => {
-        style.bottom = CssOption::some(length_unit).into();
+        style.bottom = Some(length_unit).into();
       }
       TailwindProperty::Left(length_unit) => {
-        style.left = CssOption::some(length_unit).into();
+        style.left = Some(length_unit).into();
       }
       TailwindProperty::GridAutoColumns(ref tw_grid_auto_size) => {
-        style.grid_auto_columns = CssOption::some(tw_grid_auto_size.0.clone()).into();
+        style.grid_auto_columns = Some(tw_grid_auto_size.0.clone()).into();
       }
       TailwindProperty::GridAutoRows(ref tw_grid_auto_size) => {
-        style.grid_auto_rows = CssOption::some(tw_grid_auto_size.0.clone()).into();
+        style.grid_auto_rows = Some(tw_grid_auto_size.0.clone()).into();
       }
       TailwindProperty::GridColumn(ref tw_grid_span) => {
-        style.grid_column = CssOption::some(tw_grid_span.0.clone()).into();
+        style.grid_column = Some(tw_grid_span.0.clone()).into();
       }
       TailwindProperty::GridRow(ref tw_grid_span) => {
-        style.grid_row = CssOption::some(tw_grid_span.0.clone()).into();
+        style.grid_row = Some(tw_grid_span.0.clone()).into();
       }
       TailwindProperty::GridColumnStart(ref tw_grid_placement) => {
-        if let CssValue::Value(CssOption(Some(ref mut existing_grid_column))) = style.grid_column {
+        if let CssValue::Value(Some(ref mut existing_grid_column)) = style.grid_column {
           existing_grid_column.start = tw_grid_placement.0.start.clone();
         } else {
-          style.grid_column = CssOption::some(tw_grid_placement.0.clone()).into();
+          style.grid_column = Some(tw_grid_placement.0.clone()).into();
         }
       }
       TailwindProperty::GridColumnEnd(ref tw_grid_placement) => {
-        if let CssValue::Value(CssOption(Some(ref mut existing_grid_column))) = style.grid_column {
+        if let CssValue::Value(Some(ref mut existing_grid_column)) = style.grid_column {
           existing_grid_column.end = tw_grid_placement.0.end.clone();
         } else {
-          style.grid_column = CssOption::some(tw_grid_placement.0.clone()).into();
+          style.grid_column = Some(tw_grid_placement.0.clone()).into();
         }
       }
       TailwindProperty::GridRowStart(ref tw_grid_placement) => {
-        if let CssValue::Value(CssOption(Some(ref mut existing_grid_row))) = style.grid_row {
+        if let CssValue::Value(Some(ref mut existing_grid_row)) = style.grid_row {
           existing_grid_row.start = tw_grid_placement.0.start.clone();
         } else {
-          style.grid_row = CssOption::some(tw_grid_placement.0.clone()).into();
+          style.grid_row = Some(tw_grid_placement.0.clone()).into();
         }
       }
       TailwindProperty::GridRowEnd(ref tw_grid_placement) => {
-        if let CssValue::Value(CssOption(Some(ref mut existing_grid_row))) = style.grid_row {
+        if let CssValue::Value(Some(ref mut existing_grid_row)) = style.grid_row {
           existing_grid_row.end = tw_grid_placement.0.end.clone();
         } else {
-          style.grid_row = CssOption::some(tw_grid_placement.0.clone()).into();
+          style.grid_row = Some(tw_grid_placement.0.clone()).into();
         }
       }
       TailwindProperty::GridTemplateColumns(ref tw_grid_template) => {
-        style.grid_template_columns = CssOption::some(tw_grid_template.0.clone()).into();
+        style.grid_template_columns = Some(tw_grid_template.0.clone()).into();
       }
       TailwindProperty::GridTemplateRows(ref tw_grid_template) => {
-        style.grid_template_rows = CssOption::some(tw_grid_template.0.clone()).into();
+        style.grid_template_rows = Some(tw_grid_template.0.clone()).into();
       }
       TailwindProperty::LetterSpacing(tw_letter_spacing) => {
-        style.letter_spacing = CssOption::some(tw_letter_spacing.0).into();
+        style.letter_spacing = Some(tw_letter_spacing.0).into();
       }
       TailwindProperty::GridAutoFlow(grid_auto_flow) => {
-        style.grid_auto_flow = CssOption::some(grid_auto_flow).into();
+        style.grid_auto_flow = Some(grid_auto_flow).into();
       }
     }
   }

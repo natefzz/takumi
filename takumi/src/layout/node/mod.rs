@@ -14,7 +14,7 @@ use crate::{
   layout::{
     Viewport,
     inline::InlineContentKind,
-    style::{BackgroundImage, CssOption, CssValue, InheritedStyle, Style},
+    style::{BackgroundImage, CssValue, InheritedStyle, Style},
   },
   rendering::{
     BorderProperties, Canvas, RenderContext, SizedShadow, draw_background_layers,
@@ -155,7 +155,7 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
   /// Creates resolving tasks for style's http resources.
   fn collect_style_fetch_tasks(&self, collection: &mut FetchTaskCollection) {
     if let Some(style) = self.get_style() {
-      if let CssValue::Value(CssOption(Some(images))) = &style.background_image {
+      if let CssValue::Value(Some(images)) = &style.background_image {
         collection.insert_many(images.0.iter().filter_map(|image| {
           if let BackgroundImage::Url(url) = image {
             Some(url.clone())
@@ -165,7 +165,7 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
         }))
       };
 
-      if let CssValue::Value(CssOption(Some(images))) = &style.mask_image {
+      if let CssValue::Value(Some(images)) = &style.mask_image {
         collection.insert_many(images.0.iter().filter_map(|image| {
           if let BackgroundImage::Url(url) = image {
             Some(url.clone())

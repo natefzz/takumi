@@ -1,36 +1,16 @@
 use cssparser::{Parser, Token, match_ignore_ascii_case};
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::layout::style::{ColorInput, FromCss, ParseResult, properties::LengthUnit};
 
-/// Represents the `border` shorthand which accepts a width, style ("solid"), and an optional color.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
-#[serde(untagged)]
-pub(crate) enum BorderValue {
-  /// Structured representation when provided as JSON.
-  #[serde(rename_all = "camelCase")]
-  Structured {
-    width: Option<LengthUnit>,
-    style: Option<BorderStyle>,
-    color: Option<ColorInput>,
-  },
-  /// Raw CSS string representation.
-  Css(String),
-}
-
 /// Represents border style options (currently only solid is supported).
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, TS)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BorderStyle {
   /// Solid border style.
   Solid,
 }
 
 /// Parsed `border` value.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize, TS)]
-#[serde(try_from = "BorderValue")]
-#[ts(as = "BorderValue")]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Border {
   /// Border width as a `LengthUnit`.
   pub width: Option<LengthUnit>,
@@ -38,25 +18,6 @@ pub struct Border {
   pub style: Option<BorderStyle>,
   /// Optional border color.
   pub color: Option<ColorInput>,
-}
-
-impl TryFrom<BorderValue> for Border {
-  type Error = String;
-
-  fn try_from(value: BorderValue) -> Result<Self, Self::Error> {
-    match value {
-      BorderValue::Structured {
-        width,
-        style,
-        color,
-      } => Ok(Border {
-        width,
-        style,
-        color,
-      }),
-      BorderValue::Css(s) => Ok(Border::from_str(&s).map_err(|e| e.to_string())?),
-    }
-  }
 }
 
 impl<'i> FromCss<'i> for Border {
@@ -264,27 +225,9 @@ mod tests {
   }
 
   #[test]
-  fn test_border_value_from_structured() {
-    let border_value = BorderValue::Structured {
-      width: Some(LengthUnit::Px(5.0)),
-      style: Some(BorderStyle::Solid),
-      color: Some(ColorInput::Value(Color([255, 0, 0, 255]))),
-    };
-
-    let border: Border = border_value.try_into().unwrap();
-    assert_eq!(border.width, Some(LengthUnit::Px(5.0)));
-    assert_eq!(border.style, Some(BorderStyle::Solid));
-    assert_eq!(
-      border.color,
-      Some(ColorInput::Value(Color([255, 0, 0, 255])))
-    );
-  }
-
-  #[test]
   fn test_border_value_from_css() {
-    let border_value = BorderValue::Css("3px solid blue".to_string());
+    let border = Border::from_str("3px solid blue").unwrap();
 
-    let border: Border = border_value.try_into().unwrap();
     assert_eq!(border.width, Some(LengthUnit::Px(3.0)));
     assert_eq!(border.style, Some(BorderStyle::Solid));
     assert_eq!(
@@ -295,17 +238,6 @@ mod tests {
 
   #[test]
   fn test_border_value_from_invalid_css() {
-    let border_value = BorderValue::Css("invalid border".to_string());
-
-    let result: Result<Border, _> = border_value.try_into();
-    assert!(result.is_err());
-  }
-
-  #[test]
-  fn test_border_default() {
-    let border = Border::default();
-    assert_eq!(border.width, None);
-    assert_eq!(border.style, None);
-    assert_eq!(border.color, None);
+    assert!(Border::from_str("invalid border").is_err());
   }
 }

@@ -1,9 +1,7 @@
 use std::ops::Neg;
 
-use cssparser::{Parser, ParserInput, Token, match_ignore_ascii_case};
-use serde::{Deserialize, Serialize};
+use cssparser::{Parser, Token, match_ignore_ascii_case};
 use taffy::{CompactLength, Dimension, LengthPercentage, LengthPercentageAuto};
-use ts_rs::TS;
 
 use crate::{
   layout::style::{
@@ -14,15 +12,9 @@ use crate::{
 };
 
 /// Represents a value that can be a specific length, percentage, or automatic.
-///
-/// This corresponds to CSS values that can be specified as pixels, percentages,
-/// or the 'auto' keyword for automatic sizing.
-#[derive(Default, Debug, Clone, Deserialize, Serialize, PartialEq, Copy, TS)]
-#[serde(try_from = "LengthUnitValue", into = "LengthUnitValue")]
-#[ts(as = "LengthUnitValue")]
-pub enum LengthUnit {
+#[derive(Debug, Clone, PartialEq, Copy)]
+pub enum LengthUnit<const DEFAULT_AUTO: bool = true> {
   /// Automatic sizing based on content
-  #[default]
   Auto,
   /// Percentage value relative to parent container (0-100)
   Percentage(f32),
@@ -50,7 +42,17 @@ pub enum LengthUnit {
   Px(f32),
 }
 
-impl TailwindPropertyParser for LengthUnit {
+impl<const DEFAULT_AUTO: bool> Default for LengthUnit<DEFAULT_AUTO> {
+  fn default() -> Self {
+    if DEFAULT_AUTO {
+      Self::Auto
+    } else {
+      Self::Px(0.0)
+    }
+  }
+}
+
+impl<const DEFAULT_AUTO: bool> TailwindPropertyParser for LengthUnit<DEFAULT_AUTO> {
   fn parse_tw(token: &str) -> Option<Self> {
     if let Ok(value) = token.parse::<f32>() {
       return Some(LengthUnit::Rem(value * TW_VAR_SPACING));
@@ -86,96 +88,7 @@ impl TailwindPropertyParser for LengthUnit {
   }
 }
 
-/// Proxy type for CSS `LengthUnit` serialization/deserialization.
-#[derive(Debug, Deserialize, Serialize, TS)]
-#[serde(rename_all = "kebab-case")]
-pub(crate) enum LengthUnitValue {
-  /// Automatic sizing based on content
-  Auto,
-  /// Percentage value relative to parent container (0-100)
-  Percentage(f32),
-  /// Rem value relative to the root font size
-  Rem(f32),
-  /// Em value relative to the font size
-  Em(f32),
-  /// Vh value relative to the viewport height (0-100)
-  Vh(f32),
-  /// Vw value relative to the viewport width (0-100)
-  Vw(f32),
-  /// Centimeter value
-  Cm(f32),
-  /// Millimeter value
-  Mm(f32),
-  /// Inch value
-  In(f32),
-  /// Quarter value
-  #[serde(rename = "Q")]
-  Q(f32),
-  /// Point value
-  #[serde(rename = "Pt")]
-  Pt(f32),
-  /// Picas value
-  #[serde(rename = "Pc")]
-  Pc(f32),
-  /// Specific pixel value
-  #[serde(untagged)]
-  Px(f32),
-  /// CSS string representation
-  #[serde(untagged)]
-  Css(String),
-}
-
-impl TryFrom<LengthUnitValue> for LengthUnit {
-  type Error = String;
-
-  fn try_from(value: LengthUnitValue) -> Result<Self, Self::Error> {
-    match value {
-      LengthUnitValue::Auto => Ok(Self::Auto),
-      LengthUnitValue::Percentage(v) => Ok(Self::Percentage(v)),
-      LengthUnitValue::Rem(v) => Ok(Self::Rem(v)),
-      LengthUnitValue::Em(v) => Ok(Self::Em(v)),
-      LengthUnitValue::Vh(v) => Ok(Self::Vh(v)),
-      LengthUnitValue::Vw(v) => Ok(Self::Vw(v)),
-      LengthUnitValue::Cm(v) => Ok(Self::Cm(v)),
-      LengthUnitValue::Mm(v) => Ok(Self::Mm(v)),
-      LengthUnitValue::In(v) => Ok(Self::In(v)),
-      LengthUnitValue::Q(v) => Ok(Self::Q(v)),
-      LengthUnitValue::Pt(v) => Ok(Self::Pt(v)),
-      LengthUnitValue::Pc(v) => Ok(Self::Pc(v)),
-      LengthUnitValue::Px(v) => Ok(Self::Px(v)),
-      LengthUnitValue::Css(s) => {
-        let mut input = ParserInput::new(&s);
-        let mut parser = Parser::new(&mut input);
-
-        let unit = LengthUnit::from_css(&mut parser).map_err(|e| e.to_string())?;
-
-        Ok(unit)
-      }
-    }
-  }
-}
-
-impl From<LengthUnit> for LengthUnitValue {
-  fn from(value: LengthUnit) -> Self {
-    match value {
-      LengthUnit::Auto => LengthUnitValue::Auto,
-      LengthUnit::Percentage(v) => LengthUnitValue::Percentage(v),
-      LengthUnit::Rem(v) => LengthUnitValue::Rem(v),
-      LengthUnit::Em(v) => LengthUnitValue::Em(v),
-      LengthUnit::Vh(v) => LengthUnitValue::Vh(v),
-      LengthUnit::Vw(v) => LengthUnitValue::Vw(v),
-      LengthUnit::Cm(v) => LengthUnitValue::Cm(v),
-      LengthUnit::Mm(v) => LengthUnitValue::Mm(v),
-      LengthUnit::In(v) => LengthUnitValue::In(v),
-      LengthUnit::Q(v) => LengthUnitValue::Q(v),
-      LengthUnit::Pt(v) => LengthUnitValue::Pt(v),
-      LengthUnit::Pc(v) => LengthUnitValue::Pc(v),
-      LengthUnit::Px(v) => LengthUnitValue::Px(v),
-    }
-  }
-}
-
-impl Neg for LengthUnit {
+impl<const DEFAULT_AUTO: bool> Neg for LengthUnit<DEFAULT_AUTO> {
   type Output = Self;
 
   fn neg(self) -> Self::Output {
@@ -183,7 +96,7 @@ impl Neg for LengthUnit {
   }
 }
 
-impl LengthUnit {
+impl<const DEFAULT_AUTO: bool> LengthUnit<DEFAULT_AUTO> {
   /// Returns a zero pixel length unit.
   pub const fn zero() -> Self {
     Self::Px(0.0)
@@ -209,13 +122,13 @@ impl LengthUnit {
   }
 }
 
-impl From<f32> for LengthUnit {
+impl<const DEFAULT_AUTO: bool> From<f32> for LengthUnit<DEFAULT_AUTO> {
   fn from(value: f32) -> Self {
     Self::Px(value)
   }
 }
 
-impl<'i> FromCss<'i> for LengthUnit {
+impl<'i, const DEFAULT_AUTO: bool> FromCss<'i> for LengthUnit<DEFAULT_AUTO> {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
     let location = input.current_source_location();
     let token = input.next()?;
@@ -254,7 +167,7 @@ impl<'i> FromCss<'i> for LengthUnit {
   }
 }
 
-impl LengthUnit {
+impl<const DEFAULT_AUTO: bool> LengthUnit<DEFAULT_AUTO> {
   /// Converts the length unit to a compact length representation.
   ///
   /// This method converts the length unit (either a percentage, pixel, rem, em, vh, vw, or auto)

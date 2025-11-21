@@ -7,44 +7,33 @@ use cssparser::{
   match_ignore_ascii_case,
 };
 use image::Rgba;
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::layout::style::{FromCss, ParseResult, tw::TailwindPropertyParser};
 
-/// `Color` proxy type for deserializing CSS color values.
-#[derive(Debug, Clone, Deserialize, TS)]
-#[serde(untagged)]
-pub(crate) enum ColorInputValue {
-  /// RGB color with 8-bit components
-  Rgb(u8, u8, u8),
-  /// RGBA color with 8-bit RGB components and 32-bit float alpha (alpha is between 0.0 and 1.0)
-  Rgba(u8, u8, u8, f32),
-  /// Single 32-bit integer containing RGB values
-  RgbInt(u32),
-  /// CSS color string
-  #[ts(type = "\"currentColor\" | string")]
-  Css(String),
-}
-
 /// Represents a color with 8-bit RGBA components.
-#[derive(Debug, Clone, PartialEq, Serialize, TS, Copy)]
+#[derive(Debug, Default, Clone, PartialEq, Copy)]
 pub struct Color(pub [u8; 4]);
 
 /// Represents a color input value.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, Copy)]
-#[serde(try_from = "ColorInputValue")]
-#[ts(as = "ColorInputValue")]
-pub enum ColorInput {
-  #[serde(rename = "currentColor")]
+#[derive(Debug, Clone, PartialEq, Copy)]
+pub enum ColorInput<const DEFAULT_CURRENT_COLOR: bool = true> {
   /// Inherit from the `color` value.
   CurrentColor,
   /// A color value.
-  #[serde(untagged)]
   Value(Color),
 }
 
-impl ColorInput {
+impl<const DEFAULT_CURRENT_COLOR: bool> Default for ColorInput<DEFAULT_CURRENT_COLOR> {
+  fn default() -> Self {
+    if DEFAULT_CURRENT_COLOR {
+      ColorInput::CurrentColor
+    } else {
+      ColorInput::Value(Color::transparent())
+    }
+  }
+}
+
+impl<const DEFAULT_CURRENT_COLOR: bool> ColorInput<DEFAULT_CURRENT_COLOR> {
   /// Resolves the color input to a color.
   pub fn resolve(self, current_color: Color, opacity: f32) -> Color {
     match self {
@@ -54,7 +43,9 @@ impl ColorInput {
   }
 }
 
-impl TailwindPropertyParser for ColorInput {
+impl<const DEFAULT_CURRENT_COLOR: bool> TailwindPropertyParser
+  for ColorInput<DEFAULT_CURRENT_COLOR>
+{
   fn parse_tw(token: &str) -> Option<Self> {
     if token.eq_ignore_ascii_case("current") {
       return Some(ColorInput::CurrentColor);
@@ -247,7 +238,7 @@ impl TailwindPropertyParser for Color {
   }
 }
 
-impl From<Color> for ColorInput {
+impl<const DEFAULT_CURRENT_COLOR: bool> From<Color> for ColorInput<DEFAULT_CURRENT_COLOR> {
   fn from(color: Color) -> Self {
     ColorInput::Value(color)
   }
@@ -269,12 +260,6 @@ impl Display for Color {
       self.0[2],
       self.0[3] as f32 / 255.0
     )
-  }
-}
-
-impl Default for Color {
-  fn default() -> Self {
-    Self::transparent()
   }
 }
 
@@ -312,28 +297,7 @@ impl Color {
   }
 }
 
-impl TryFrom<ColorInputValue> for ColorInput {
-  type Error = String;
-
-  fn try_from(value: ColorInputValue) -> Result<Self, Self::Error> {
-    match value {
-      ColorInputValue::Rgb(r, g, b) => Ok(ColorInput::Value(Color([r, g, b, 255]))),
-      ColorInputValue::Rgba(r, g, b, a) => {
-        Ok(ColorInput::Value(Color([r, g, b, (a * 255.0) as u8])))
-      }
-      ColorInputValue::RgbInt(rgb) => {
-        let r = ((rgb >> 16) & 0xFF) as u8;
-        let g = ((rgb >> 8) & 0xFF) as u8;
-        let b = (rgb & 0xFF) as u8;
-
-        Ok(ColorInput::Value(Color([r, g, b, 255])))
-      }
-      ColorInputValue::Css(css) => ColorInput::from_str(&css).map_err(|e| e.to_string()),
-    }
-  }
-}
-
-impl<'i> FromCss<'i> for ColorInput {
+impl<'i, const DEFAULT_CURRENT_COLOR: bool> FromCss<'i> for ColorInput<DEFAULT_CURRENT_COLOR> {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
     if input
       .try_parse(|input| input.expect_ident_matching("currentcolor"))
@@ -481,7 +445,7 @@ mod tests {
   #[test]
   fn test_parse_arbitrary_color_from_str() {
     // Test that ColorInput::from_str can parse arbitrary color names like deepskyblue
-    let result = ColorInput::from_str("deepskyblue").unwrap();
+    let result = ColorInput::<false>::from_str("deepskyblue").unwrap();
     match result {
       ColorInput::Value(color) => {
         // deepskyblue is rgb(0, 191, 255)

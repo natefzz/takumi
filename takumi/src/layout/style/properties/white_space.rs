@@ -1,15 +1,11 @@
 use cssparser::{Parser, Token, match_ignore_ascii_case};
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::layout::style::{
   FromCss, ParseResult, TextWrapMode, WhiteSpaceCollapse, tw::TailwindPropertyParser,
 };
 
 /// Controls how whitespace should be handled.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq)]
-#[serde(try_from = "WhiteSpaceValue", into = "WhiteSpaceValue")]
-#[ts(as = "WhiteSpaceValue")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct WhiteSpace {
   /// Controls whether text should be wrapped.
   pub text_wrap_mode: TextWrapMode,
@@ -72,83 +68,27 @@ impl WhiteSpace {
   }
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub(crate) enum WhiteSpaceKeywords {
-  Normal,
-  Pre,
-  PreWrap,
-  PreLine,
-}
-
-impl<'i> FromCss<'i> for WhiteSpaceKeywords {
-  fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
-    let ident = input.expect_ident()?;
-    match_ignore_ascii_case! {&ident,
-      "normal" => Ok(WhiteSpaceKeywords::Normal),
-      "pre" => Ok(WhiteSpaceKeywords::Pre),
-      "pre-wrap" => Ok(WhiteSpaceKeywords::PreWrap),
-      "pre-line" => Ok(WhiteSpaceKeywords::PreLine),
-      _ => {
-        let token = Token::Ident(ident.clone());
-        Err(input.new_basic_unexpected_token_error(token).into())
-      }
-    }
-  }
-}
-
-impl From<WhiteSpaceKeywords> for WhiteSpace {
-  fn from(keyword: WhiteSpaceKeywords) -> Self {
-    match keyword {
-      WhiteSpaceKeywords::Normal => WhiteSpace::normal(),
-      WhiteSpaceKeywords::Pre => WhiteSpace::pre(),
-      WhiteSpaceKeywords::PreWrap => WhiteSpace::pre_wrap(),
-      WhiteSpaceKeywords::PreLine => WhiteSpace::pre_line(),
-    }
-  }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(untagged)]
-pub(crate) enum WhiteSpaceValue {
-  Keyword(WhiteSpaceKeywords),
-  Structured {
-    #[serde(rename = "textWrapMode")]
-    text_wrap_mode: TextWrapMode,
-    #[serde(rename = "whiteSpaceCollapse")]
-    white_space_collapse: WhiteSpaceCollapse,
-  },
-  Css(String),
-}
-
-impl TryFrom<WhiteSpaceValue> for WhiteSpace {
-  type Error = String;
-
-  fn try_from(value: WhiteSpaceValue) -> Result<Self, Self::Error> {
-    match value {
-      WhiteSpaceValue::Keyword(keyword) => Ok(keyword.into()),
-      WhiteSpaceValue::Structured {
-        text_wrap_mode,
-        white_space_collapse,
-      } => Ok(WhiteSpace {
-        text_wrap_mode,
-        white_space_collapse,
-      }),
-      WhiteSpaceValue::Css(css) => Ok(WhiteSpace::from_str(&css).map_err(|e| e.to_string())?),
-    }
-  }
-}
-
 impl<'i> FromCss<'i> for WhiteSpace {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
+    // Try parsing as a keyword first
+    if let Ok(ident) = input.try_parse(Parser::expect_ident_cloned) {
+      return match_ignore_ascii_case! {&ident,
+        "normal" => Ok(WhiteSpace::normal()),
+        "pre" => Ok(WhiteSpace::pre()),
+        "pre-wrap" => Ok(WhiteSpace::pre_wrap()),
+        "pre-line" => Ok(WhiteSpace::pre_line()),
+        _ => {
+          let token = Token::Ident(ident.clone());
+          Err(input.new_basic_unexpected_token_error(token).into())
+        }
+      };
+    }
+
+    // Otherwise parse individual components
     let mut text_wrap_mode = None;
     let mut white_space_collapse = None;
 
     while !input.is_exhausted() {
-      if let Ok(value) = input.try_parse(WhiteSpaceKeywords::from_css) {
-        return Ok(value.into());
-      }
-
       if let Ok(value) = input.try_parse(TextWrapMode::from_css) {
         text_wrap_mode = Some(value);
         continue;
@@ -166,14 +106,5 @@ impl<'i> FromCss<'i> for WhiteSpace {
       text_wrap_mode: text_wrap_mode.unwrap_or_default(),
       white_space_collapse: white_space_collapse.unwrap_or_default(),
     })
-  }
-}
-
-impl From<WhiteSpace> for WhiteSpaceValue {
-  fn from(value: WhiteSpace) -> Self {
-    WhiteSpaceValue::Structured {
-      text_wrap_mode: value.text_wrap_mode,
-      white_space_collapse: value.white_space_collapse,
-    }
   }
 }

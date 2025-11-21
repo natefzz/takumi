@@ -1,14 +1,10 @@
 use cssparser::{Parser, match_ignore_ascii_case};
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::layout::style::{
   AspectRatio, FromCss, LengthUnit, ParseResult, tw::TailwindPropertyParser,
 };
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq)]
-#[serde(try_from = "FlexValue")]
-#[ts(as = "FlexValue")]
+#[derive(Debug, Clone, Copy, PartialEq)]
 /// Represents a flex shorthand property for flex-grow, flex-shrink, and flex-basis.
 pub struct Flex {
   /// The flex-grow value.
@@ -70,39 +66,6 @@ impl Flex {
       grow: number,
       shrink: 1.0,
       basis: LengthUnit::zero(),
-    }
-  }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, TS)]
-#[serde(untagged)]
-pub(crate) enum FlexValue {
-  Structured {
-    grow: Option<f32>,
-    shrink: Option<f32>,
-    basis: Option<LengthUnit>,
-  },
-  Number(f32),
-  #[ts(type = "'auto' | 'none' | string")]
-  Css(String),
-}
-
-impl TryFrom<FlexValue> for Flex {
-  type Error = String;
-
-  fn try_from(value: FlexValue) -> Result<Self, Self::Error> {
-    match value {
-      FlexValue::Structured {
-        grow,
-        shrink,
-        basis,
-      } => Ok(Flex {
-        grow: grow.unwrap_or(0.0),
-        shrink: shrink.unwrap_or(1.0),
-        basis: basis.unwrap_or(LengthUnit::Auto),
-      }),
-      FlexValue::Number(grow) => Ok(Flex::from_number(grow)),
-      FlexValue::Css(css) => Flex::from_str(&css).map_err(|e| e.to_string()),
     }
   }
 }

@@ -1,13 +1,9 @@
 use cssparser::Parser;
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::layout::style::{FromCss, GridTrackSize, ParseResult};
 
 /// Represents a grid repeat track
-#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(rename_all = "camelCase")]
-#[ts(optional_fields)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GridRepeatTrack {
   /// The size of the grid track
   pub size: GridTrackSize,

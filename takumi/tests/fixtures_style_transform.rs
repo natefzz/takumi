@@ -29,7 +29,7 @@ fn test_rotate_image() {
       ImageNode {
         style: Some(
           StyleBuilder::default()
-            .rotate(CssOption::some(Angle::new(90.0)))
+            .rotate(Some(Angle::new(90.0)))
             .build()
             .unwrap(),
         ),
@@ -66,7 +66,7 @@ fn test_rotate() {
             .width(Rem(16.0))
             .height(Rem(16.0))
             .background_color(ColorInput::Value(Color::black()))
-            .rotate(CssOption::some(Angle::new(45.0)))
+            .rotate(Some(Angle::new(45.0)))
             .build()
             .unwrap(),
         ),
@@ -116,7 +116,7 @@ fn test_style_transform_origin_top_left() {
         .height(Percentage(100.0))
         .background_color(ColorInput::Value(Color::white()))
         .display(Display::Flex)
-        .font_size(CssOption::some(Px(24.0)))
+        .font_size(Some(Px(24.0)))
         .build()
         .unwrap(),
     ),
@@ -148,16 +148,16 @@ fn create_rotated_container(angle: f32, transform_origin: BackgroundPosition) ->
     tw: None,
     style: Some(
       StyleBuilder::default()
-        .translate(CssOption::some(SpacePair::from_single(Percentage(-50.0))))
-        .rotate(CssOption::some(Angle::new(angle)))
+        .translate(Some(SpacePair::from_single(Percentage(-50.0))))
+        .rotate(Some(Angle::new(angle)))
         .position(Position::Absolute)
-        .top(CssOption::some(Percentage(50.0)))
-        .left(CssOption::some(Percentage(50.0)))
-        .transform_origin(CssOption::some(transform_origin))
+        .top(Some(Percentage(50.0)))
+        .left(Some(Percentage(50.0)))
+        .transform_origin(Some(transform_origin))
         .width(Px(200.0))
         .height(Px(200.0))
         .background_color(ColorInput::Value(Color([255, 0, 0, 30])))
-        .border_width(CssOption::some(Sides([Px(1.0); 4])))
+        .border_width(Some(Sides([Px(1.0); 4])))
         .border_radius(Sides([Px(12.0); 4]))
         .build()
         .unwrap(),
@@ -178,7 +178,7 @@ fn test_style_transform_translate_and_scale() {
         .height(Percentage(100.0))
         .background_color(ColorInput::Value(Color::white()))
         .display(Display::Flex)
-        .font_size(CssOption::some(Px(24.0)))
+        .font_size(Some(Px(24.0)))
         .build()
         .unwrap(),
     ),
@@ -211,8 +211,8 @@ fn test_style_transform_translate_and_scale() {
       StyleBuilder::default()
         .width(Px(300.0))
         .height(Px(300.0))
-        .border_width(CssOption::some(Sides([Px(1.0); 4])))
-        .translate(CssOption::some(SpacePair::from_single(Px(300.0))))
+        .border_width(Some(Sides([Px(1.0); 4])))
+        .translate(Some(SpacePair::from_single(Px(300.0))))
         .background_color(ColorInput::Value(Color([0, 128, 255, 255])))
         .build()
         .unwrap(),
@@ -239,14 +239,12 @@ fn test_style_transform_translate_and_scale() {
     tw: None,
     style: Some(
       StyleBuilder::default()
-        .scale(CssOption::some(SpacePair::from_single(PercentageNumber(
-          2.0,
-        ))))
+        .scale(Some(SpacePair::from_single(PercentageNumber(2.0))))
         .background_color(ColorInput::Value(Color([0, 255, 0, 255])))
         .width(Px(100.0))
         .height(Px(100.0))
-        .border_width(CssOption::some(Sides([Px(1.0); 4])))
-        .font_size(CssOption::some(Px(12.0)))
+        .border_width(Some(Sides([Px(1.0); 4])))
+        .font_size(Some(Px(12.0)))
         .build()
         .unwrap(),
     ),
@@ -264,13 +262,13 @@ fn test_style_transform_translate_and_scale() {
     tw: None,
     style: Some(
       StyleBuilder::default()
-        .rotate(CssOption::some(Angle::new(45.0)))
+        .rotate(Some(Angle::new(45.0)))
         .background_color(ColorInput::Value(Color([0, 0, 255, 255])))
         .width(Px(200.0))
         .height(Px(200.0))
-        .border_width(CssOption::some(Sides([Px(1.0); 4])))
+        .border_width(Some(Sides([Px(1.0); 4])))
         .color(ColorInput::Value(Color::white()))
-        .border_color(CssOption::some(ColorInput::Value(Color::black())))
+        .border_color(Some(ColorInput::Value(Color::black())))
         .build()
         .unwrap(),
     ),

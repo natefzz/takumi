@@ -19,6 +19,6 @@ test("report deserialize error", () => {
       },
     ),
   ).toThrowError(
-    "InvalidArg, invalid type: integer `123`, expected enum JustifyContent",
+    "InvalidArg, unexpected token: Number { has_sign: false, value: 123.0, int_value: Some(123) }",
   );
 });

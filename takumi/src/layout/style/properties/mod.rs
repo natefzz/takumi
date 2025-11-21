@@ -82,22 +82,20 @@ pub use word_break::*;
 use cssparser::{ParseError, Parser, ParserInput, Token, match_ignore_ascii_case};
 use image::imageops::FilterType;
 use parley::{Alignment, FontStack};
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::layout::style::tw::TailwindPropertyParser;
 
 /// Parser result type alias for CSS property parsers.
 pub type ParseResult<'i, T> = Result<T, ParseError<'i, Cow<'i, str>>>;
 
-/// Trait for types that can be deserialized from CSS.
+/// Trait for types that can be parsed from CSS.
 pub trait FromCss<'i> {
-  /// Deserializes the type from a [`Parser`] instance.
+  /// Parses the type from a [`Parser`] instance.
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self>
   where
     Self: Sized;
 
-  /// Helper function to deserialize the type from a string.
+  /// Helper function to parse the type from a string.
   fn from_str(source: &'i str) -> ParseResult<'i, Self>
   where
     Self: Sized,
@@ -109,7 +107,7 @@ pub trait FromCss<'i> {
   }
 }
 
-/// Macro to implement From trait for Taffy enum conversions
+/// Macro to implement From trait for Taffy enum conversions.
 macro_rules! impl_from_taffy_enum {
   ($from_ty:ty, $to_ty:ty, $($variant:ident),*) => {
     impl From<$from_ty> for $to_ty {
@@ -125,8 +123,7 @@ macro_rules! impl_from_taffy_enum {
 /// Defines how an image should be resized to fit its container.
 ///
 /// Similar to CSS object-fit property.
-#[derive(Debug, Clone, Deserialize, Serialize, Copy, TS, PartialEq, Default)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum ObjectFit {
   /// The replaced content is sized to fill the element's content box exactly, without maintaining aspect ratio
   #[default]
@@ -166,8 +163,7 @@ impl TailwindPropertyParser for ObjectFit {
 /// Defines how the width and height of an element are calculated.
 ///
 /// This enum determines whether the width and height properties include padding and border, or just the content area.
-#[derive(Default, Debug, Clone, Deserialize, Serialize, Copy, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub enum BoxSizing {
   /// The width and height properties include padding and border, but not the content area
   ContentBox,
@@ -176,13 +172,25 @@ pub enum BoxSizing {
   BorderBox,
 }
 
+impl<'i> FromCss<'i> for BoxSizing {
+  fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
+    let location = input.current_source_location();
+    let token = input.expect_ident()?;
+
+    match_ignore_ascii_case! { token,
+      "content-box" => Ok(BoxSizing::ContentBox),
+      "border-box" => Ok(BoxSizing::BorderBox),
+      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+    }
+  }
+}
+
 impl_from_taffy_enum!(BoxSizing, taffy::BoxSizing, ContentBox, BorderBox);
 
 /// Text alignment options for text rendering.
 ///
 /// Corresponds to CSS text-align property values.
-#[derive(Default, Debug, Clone, Deserialize, Serialize, Copy, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub enum TextAlign {
   /// Aligns inline content to the left edge of the line box
   Left,
@@ -229,8 +237,7 @@ impl_from_taffy_enum!(
 /// Defines the positioning method for an element.
 ///
 /// This enum determines how an element is positioned within its containing element.
-#[derive(Default, Debug, Clone, Deserialize, Serialize, Copy, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub enum Position {
   /// The element is positioned according to the normal flow of the document.
   /// Offsets (top, right, bottom, left) have no effect.
@@ -241,13 +248,25 @@ pub enum Position {
   Absolute,
 }
 
+impl<'i> FromCss<'i> for Position {
+  fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
+    let location = input.current_source_location();
+    let token = input.expect_ident()?;
+
+    match_ignore_ascii_case! { token,
+      "relative" => Ok(Position::Relative),
+      "absolute" => Ok(Position::Absolute),
+      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+    }
+  }
+}
+
 impl_from_taffy_enum!(Position, taffy::Position, Relative, Absolute);
 
 /// Defines the direction of flex items within a flex container.
 ///
 /// This enum determines how flex items are laid out along the main axis.
-#[derive(Default, Debug, Clone, Deserialize, Serialize, Copy, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum FlexDirection {
   /// Items are laid out in the same direction as the text direction (left-to-right for English)
   #[default]
@@ -258,6 +277,21 @@ pub enum FlexDirection {
   RowReverse,
   /// Items are laid out opposite to the column direction (bottom-to-top)
   ColumnReverse,
+}
+
+impl<'i> FromCss<'i> for FlexDirection {
+  fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
+    let location = input.current_source_location();
+    let token = input.expect_ident()?;
+
+    match_ignore_ascii_case! { token,
+      "row" => Ok(FlexDirection::Row),
+      "column" => Ok(FlexDirection::Column),
+      "row-reverse" => Ok(FlexDirection::RowReverse),
+      "column-reverse" => Ok(FlexDirection::ColumnReverse),
+      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+    }
+  }
 }
 
 impl_from_taffy_enum!(
@@ -273,8 +307,7 @@ impl_from_taffy_enum!(
 ///
 /// This enum determines how space is distributed between and around flex items
 /// along the main axis of the flex container.
-#[derive(Debug, Default, Clone, Deserialize, Serialize, Copy, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum JustifyContent {
   /// The items are distributed using the normal flow of the flex container.
   #[default]
@@ -351,8 +384,7 @@ impl From<JustifyContent> for Option<taffy::JustifyContent> {
 }
 
 /// This enum determines the layout algorithm used for the children of a node.
-#[derive(Debug, Clone, Deserialize, Serialize, Copy, TS, PartialEq, Default)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum Display {
   /// The element is not displayed
   None,
@@ -365,6 +397,22 @@ pub enum Display {
   Inline,
   /// The element creates a block container and its children follow the block layout algorithm
   Block,
+}
+
+impl<'i> FromCss<'i> for Display {
+  fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
+    let location = input.current_source_location();
+    let token = input.expect_ident()?;
+
+    match_ignore_ascii_case! { token,
+      "none" => Ok(Display::None),
+      "flex" => Ok(Display::Flex),
+      "grid" => Ok(Display::Grid),
+      "inline" => Ok(Display::Inline),
+      "block" => Ok(Display::Block),
+      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+    }
+  }
 }
 
 impl Display {
@@ -408,8 +456,7 @@ impl From<Display> for taffy::Display {
 ///
 /// This enum determines how items are aligned within the flex container
 /// along the cross axis (perpendicular to the main axis).
-#[derive(Debug, Clone, Default, Deserialize, Serialize, Copy, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum AlignItems {
   /// The items are distributed using the normal flow of the flex container.
   #[default]
@@ -473,11 +520,10 @@ impl From<AlignItems> for Option<taffy::AlignItems> {
 /// Defines how flex items should wrap.
 ///
 /// This enum determines how flex items should wrap within the flex container.
-#[derive(Debug, Clone, Deserialize, Serialize, Copy, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum FlexWrap {
   /// Flex items will all be displayed in a single line, shrinking as needed
-  #[serde(rename = "nowrap")]
+  #[default]
   NoWrap,
   /// Flex items will wrap onto multiple lines, with new lines stacking in the flex direction
   Wrap,
@@ -485,11 +531,24 @@ pub enum FlexWrap {
   WrapReverse,
 }
 
+impl<'i> FromCss<'i> for FlexWrap {
+  fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
+    let location = input.current_source_location();
+    let token = input.expect_ident()?;
+
+    match_ignore_ascii_case! { token,
+      "nowrap" => Ok(FlexWrap::NoWrap),
+      "wrap" => Ok(FlexWrap::Wrap),
+      "wrap-reverse" => Ok(FlexWrap::WrapReverse),
+      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+    }
+  }
+}
+
 impl_from_taffy_enum!(FlexWrap, taffy::FlexWrap, NoWrap, Wrap, WrapReverse);
 
 /// Controls text case transformation when rendering.
-#[derive(Default, Debug, Clone, Deserialize, Serialize, Copy, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum TextTransform {
   /// Do not transform text
   #[default]
@@ -502,11 +561,35 @@ pub enum TextTransform {
   Capitalize,
 }
 
+impl<'i> FromCss<'i> for TextTransform {
+  fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
+    let location = input.current_source_location();
+    let token = input.expect_ident()?;
+
+    match_ignore_ascii_case! { token,
+      "none" => Ok(TextTransform::None),
+      "uppercase" => Ok(TextTransform::Uppercase),
+      "lowercase" => Ok(TextTransform::Lowercase),
+      "capitalize" => Ok(TextTransform::Capitalize),
+      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+    }
+  }
+}
+
 /// Represents a font family for text rendering.
 /// Multi value fallback is supported.
-#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(transparent)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct FontFamily(String);
+
+impl<'i> FromCss<'i> for FontFamily {
+  fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
+    Ok(FontFamily(input.current_line().to_string()))
+  }
+
+  fn from_str(source: &'i str) -> ParseResult<'i, Self> {
+    Ok(FontFamily(source.to_string()))
+  }
+}
 
 impl TailwindPropertyParser for FontFamily {
   fn parse_tw(token: &str) -> Option<Self> {
@@ -516,12 +599,6 @@ impl TailwindPropertyParser for FontFamily {
       "mono" => Some(FontFamily("monospace".to_string())),
       _ => None,
     }
-  }
-}
-
-impl<'i> FromCss<'i> for FontFamily {
-  fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
-    Ok(FontFamily(input.current_line().to_string()))
   }
 }
 
@@ -550,8 +627,7 @@ impl From<&str> for FontFamily {
 }
 
 /// Controls whether text should be wrapped.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq, Default)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum TextWrapMode {
   /// Text is wrapped across lines at appropriate characters to minimize overflow.
   #[default]
@@ -575,8 +651,7 @@ impl<'i> FromCss<'i> for TextWrapMode {
 }
 
 /// Controls how whitespace should be collapsed.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq, Default)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum WhiteSpaceCollapse {
   /// Preserve whitespace as is—spaces and tabs are not collapsed.
   Preserve,
@@ -606,8 +681,7 @@ impl<'i> FromCss<'i> for WhiteSpaceCollapse {
 }
 
 /// Defines how images should be scaled when rendered.
-#[derive(Default, Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum ImageScalingAlgorithm {
   /// The image is scaled using Catmull-Rom interpolation.
   /// This is balanced for speed and quality.
@@ -619,6 +693,20 @@ pub enum ImageScalingAlgorithm {
   /// The image is scaled using nearest neighbor interpolation,
   /// which is suitable for pixel art or images where sharp edges are desired.
   Pixelated,
+}
+
+impl<'i> FromCss<'i> for ImageScalingAlgorithm {
+  fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
+    let location = input.current_source_location();
+    let token = input.expect_ident()?;
+
+    match_ignore_ascii_case! { token,
+      "auto" => Ok(ImageScalingAlgorithm::Auto),
+      "smooth" => Ok(ImageScalingAlgorithm::Smooth),
+      "pixelated" => Ok(ImageScalingAlgorithm::Pixelated),
+      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+    }
+  }
 }
 
 impl From<ImageScalingAlgorithm> for FilterType {

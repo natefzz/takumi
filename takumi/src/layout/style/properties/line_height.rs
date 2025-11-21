@@ -1,6 +1,4 @@
 use cssparser::Parser;
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::{
   layout::{
@@ -14,9 +12,7 @@ use crate::{
 };
 
 /// Represents a line height value, number value is parsed as em.
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize, TS, Copy)]
-#[serde(try_from = "LineHeightValue")]
-#[ts(as = "LineHeightValue")]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub struct LineHeight(pub LengthUnit);
 
 impl Default for LineHeight {
@@ -36,30 +32,6 @@ impl TailwindPropertyParser for LineHeight {
     };
 
     Some(Self(LengthUnit::Em(value * TW_VAR_SPACING)))
-  }
-}
-
-/// Proxy type for `LineHeight` Css deserialization.
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize, TS)]
-#[serde(untagged)]
-pub(crate) enum LineHeightValue {
-  /// A number value.
-  Number(f32),
-  /// A CSS string value.
-  Css(String),
-  /// A length value.
-  Length(LengthUnit),
-}
-
-impl TryFrom<LineHeightValue> for LineHeight {
-  type Error = String;
-
-  fn try_from(value: LineHeightValue) -> Result<Self, Self::Error> {
-    match value {
-      LineHeightValue::Number(number) => Ok(LineHeight(LengthUnit::Em(number))),
-      LineHeightValue::Css(css) => LineHeight::from_str(&css).map_err(|e| e.to_string()),
-      LineHeightValue::Length(length) => Ok(LineHeight(length)),
-    }
   }
 }
 

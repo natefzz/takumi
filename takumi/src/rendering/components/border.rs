@@ -8,9 +8,9 @@ use crate::{
   rendering::{Canvas, RenderContext},
 };
 
-fn resolve_border_radius_from_percentage_css(
+fn resolve_border_radius_from_percentage_css<const DEFAULT_AUTO: bool>(
   context: &RenderContext,
-  radius: LengthUnit,
+  radius: LengthUnit<DEFAULT_AUTO>,
   reference_size: f32,
 ) -> f32 {
   radius

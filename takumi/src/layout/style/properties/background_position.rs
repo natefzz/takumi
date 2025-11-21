@@ -1,7 +1,5 @@
 use cssparser::{Parser, Token, match_ignore_ascii_case};
-use serde::{Deserialize, Serialize};
 use taffy::{Point, Size};
-use ts_rs::TS;
 
 use crate::{
   layout::style::{FromCss, LengthUnit, ParseResult, SpacePair, tw::TailwindPropertyParser},
@@ -9,8 +7,7 @@ use crate::{
 };
 
 /// Horizontal keywords for `background-position`.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PositionKeywordX {
   /// Align to the left edge.
   Left,
@@ -21,8 +18,7 @@ pub enum PositionKeywordX {
 }
 
 /// Vertical keywords for `background-position`.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PositionKeywordY {
   /// Align to the top edge.
   Top,
@@ -33,8 +29,7 @@ pub enum PositionKeywordY {
 }
 
 /// A single `background-position` component for an axis.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq)]
-#[serde(untagged)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PositionComponent {
   /// A horizontal keyword.
   KeywordX(PositionKeywordX),
@@ -63,8 +58,7 @@ impl From<PositionComponent> for LengthUnit {
 }
 
 /// Parsed `background-position` value for one layer.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq)]
-#[serde(transparent)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct BackgroundPosition(pub SpacePair<PositionComponent>);
 
 impl BackgroundPosition {
@@ -169,32 +163,9 @@ impl<'i> FromCss<'i> for PositionComponent {
   }
 }
 
-/// A value representing either a list of parsed positions or a raw CSS string.
-#[derive(Debug, Clone, PartialEq, TS, Deserialize)]
-#[serde(untagged)]
-pub(crate) enum BackgroundPositionsValue {
-  /// Parsed positions for one or more layers.
-  Positions(Vec<BackgroundPosition>),
-  /// Raw CSS to be parsed at runtime.
-  Css(String),
-}
-
 /// A list of `background-position` values (one per layer).
-#[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq, TS)]
-#[ts(as = "BackgroundPositionsValue")]
-#[serde(try_from = "BackgroundPositionsValue")]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct BackgroundPositions(pub Vec<BackgroundPosition>);
-
-impl TryFrom<BackgroundPositionsValue> for BackgroundPositions {
-  type Error = String;
-
-  fn try_from(value: BackgroundPositionsValue) -> Result<Self, Self::Error> {
-    match value {
-      BackgroundPositionsValue::Positions(v) => Ok(Self(v)),
-      BackgroundPositionsValue::Css(css) => Self::from_str(&css).map_err(|e| e.to_string()),
-    }
-  }
-}
 
 impl<'i> FromCss<'i> for BackgroundPositions {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {

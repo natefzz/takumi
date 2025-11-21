@@ -1,16 +1,12 @@
 use std::{borrow::Cow, fmt::Debug};
 
 use cssparser::{BasicParseErrorKind, ParseError, Parser};
-use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
-use ts_rs::TS;
 
 use crate::layout::style::{Color, ColorInput, FromCss, LengthUnit, ParseResult};
 
 /// Represents a text shadow with all its properties.
-#[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize, TS)]
-#[ts(as = "TextShadowValue")]
-#[serde(try_from = "TextShadowValue")]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub struct TextShadow {
   /// Horizontal offset of the shadow.
   pub offset_x: LengthUnit,
@@ -22,60 +18,9 @@ pub struct TextShadow {
   pub color: ColorInput,
 }
 
-/// Proxy type for `TextShadow` Css deserialization.
-#[derive(Debug, Clone, PartialEq, TS, Deserialize)]
-#[serde(untagged)]
-pub(crate) enum TextShadowValue {
-  /// Represents a structured box shadow.
-  #[serde(rename_all = "camelCase")]
-  Structured {
-    /// Horizontal offset of the shadow.
-    offset_x: LengthUnit,
-    /// Vertical offset of the shadow.
-    offset_y: LengthUnit,
-    /// Blur radius of the shadow. Higher values create a more blurred shadow.
-    blur_radius: LengthUnit,
-    /// Color of the shadow.
-    color: ColorInput,
-  },
-  /// Represents a CSS string.
-  Css(String),
-}
-
-impl TryFrom<TextShadowValue> for TextShadow {
-  type Error = String;
-
-  fn try_from(value: TextShadowValue) -> Result<Self, Self::Error> {
-    match value {
-      TextShadowValue::Structured {
-        offset_x,
-        offset_y,
-        blur_radius,
-        color,
-      } => Ok(TextShadow {
-        offset_x,
-        offset_y,
-        blur_radius,
-        color,
-      }),
-      TextShadowValue::Css(css) => TextShadow::from_str(&css).map_err(|e| e.to_string()),
-    }
-  }
-}
-
 /// Represents a collection of text shadows; has custom `FromCss` implementation for comma-separated values.
-#[derive(Debug, Clone, PartialEq, Deserialize, TS, Serialize)]
-#[ts(as = "TextShadowsValue")]
-#[serde(try_from = "TextShadowsValue")]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TextShadows(pub SmallVec<[TextShadow; 4]>);
-
-#[derive(Debug, Clone, PartialEq, TS, Deserialize)]
-#[serde(untagged)]
-pub(crate) enum TextShadowsValue {
-  #[ts(as = "Vec<TextShadow>")]
-  Structured(SmallVec<[TextShadow; 4]>),
-  Css(String),
-}
 
 impl<'i> FromCss<'i> for TextShadows {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
@@ -95,17 +40,6 @@ impl<'i> FromCss<'i> for TextShadows {
     }
 
     Ok(TextShadows(shadows))
-  }
-}
-
-impl TryFrom<TextShadowsValue> for TextShadows {
-  type Error = String;
-
-  fn try_from(value: TextShadowsValue) -> Result<Self, Self::Error> {
-    match value {
-      TextShadowsValue::Structured(shadows) => Ok(TextShadows(shadows)),
-      TextShadowsValue::Css(css) => TextShadows::from_str(&css).map_err(|e| e.to_string()),
-    }
   }
 }
 
@@ -182,9 +116,7 @@ mod tests {
 
   #[test]
   fn test_parse_text_shadow_no_blur_radius() {
-    let result: TextShadows = TextShadowsValue::Css("5px 5px #558abb".to_string())
-      .try_into()
-      .unwrap();
+    let result = TextShadows::from_str("5px 5px #558abb").unwrap();
 
     assert_eq!(result.0.len(), 1);
 
@@ -198,10 +130,7 @@ mod tests {
 
   #[test]
   fn test_parse_text_shadow_multiple_values() {
-    let result: TextShadows =
-      TextShadowsValue::Css("5px 5px #558abb, 10px 10px #558abb".to_string())
-        .try_into()
-        .unwrap();
+    let result = TextShadows::from_str("5px 5px #558abb, 10px 10px #558abb").unwrap();
 
     assert_eq!(result.0.len(), 2);
   }

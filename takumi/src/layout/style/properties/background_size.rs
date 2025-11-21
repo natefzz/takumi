@@ -1,11 +1,9 @@
 use cssparser::Parser;
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::layout::style::{FromCss, LengthUnit, ParseResult, tw::TailwindPropertyParser};
 
 /// Parsed `background-size` for one layer.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BackgroundSize {
   /// Scale the image to cover the container (may crop).
   Cover,
@@ -70,20 +68,8 @@ impl<'i> FromCss<'i> for BackgroundSize {
   }
 }
 
-/// A value representing either a list of parsed sizes or a raw CSS string.
-#[derive(Debug, Clone, PartialEq, TS, Deserialize)]
-#[serde(untagged)]
-pub(crate) enum BackgroundSizesValue {
-  /// Parsed sizes for one or more layers.
-  Sizes(Vec<BackgroundSize>),
-  /// Raw CSS to be parsed at runtime.
-  Css(String),
-}
-
 /// A list of `background-size` values (one per layer).
-#[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq, TS)]
-#[ts(as = "BackgroundSizesValue")]
-#[serde(try_from = "BackgroundSizesValue")]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct BackgroundSizes(pub Vec<BackgroundSize>);
 
 impl<'i> FromCss<'i> for BackgroundSizes {
@@ -96,17 +82,6 @@ impl<'i> FromCss<'i> for BackgroundSizes {
     }
 
     Ok(Self(values))
-  }
-}
-
-impl TryFrom<BackgroundSizesValue> for BackgroundSizes {
-  type Error = String;
-
-  fn try_from(value: BackgroundSizesValue) -> Result<Self, Self::Error> {
-    match value {
-      BackgroundSizesValue::Sizes(v) => Ok(Self(v)),
-      BackgroundSizesValue::Css(css) => Self::from_str(&css).map_err(|e| e.to_string()),
-    }
   }
 }
 
@@ -175,13 +150,9 @@ mod tests {
     assert!(result.is_err());
   }
 
-  fn parse_bg_sizes(input: &str) -> Result<BackgroundSizes, String> {
-    BackgroundSizes::try_from(BackgroundSizesValue::Css(input.to_string()))
-  }
-
   #[test]
   fn parses_multiple_layers_with_keywords_and_values() {
-    let parsed = parse_bg_sizes("cover, 50% auto").unwrap();
+    let parsed = BackgroundSizes::from_str("cover, 50% auto").unwrap();
     assert_eq!(parsed.0.len(), 2);
     assert_eq!(parsed.0[0], BackgroundSize::Cover);
     assert_eq!(
@@ -195,7 +166,7 @@ mod tests {
 
   #[test]
   fn parses_multiple_layers_with_single_value_duplication() {
-    let parsed = parse_bg_sizes("25%, contain").unwrap();
+    let parsed = BackgroundSizes::from_str("25%, contain").unwrap();
     assert_eq!(parsed.0.len(), 2);
     assert_eq!(
       parsed.0[0],
@@ -209,7 +180,7 @@ mod tests {
 
   #[test]
   fn errors_on_invalid_first_layer() {
-    let result = parse_bg_sizes("nope");
+    let result = BackgroundSizes::from_str("nope");
     assert!(result.is_err());
   }
 }

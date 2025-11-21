@@ -1,14 +1,11 @@
 use cssparser::Parser;
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::layout::style::{FromCss, ParseResult};
 
 use super::GridPlacement;
 
 /// Represents a grid line placement with serde support
-#[derive(Debug, Clone, Deserialize, Serialize, TS, Default, PartialEq)]
-#[ts(optional_fields)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct GridLine {
   /// The start line placement
   pub start: Option<GridPlacement>,

@@ -240,7 +240,7 @@ impl TailwindPropertyParser for TwBorderWidth {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct TwRounded(pub(crate) LengthUnit);
+pub struct TwRounded(pub(crate) LengthUnit<false>);
 
 impl<'i> FromCss<'i> for TwRounded {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {

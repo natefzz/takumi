@@ -1,12 +1,9 @@
 use cssparser::Parser;
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::layout::style::{FromCss, ParseResult};
 
 /// Represents the direction of the grid auto flow.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq, Default)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum GridDirection {
   /// The grid auto flow is in the row direction.
   #[default]
@@ -16,9 +13,7 @@ pub enum GridDirection {
 }
 
 /// Represents the flow of the grid auto placement.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq, Default)]
-#[ts(as = "GridAutoFlowValue")]
-#[serde(try_from = "GridAutoFlowValue")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct GridAutoFlow {
   /// The direction of the grid auto flow.
   pub direction: GridDirection,
@@ -59,27 +54,6 @@ impl GridAutoFlow {
     Self {
       dense: true,
       ..self
-    }
-  }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(untagged)]
-pub(crate) enum GridAutoFlowValue {
-  Structured {
-    direction: GridDirection,
-    dense: bool,
-  },
-  Css(String),
-}
-
-impl TryFrom<GridAutoFlowValue> for GridAutoFlow {
-  type Error = String;
-
-  fn try_from(value: GridAutoFlowValue) -> Result<Self, Self::Error> {
-    match value {
-      GridAutoFlowValue::Structured { direction, dense } => Ok(GridAutoFlow { direction, dense }),
-      GridAutoFlowValue::Css(css) => GridAutoFlow::from_str(&css).map_err(|e| e.to_string()),
     }
   }
 }

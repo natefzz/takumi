@@ -13,7 +13,7 @@ fn create_container(background_images: BackgroundImages) -> ContainerNode<NodeKi
       StyleBuilder::default()
         .width(Percentage(100.0))
         .height(Percentage(100.0))
-        .background_image(CssOption::some(background_images))
+        .background_image(Some(background_images))
         .build()
         .unwrap(),
     ),
@@ -33,10 +33,10 @@ fn create_container_with(
       StyleBuilder::default()
         .width(Percentage(100.0))
         .height(Percentage(100.0))
-        .background_image(CssOption::some(background_images))
-        .background_size(CssOption(background_size))
-        .background_position(CssOption(background_position))
-        .background_repeat(CssOption(background_repeat))
+        .background_image(Some(background_images))
+        .background_size(background_size)
+        .background_position(background_position)
+        .background_repeat(background_repeat)
         .build()
         .unwrap(),
     ),
@@ -247,7 +247,7 @@ fn test_background_image_grid_pattern() {
 
   assert_eq!(
     container.style.as_ref().unwrap().background_repeat,
-    CssOption::some(BackgroundRepeats(vec![
+    Some(BackgroundRepeats(vec![
       BackgroundRepeat::repeat(),
       BackgroundRepeat::repeat()
     ]))

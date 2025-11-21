@@ -47,10 +47,6 @@ features = ["std", "scale"]
 version = "1.10"
 optional = true
 
-[dependencies.ts-rs]
-version = "11.0"
-features = ["no-serde-warnings"]
-
 [dependencies.wuff]
 version = "0.2"
 optional = true

@@ -1,26 +1,19 @@
 use cssparser::Parser;
-use serde::{Deserialize, Deserializer, Serialize, de::Error as DeError};
 use taffy::Rect;
-use ts_rs::TS;
 
 use crate::layout::style::{FromCss, LengthUnit, ParseResult};
 
 /// Represents the values for the four sides of a box (top, right, bottom, left).
-#[derive(Debug, Clone, Copy, Serialize, TS, PartialEq)]
-#[ts(as = "SidesValue<T>")]
-pub struct Sides<T: TS + Copy>(pub [T; 4]);
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Sides<T: Copy>(pub [T; 4]);
 
 pub(crate) enum Axis {
   Horizontal,
   Vertical,
 }
 
-impl<T: TS + Copy> Sides<T> {
-  pub(crate) fn map_axis<R, F>(&self, func: F) -> Sides<R>
-  where
-    R: TS + Copy,
-    F: Fn(T, Axis) -> R,
-  {
+impl<T: Copy> Sides<T> {
+  pub(crate) fn map_axis<R: Copy, F: Fn(T, Axis) -> R>(&self, func: F) -> Sides<R> {
     let [top, right, bottom, left] = self.0;
 
     Sides([
@@ -32,25 +25,7 @@ impl<T: TS + Copy> Sides<T> {
   }
 }
 
-/// Represents values that can be applied to all sides of an element.
-///
-/// This enum allows for flexible specification of values like padding, margin,
-/// or border sizes using either a single value for all sides, separate values
-/// for vertical/horizontal axes, or individual values for each side.
-#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(untagged)]
-pub enum SidesValue<T> {
-  /// CSS string representation
-  Css(String),
-  /// Individual values for each side (top, right, bottom, left)
-  AllSides(T, T, T, T),
-  /// Separate values for vertical and horizontal sides (vertical, horizontal)
-  AxisSidesArray(T, T),
-  /// Same value for all four sides
-  SingleValue(T),
-}
-
-impl<'i, T: TS + Copy + for<'j> FromCss<'j>> FromCss<'i> for Sides<T> {
+impl<'i, T: Copy + for<'j> FromCss<'j>> FromCss<'i> for Sides<T> {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
     // Parse between 1 and 4 values of T using FromCss
     let first = T::from_css(input)?;
@@ -87,35 +62,7 @@ impl<'i, T: TS + Copy + for<'j> FromCss<'j>> FromCss<'i> for Sides<T> {
   }
 }
 
-impl<T: TS + Copy + for<'i> FromCss<'i>> TryFrom<SidesValue<T>> for Sides<T> {
-  type Error = String;
-
-  fn try_from(value: SidesValue<T>) -> Result<Self, Self::Error> {
-    match value {
-      SidesValue::Css(string) => Self::from_str(&string).map_err(|e| e.to_string()),
-      SidesValue::AllSides(top, right, bottom, left) => Ok(Sides([top, right, bottom, left])),
-      SidesValue::AxisSidesArray(vertical, horizontal) => {
-        Ok(Sides([vertical, horizontal, vertical, horizontal]))
-      }
-      SidesValue::SingleValue(value) => Ok(Sides([value; 4])),
-    }
-  }
-}
-
-impl<'de, T> Deserialize<'de> for Sides<T>
-where
-  T: TS + Copy + Deserialize<'de> + for<'i> FromCss<'i>,
-{
-  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-  where
-    D: Deserializer<'de>,
-  {
-    let proxy = SidesValue::<T>::deserialize(deserializer)?;
-    Sides::try_from(proxy).map_err(D::Error::custom)
-  }
-}
-
-impl<T: Copy + TS> From<Sides<T>> for Rect<T> {
+impl<T: Copy> From<Sides<T>> for Rect<T> {
   fn from(value: Sides<T>) -> Self {
     Rect {
       top: value.0[0],
@@ -126,21 +73,15 @@ impl<T: Copy + TS> From<Sides<T>> for Rect<T> {
   }
 }
 
-impl<T: TS + Default + Copy> Default for Sides<T> {
+impl<T: Default + Copy> Default for Sides<T> {
   fn default() -> Self {
     Self([T::default(); 4])
   }
 }
 
-impl<T: TS + Copy> From<T> for Sides<T> {
+impl<T: Copy> From<T> for Sides<T> {
   fn from(value: T) -> Self {
     Self([value; 4])
-  }
-}
-
-impl<T: Default> Default for SidesValue<T> {
-  fn default() -> Self {
-    Self::SingleValue(T::default())
   }
 }
 
@@ -160,19 +101,18 @@ impl Sides<LengthUnit> {
 mod tests {
   use super::*;
   use crate::layout::style::LengthUnit;
-  use serde_json;
 
   #[test]
   fn deserialize_single_number() {
     let json = "5";
-    let sides: Sides<LengthUnit> = serde_json::from_str(json).expect("should deserialize");
+    let sides: Sides<LengthUnit> = Sides::from_str(json).expect("should deserialize");
     assert_eq!(sides, Sides([LengthUnit::Px(5.0); 4]));
   }
 
   #[test]
   fn deserialize_axis_pair_numbers() {
-    let json = "[10, 20]";
-    let sides: Sides<LengthUnit> = serde_json::from_str(json).expect("should deserialize");
+    let sides: Sides<LengthUnit> = Sides::from_str("10 20").unwrap();
+
     assert_eq!(
       sides,
       Sides([
@@ -185,31 +125,16 @@ mod tests {
   }
 
   #[test]
-  fn deserialize_all_sides_numbers() {
-    let json = "[1, 2, 3, 4]";
-    let sides: Sides<LengthUnit> = serde_json::from_str(json).expect("should deserialize");
-    assert_eq!(
-      sides,
-      Sides([
-        LengthUnit::Px(1.0),
-        LengthUnit::Px(2.0),
-        LengthUnit::Px(3.0),
-        LengthUnit::Px(4.0)
-      ])
-    );
-  }
-
-  #[test]
   fn deserialize_css_single_value() {
-    let json = "\"10px\"";
-    let sides: Sides<LengthUnit> = serde_json::from_str(json).expect("should deserialize");
+    let sides: Sides<LengthUnit> = Sides::from_str("10px").unwrap();
+
     assert_eq!(sides, Sides([LengthUnit::Px(10.0); 4]));
   }
 
   #[test]
   fn deserialize_css_multi_values() {
-    let json = "\"1px 2px 3px 4px\"";
-    let sides: Sides<LengthUnit> = serde_json::from_str(json).expect("should deserialize");
+    let sides: Sides<LengthUnit> = Sides::from_str("1px 2px 3px 4px").unwrap();
+
     assert_eq!(
       sides,
       Sides([

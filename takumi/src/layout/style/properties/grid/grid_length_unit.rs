@@ -1,7 +1,5 @@
 use cssparser::{Parser, Token};
-use serde::{Deserialize, Serialize};
 use taffy::CompactLength;
-use ts_rs::TS;
 
 use crate::{
   layout::style::{FromCss, LengthUnit, ParseResult},
@@ -9,46 +7,19 @@ use crate::{
 };
 
 /// Represents a fraction of the available space
-#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, PartialEq)]
 pub enum FrLengthUnit {
   /// A fraction of the available space
   Fr(f32),
 }
 
 /// Represents a grid track sizing function with serde support
-#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(try_from = "GridLengthUnitValue")]
-#[ts(as = "GridLengthUnitValue")]
+#[derive(Debug, Clone, PartialEq)]
 pub enum GridLengthUnit {
   /// A fraction of the available space
   Fr(f32),
   /// A fixed length
   Unit(LengthUnit),
-}
-
-/// Represents a grid length unit value with serde support
-#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(untagged)]
-pub(crate) enum GridLengthUnitValue {
-  /// A fraction of the available space
-  Fr(FrLengthUnit),
-  /// A fixed length
-  Unit(LengthUnit),
-  /// A CSS string representation
-  Css(String),
-}
-
-impl TryFrom<GridLengthUnitValue> for GridLengthUnit {
-  type Error = String;
-
-  fn try_from(value: GridLengthUnitValue) -> Result<Self, Self::Error> {
-    match value {
-      GridLengthUnitValue::Fr(FrLengthUnit::Fr(fr)) => Ok(GridLengthUnit::Fr(fr)),
-      GridLengthUnitValue::Unit(unit) => Ok(GridLengthUnit::Unit(unit)),
-      GridLengthUnitValue::Css(css) => GridLengthUnit::from_str(&css).map_err(|e| e.to_string()),
-    }
-  }
 }
 
 impl GridLengthUnit {

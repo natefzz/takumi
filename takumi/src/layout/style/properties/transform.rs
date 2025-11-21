@@ -1,10 +1,8 @@
 use std::ops::{Mul, MulAssign};
 
 use cssparser::{Parser, Token, match_ignore_ascii_case};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use smallvec::SmallVec;
 use taffy::{Point, Size};
-use ts_rs::TS;
 
 use crate::{
   layout::style::{Angle, FromCss, LengthUnit, ParseResult, PercentageNumber},
@@ -14,8 +12,7 @@ use crate::{
 const DEFAULT_SCALE: f32 = 1.0;
 
 /// Represents a single CSS transform operation
-#[derive(Debug, Clone, Deserialize, Serialize, Copy, TS, PartialEq)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Transform {
   /// Translates an element along the X-axis and Y-axis by the specified lengths
   Translate(LengthUnit, LengthUnit),
@@ -32,8 +29,7 @@ pub enum Transform {
 /// | a b x |
 /// | c d y |
 /// | 0 0 1 |
-#[derive(Debug, Clone, Copy, TS, Default, PartialEq)]
-#[ts(type = "string")]
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct Affine {
   /// Horizontal scaling / cosine of rotation
   pub a: f32,
@@ -207,39 +203,6 @@ impl From<Affine> for zeno::Transform {
   }
 }
 
-impl<'de> Deserialize<'de> for Affine {
-  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-  where
-    D: Deserializer<'de>,
-  {
-    let seq = String::deserialize(deserializer)?;
-    Affine::from_str(&seq).map_err(|e| serde::de::Error::custom(e.to_string()))
-  }
-}
-
-impl Serialize for Affine {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    let mut string = String::new();
-
-    string.push_str(&self.a.to_string());
-    string.push(',');
-    string.push_str(&self.b.to_string());
-    string.push(',');
-    string.push_str(&self.c.to_string());
-    string.push(',');
-    string.push_str(&self.d.to_string());
-    string.push(',');
-    string.push_str(&self.x.to_string());
-    string.push(',');
-    string.push_str(&self.y.to_string());
-
-    serializer.serialize_str(&string)
-  }
-}
-
 impl<'i> FromCss<'i> for Affine {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
     let a = input.expect_number()?;
@@ -254,9 +217,7 @@ impl<'i> FromCss<'i> for Affine {
 }
 
 /// A collection of transform operations that can be applied together
-#[derive(Debug, Clone, Deserialize, Serialize, TS, Default, PartialEq)]
-#[ts(as = "TransformsValue")]
-#[serde(try_from = "TransformsValue")]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct Transforms(pub SmallVec<[Transform; 4]>);
 
 impl Transforms {
@@ -291,17 +252,6 @@ impl Transforms {
   }
 }
 
-/// Represents transform values that can be either a structured list or raw CSS
-#[derive(Debug, Clone, Deserialize, TS)]
-#[serde(untagged)]
-pub(crate) enum TransformsValue {
-  /// A structured list of transform operations
-  #[ts(as = "Vec<Transform>")]
-  Transforms(SmallVec<[Transform; 4]>),
-  /// Raw CSS transform string to be parsed
-  Css(String),
-}
-
 impl<'i> FromCss<'i> for Transforms {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
     let mut transforms = SmallVec::new();
@@ -312,17 +262,6 @@ impl<'i> FromCss<'i> for Transforms {
     }
 
     Ok(Transforms(transforms))
-  }
-}
-
-impl TryFrom<TransformsValue> for Transforms {
-  type Error = String;
-
-  fn try_from(value: TransformsValue) -> Result<Self, Self::Error> {
-    match value {
-      TransformsValue::Transforms(transforms) => Ok(Transforms(transforms)),
-      TransformsValue::Css(css) => Transforms::from_str(&css).map_err(|e| e.to_string()),
-    }
   }
 }
 

@@ -1,20 +1,14 @@
-use cssparser::{Parser, ParserInput};
-use serde::{Deserialize, Deserializer, Serialize};
-use serde_untagged::UntaggedEnumVisitor;
-use ts_rs::TS;
+use cssparser::Parser;
 
 use crate::layout::style::{FromCss, ParseResult, tw::TailwindPropertyParser};
 
-#[derive(Default, Debug, Clone, Serialize, Copy, TS, PartialEq)]
-#[ts(type = "number | 'auto' | (string & {})")]
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 /// Represents a aspect ratio.
 pub enum AspectRatio {
   /// The aspect ratio is determined by the content.
   #[default]
-  #[serde(rename(serialize = "auto"))]
   Auto,
   /// The aspect ratio is a fixed ratio.
-  #[serde(untagged)]
   Ratio(f32),
 }
 
@@ -30,23 +24,6 @@ impl From<AspectRatio> for Option<f32> {
       AspectRatio::Auto => None,
       AspectRatio::Ratio(ratio) => Some(ratio),
     }
-  }
-}
-
-impl<'de> Deserialize<'de> for AspectRatio {
-  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-  where
-    D: Deserializer<'de>,
-  {
-    UntaggedEnumVisitor::new()
-      .i32(|num| Ok(AspectRatio::Ratio(num as f32)))
-      .f32(|num| Ok(AspectRatio::Ratio(num)))
-      .string(|str| {
-        let mut input = ParserInput::new(str);
-        let mut parser = Parser::new(&mut input);
-        AspectRatio::from_css(&mut parser).map_err(|e| serde::de::Error::custom(e.to_string()))
-      })
-      .deserialize(deserializer)
   }
 }
 

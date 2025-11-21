@@ -1,12 +1,9 @@
 use cssparser::{Parser, Token, match_ignore_ascii_case};
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::layout::style::{FromCss, ParseResult};
 
 /// Per-axis repeat style.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq, Default)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum BackgroundRepeatStyle {
   /// Tile as many times as needed with no extra spacing
   #[default]
@@ -20,8 +17,7 @@ pub enum BackgroundRepeatStyle {
 }
 
 /// Combined repeat for X and Y axes.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, TS, PartialEq, Default)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct BackgroundRepeat(pub BackgroundRepeatStyle, pub BackgroundRepeatStyle);
 
 impl BackgroundRepeat {
@@ -101,32 +97,9 @@ impl<'i> FromCss<'i> for BackgroundRepeat {
   }
 }
 
-/// Proxy type to deserialize CSS background-repeat as either a list or CSS string.
-#[derive(Debug, Clone, PartialEq, TS, Deserialize)]
-#[serde(untagged)]
-pub(crate) enum BackgroundRepeatsValue {
-  /// Parsed repeats for one or more layers.
-  Repeats(Vec<BackgroundRepeat>),
-  /// Raw CSS to be parsed at runtime.
-  Css(String),
-}
-
 /// A list of background-repeat values (layered).
-#[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq, TS)]
-#[ts(as = "BackgroundRepeatsValue")]
-#[serde(try_from = "BackgroundRepeatsValue")]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct BackgroundRepeats(pub Vec<BackgroundRepeat>);
-
-impl TryFrom<BackgroundRepeatsValue> for BackgroundRepeats {
-  type Error = String;
-
-  fn try_from(value: BackgroundRepeatsValue) -> Result<Self, Self::Error> {
-    match value {
-      BackgroundRepeatsValue::Repeats(v) => Ok(Self(v)),
-      BackgroundRepeatsValue::Css(css) => Self::from_str(&css).map_err(|e| e.to_string()),
-    }
-  }
-}
 
 impl<'i> FromCss<'i> for BackgroundRepeats {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {

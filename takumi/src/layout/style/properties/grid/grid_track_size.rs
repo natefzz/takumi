@@ -1,7 +1,5 @@
 use cssparser::Parser;
-use serde::{Deserialize, Serialize};
 use taffy::{MaxTrackSizingFunction, MinTrackSizingFunction, TrackSizingFunction};
-use ts_rs::TS;
 
 use crate::{
   layout::style::{FromCss, GridLengthUnit, GridMinMaxSize, ParseResult},
@@ -9,21 +7,8 @@ use crate::{
 };
 
 /// A wrapper around a list of `GridTrackSize` that can also be parsed from a CSS string.
-#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(try_from = "GridTrackSizesValue")]
-#[ts(as = "GridTrackSizesValue")]
+#[derive(Debug, Clone, PartialEq)]
 pub struct GridTrackSizes(pub Vec<GridTrackSize>);
-
-/// Serializable input for `GridTrackSizes` that accepts either a list of
-/// pre-parsed `GridTrackSize` values or a CSS string to parse.
-#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(untagged)]
-pub(crate) enum GridTrackSizesValue {
-  /// Explicit list of track sizes.
-  Components(Vec<GridTrackSize>),
-  /// CSS value to parse (e.g. "minmax(10px, 1fr) 2fr").
-  Css(String),
-}
 
 impl<'i> FromCss<'i> for GridTrackSizes {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
@@ -36,20 +21,8 @@ impl<'i> FromCss<'i> for GridTrackSizes {
   }
 }
 
-impl TryFrom<GridTrackSizesValue> for GridTrackSizes {
-  type Error = String;
-
-  fn try_from(value: GridTrackSizesValue) -> Result<Self, Self::Error> {
-    match value {
-      GridTrackSizesValue::Components(components) => Ok(GridTrackSizes(components)),
-      GridTrackSizesValue::Css(css) => GridTrackSizes::from_str(&css).map_err(|e| e.to_string()),
-    }
-  }
-}
-
 /// Represents a grid track size
-#[derive(Debug, Clone, Deserialize, Serialize, TS, PartialEq)]
-#[serde(untagged)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum GridTrackSize {
   /// A minmax() track size
   MinMax(GridMinMaxSize),

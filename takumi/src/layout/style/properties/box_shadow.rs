@@ -1,9 +1,7 @@
 use std::{borrow::Cow, fmt::Debug};
 
 use cssparser::{BasicParseErrorKind, ParseError, Parser};
-use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
-use ts_rs::TS;
 
 use crate::layout::style::{Color, ColorInput, FromCss, LengthUnit, ParseResult};
 
@@ -14,9 +12,7 @@ use crate::layout::style::{Color, ColorInput, FromCss, LengthUnit, ParseResult};
 /// - Blur radius (optional, defaults to 0)
 /// - Spread radius (optional, defaults to 0)
 /// - Color (optional, defaults to transparent)
-#[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize, TS)]
-#[ts(as = "BoxShadowValue")]
-#[serde(try_from = "BoxShadowValue")]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub struct BoxShadow {
   /// Whether the shadow is inset (inside the element) or outset (outside the element).
   pub inset: bool,
@@ -32,68 +28,9 @@ pub struct BoxShadow {
   pub color: ColorInput,
 }
 
-/// Proxy type for `BoxShadow` Css deserialization.
-#[derive(Debug, Clone, PartialEq, TS, Deserialize)]
-#[serde(untagged)]
-pub(crate) enum BoxShadowValue {
-  /// Represents a structured box shadow.
-  #[serde(rename_all = "camelCase")]
-  Structured {
-    /// Whether the shadow is inset (inside the element) or outset (outside the element).
-    inset: bool,
-    /// Horizontal offset of the shadow.
-    offset_x: LengthUnit,
-    /// Vertical offset of the shadow.
-    offset_y: LengthUnit,
-    /// Blur radius of the shadow. Higher values create a more blurred shadow.
-    blur_radius: LengthUnit,
-    /// Spread radius of the shadow. Positive values expand the shadow, negative values shrink it.
-    spread_radius: LengthUnit,
-    /// Color of the shadow.
-    color: ColorInput,
-  },
-  /// Represents a CSS string.
-  Css(String),
-}
-
-impl TryFrom<BoxShadowValue> for BoxShadow {
-  type Error = String;
-
-  fn try_from(value: BoxShadowValue) -> Result<Self, Self::Error> {
-    match value {
-      BoxShadowValue::Structured {
-        inset,
-        offset_x,
-        offset_y,
-        blur_radius,
-        spread_radius,
-        color,
-      } => Ok(BoxShadow {
-        inset,
-        offset_x,
-        offset_y,
-        blur_radius,
-        spread_radius,
-        color,
-      }),
-      BoxShadowValue::Css(css) => BoxShadow::from_str(&css).map_err(|e| e.to_string()),
-    }
-  }
-}
-
 /// Represents a collection of box shadows, have custom `FromCss` implementation for comma-separated values.
-#[derive(Debug, Clone, PartialEq, TS, Serialize, Deserialize)]
-#[ts(as = "BoxShadowsValue")]
-#[serde(try_from = "BoxShadowsValue")]
+#[derive(Debug, Clone, PartialEq)]
 pub struct BoxShadows(pub SmallVec<[BoxShadow; 4]>);
-
-#[derive(Debug, Clone, PartialEq, TS, Deserialize)]
-#[serde(untagged)]
-pub(crate) enum BoxShadowsValue {
-  #[ts(as = "Vec<BoxShadow>")]
-  Structured(SmallVec<[BoxShadow; 4]>),
-  Css(String),
-}
 
 impl<'i> FromCss<'i> for BoxShadows {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
@@ -113,17 +50,6 @@ impl<'i> FromCss<'i> for BoxShadows {
     }
 
     Ok(BoxShadows(shadows))
-  }
-}
-
-impl TryFrom<BoxShadowsValue> for BoxShadows {
-  type Error = String;
-
-  fn try_from(value: BoxShadowsValue) -> Result<Self, Self::Error> {
-    match value {
-      BoxShadowsValue::Structured(shadows) => Ok(BoxShadows(shadows)),
-      BoxShadowsValue::Css(css) => BoxShadows::from_str(&css).map_err(|e| e.to_string()),
-    }
   }
 }
 

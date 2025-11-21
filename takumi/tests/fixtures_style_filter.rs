@@ -1,4 +1,3 @@
-use serde_json::{Value, from_value};
 use takumi::layout::{
   node::{ContainerNode, ImageNode, NodeKind, TextNode},
   style::{LengthUnit::*, *},
@@ -43,7 +42,7 @@ fn test_style_filter_on_image_node() {
               StyleBuilder::default()
                 .flex_direction(FlexDirection::Column)
                 .align_items(AlignItems::Center)
-                .font_size(CssOption::some(Rem(1.5)))
+                .font_size(Some(Rem(1.5)))
                 .build()
                 .unwrap(),
             ),
@@ -55,9 +54,7 @@ fn test_style_filter_on_image_node() {
                   StyleBuilder::default()
                     .width(Px(128.0))
                     .height(Px(128.0))
-                    .filter(CssOption::some(
-                      from_value::<Filters>(Value::String(effect.to_string())).unwrap(),
-                    ))
+                    .filter(Some(Filters::from_str(effect).unwrap()))
                     .build()
                     .unwrap(),
                 ),

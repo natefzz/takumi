@@ -1,6 +1,4 @@
 use cssparser::{Parser, Token, match_ignore_ascii_case};
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
 
 use crate::{
   layout::style::{Color, FromCss, Gradient, ParseResult},
@@ -26,8 +24,7 @@ fn hash_2d(x: u32, y: u32, seed: u32) -> u8 {
 /// Procedural noise gradient that generates organic, natural-looking patterns using fractal Brownian motion.
 /// This creates dynamic textures that can be used as backgrounds or overlays with customizable parameters
 /// for controlling the noise characteristics and visual appearance.
-#[derive(Debug, Clone, PartialEq, TS, Deserialize, Serialize, Default)]
-#[ts(optional_fields)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct NoiseV1 {
   /// Random seed value that determines the unique noise pattern generated
   pub seed: Option<i32>,

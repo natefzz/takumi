@@ -1,7 +1,7 @@
 use takumi::layout::{
   node::{ContainerNode, ImageNode, TextNode},
   style::{
-    AlignItems, Color, ColorInput, CssOption, Display, FontWeight, JustifyContent,
+    AlignItems, Color, ColorInput, Display, FontWeight, JustifyContent,
     LengthUnit::{Percentage, Px},
     Sides, StyleBuilder, TextOverflow, TextTransform, WhiteSpace,
   },
@@ -66,9 +66,9 @@ fn fixtures_text_inline() {
         .width(Percentage(100.0))
         .display(Display::Block)
         .justify_content(JustifyContent::Center)
-        .line_clamp(CssOption::some(3.into()))
+        .line_clamp(Some(3.into()))
         .text_overflow(TextOverflow::Ellipsis)
-        .font_size(CssOption::some(Px(48.0)))
+        .font_size(Some(Px(48.0)))
         .white_space(WhiteSpace::pre_wrap())
         .build()
         .unwrap(),
@@ -138,9 +138,9 @@ fn fixtures_inline_image() {
         tw: None,
         style: Some(
           StyleBuilder::default()
-            .border_width(CssOption::some(Sides([Px(1.0); 4])))
+            .border_width(Some(Sides([Px(1.0); 4])))
             .display(Display::Block)
-            .font_size(CssOption::some(Px(48.0)))
+            .font_size(Some(Px(48.0)))
             .build()
             .unwrap(),
         ),
@@ -175,7 +175,7 @@ fn fixtures_inline_block_in_inline() {
           .display(Display::Block)
           .background_color(ColorInput::Value(Color([200, 200, 255, 255])))
           .width(Percentage(80.0))
-          .font_size(CssOption::some(Px(18.0)))
+          .font_size(Some(Px(18.0)))
           .build()
           .unwrap(),
       ),
@@ -214,7 +214,7 @@ fn fixtures_inline_block_in_inline() {
         .background_color(ColorInput::Value(Color::white()))
         .width(Percentage(100.0))
         .display(Display::Block)
-        .font_size(CssOption::some(Px(24.0)))
+        .font_size(Some(Px(24.0)))
         .white_space(WhiteSpace::pre())
         .build()
         .unwrap(),

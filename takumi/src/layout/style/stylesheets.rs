@@ -2,62 +2,46 @@ use std::{borrow::Cow, marker::PhantomData};
 
 use derive_builder::Builder;
 use parley::{FontSettings, FontStack, FontWidth, TextStyle};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use smallvec::SmallVec;
-use taffy::{Size, prelude::FromLength};
-use ts_rs::TS;
+use taffy::{Point, Size, prelude::FromLength};
 
 use crate::{
   layout::{
     inline::InlineBrush,
-    style::{CssOption, CssValue, properties::*},
+    style::{CssValue, properties::*},
   },
   rendering::{RenderContext, SizedShadow},
 };
 
 /// Helper macro to define the `Style` struct and `InheritedStyle` struct.
 macro_rules! define_style {
-  ($( $(#[$attr:meta])? $property:ident: $type:ty = $default_global:expr => $initial_value:expr),* $(,)?) => {
+  ($( $(#[$attr:meta])? $property:ident: $type:ty $(where inherit = $inherit:expr)? ),* $(,)?) => {
     /// Defines the style of an element.
-    #[derive(Debug, Clone, Deserialize, Serialize, TS, Builder, PartialEq)]
+    #[derive(Debug, Default, Clone, Deserialize, Builder, PartialEq)]
     #[serde(default, rename_all = "camelCase")]
-    #[ts(export, optional_fields)]
     #[builder(default, setter(into))]
     pub struct Style {
       $(
-        #[allow(missing_docs)]
         $(#[$attr])?
-        pub $property: CssValue<$type>,
+        #[allow(missing_docs)]
+        pub $property: CssValue<$type$(, $inherit)?>,
       )*
-    }
-
-    impl Default for Style {
-      fn default() -> Self {
-        Self {
-          $( $property: $default_global.into(), )*
-        }
-      }
     }
 
     impl Style {
       /// Inherits the style from the parent element.
       pub(crate) fn inherit(self, parent: &InheritedStyle) -> InheritedStyle {
         InheritedStyle {
-          $( $property: self.$property.inherit_value(&parent.$property, $initial_value), )*
+          $( $property: self.$property.inherit_value(&parent.$property), )*
         }
       }
     }
 
     /// A resolved set of style properties.
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Default)]
     pub struct InheritedStyle {
       $( pub(crate) $property: $type, )*
-    }
-
-    impl Default for InheritedStyle {
-      fn default() -> Self {
-        Self { $( $property: $initial_value, )* }
-      }
     }
   };
 }
@@ -65,130 +49,133 @@ macro_rules! define_style {
 // property: type = node default value => viewport default value
 define_style!(
   // For convenience, we default to border-box
-  box_sizing: BoxSizing = CssValue::inherit() => BoxSizing::BorderBox,
-  opacity: PercentageNumber = PercentageNumber(1.0) => PercentageNumber(1.0),
-  display: Display = Display::Flex => Display::Flex,
-  width: LengthUnit = LengthUnit::Auto => LengthUnit::Auto,
-  height: LengthUnit = LengthUnit::Auto => LengthUnit::Auto,
-  max_width: LengthUnit = LengthUnit::Auto => LengthUnit::Auto,
-  max_height: LengthUnit = LengthUnit::Auto => LengthUnit::Auto,
-  min_width: LengthUnit = LengthUnit::Auto => LengthUnit::Auto,
-  min_height: LengthUnit = LengthUnit::Auto => LengthUnit::Auto,
-  aspect_ratio: AspectRatio = AspectRatio::Auto => AspectRatio::Auto,
-  padding: Sides<LengthUnit> = Sides::zero() => Sides::zero(),
-  padding_inline: CssOption<SpacePair<LengthUnit>> = CssOption::none() => CssOption::none(),
-  padding_block: CssOption<SpacePair<LengthUnit>> = CssOption::none() => CssOption::none(),
-  padding_top: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  padding_right: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  padding_bottom: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  padding_left: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  margin: Sides<LengthUnit> = Sides::zero() => Sides::zero(),
-  margin_inline: CssOption<SpacePair<LengthUnit>> = CssOption::none() => CssOption::none(),
-  margin_block: CssOption<SpacePair<LengthUnit>> = CssOption::none() => CssOption::none(),
-  margin_top: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  margin_right: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  margin_bottom: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  margin_left: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  inset: Sides<LengthUnit> = Sides::auto() => Sides::auto(),
-  inset_inline: CssOption<SpacePair<LengthUnit>> = CssOption::none() => CssOption::none(),
-  inset_block: CssOption<SpacePair<LengthUnit>> = CssOption::none() => CssOption::none(),
-  top: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  right: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  bottom: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  left: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  flex_direction: FlexDirection = FlexDirection::Row => FlexDirection::Row,
-  justify_self: AlignItems = AlignItems::Normal => AlignItems::Normal,
-  justify_content: JustifyContent = JustifyContent::Normal => JustifyContent::Normal,
-  align_content: JustifyContent = JustifyContent::Normal => JustifyContent::Normal,
-  justify_items: AlignItems = AlignItems::Normal => AlignItems::Normal,
-  align_items: AlignItems = AlignItems::Normal => AlignItems::Normal,
-  align_self: AlignItems = AlignItems::Normal => AlignItems::Normal,
-  flex_wrap: FlexWrap = FlexWrap::NoWrap => FlexWrap::NoWrap,
-  flex_basis: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  position: Position = Position::Relative => Position::Relative,
-  rotate: CssOption<Angle> = CssOption::none() => CssOption::none(),
-  scale: CssOption<SpacePair<PercentageNumber>> = CssOption::none() => CssOption::none(),
-  scale_x: CssOption<PercentageNumber> = CssOption::none() => CssOption::none(),
-  scale_y: CssOption<PercentageNumber> = CssOption::none() => CssOption::none(),
-  transform: CssOption<Transforms> = CssOption::none() => CssOption::none(),
-  transform_origin: CssOption<BackgroundPosition> = CssOption::none() => CssOption::none(),
-  translate: CssOption<SpacePair<LengthUnit>> = CssOption::none() => CssOption::none(),
-  translate_x: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  translate_y: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  mask_image: CssOption<BackgroundImages> = CssOption::none() => CssOption::none(),
-  mask_size: CssOption<BackgroundSizes> = CssOption::none() => CssOption::none(),
-  mask_position: CssOption<BackgroundPositions> = CssOption::none() => CssOption::none(),
-  mask_repeat: CssOption<BackgroundRepeats> = CssOption::none() => CssOption::none(),
-  gap: SpacePair<LengthUnit, true> = SpacePair::from_single(LengthUnit::Px(0.0)) => SpacePair::from_single(LengthUnit::Px(0.0)),
-  column_gap: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  row_gap: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  flex: CssOption<Flex> = CssOption::none() => CssOption::none(),
-  flex_grow: CssOption<FlexGrow> = CssOption::none() => CssOption::none(),
-  flex_shrink: CssOption<FlexGrow> = CssOption::none() => CssOption::none(),
-  border_radius: Sides<LengthUnit> = Sides::zero() => Sides::zero(),
-  border_top_left_radius: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  border_top_right_radius: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  border_bottom_right_radius: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  border_bottom_left_radius: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  border_width: CssOption<Sides<LengthUnit>> = CssOption::none() => CssOption::none(),
-  border_inline_width: CssOption<SpacePair<LengthUnit>> = CssOption::none() => CssOption::none(),
-  border_block_width: CssOption<SpacePair<LengthUnit>> = CssOption::none() => CssOption::none(),
-  border_top_width: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  border_right_width: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  border_bottom_width: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  border_left_width: CssOption<LengthUnit> = CssOption::none() => CssOption::none(),
-  border: Border = Border::default() => Border::default(),
-  object_fit: ObjectFit = CssValue::inherit() => Default::default(),
-  overflow: Overflows = Overflows::default() => Overflows::default(),
-  overflow_x: CssOption<Overflow> = CssOption::none() => CssOption::none(),
-  overflow_y: CssOption<Overflow> = CssOption::none() => CssOption::none(),
-  object_position: BackgroundPosition = CssValue::inherit() => BackgroundPosition::default(),
-  background_image: CssOption<BackgroundImages> = CssOption::none() => CssOption::none(),
-  background_position: CssOption<BackgroundPositions> = CssOption::none() => CssOption::none(),
-  background_size: CssOption<BackgroundSizes> = CssOption::none() => CssOption::none(),
-  background_repeat: CssOption<BackgroundRepeats> = CssOption::none() => CssOption::none(),
-  background_color: ColorInput = ColorInput::Value(Color::transparent()) => ColorInput::Value(Color::transparent()),
-  box_shadow: CssOption<BoxShadows> = CssOption::none() => CssOption::none(),
-  grid_auto_columns: CssOption<GridTrackSizes> = CssOption::none() => CssOption::none(),
-  grid_auto_rows: CssOption<GridTrackSizes> = CssOption::none() => CssOption::none(),
-  grid_auto_flow: CssOption<GridAutoFlow> = CssOption::none() => CssOption::none(),
-  grid_column: CssOption<GridLine> = CssOption::none() => CssOption::none(),
-  grid_row: CssOption<GridLine> = CssOption::none() => CssOption::none(),
-  grid_template_columns: CssOption<GridTemplateComponents> = CssOption::none() => CssOption::none(),
-  grid_template_rows: CssOption<GridTemplateComponents> = CssOption::none() => CssOption::none(),
-  grid_template_areas: CssOption<GridTemplateAreas> = CssOption::none() => CssOption::none(),
-  text_overflow: TextOverflow = CssValue::inherit() => Default::default(),
-  text_transform: TextTransform = CssValue::inherit() => Default::default(),
-  font_style: FontStyle = CssValue::inherit() => Default::default(),
-  border_color: CssOption<ColorInput> = CssOption::none() => CssOption::none(),
-  color: ColorInput = CssValue::inherit() => ColorInput::CurrentColor,
-  filter: CssOption<Filters> = CssOption::none() => CssOption::none(),
-  font_size: CssOption<LengthUnit> = CssValue::inherit() => CssOption::none(),
-  font_family: CssOption<FontFamily> = CssValue::inherit() => CssOption::none(),
-  line_height: LineHeight = CssValue::inherit() => Default::default(),
-  font_weight: FontWeight = CssValue::inherit() => Default::default(),
-  font_variation_settings: CssOption<FontVariationSettings> = CssValue::inherit() => CssOption::none(),
-  font_feature_settings: CssOption<FontFeatureSettings> = CssValue::inherit() => CssOption::none(),
-  line_clamp: CssOption<LineClamp> = CssValue::inherit() => CssOption::none(),
-  text_align: TextAlign = CssValue::inherit() => Default::default(),
-  text_stroke_width: LengthUnit = CssValue::inherit() => LengthUnit::Px(0.0),
-  text_stroke_color: CssOption<ColorInput> = CssValue::inherit() => CssOption::none(),
-  text_stroke: CssOption<TextStroke> = CssValue::inherit() => CssOption::none(),
-  text_shadow: CssOption<TextShadows> = CssValue::inherit() => CssOption::none(),
-  text_decoration: TextDecoration = TextDecoration::default() => TextDecoration::default(),
-  text_decoration_line: CssOption<TextDecorationLines> = CssValue::inherit() => CssOption::none(),
-  text_decoration_color: CssOption<ColorInput> = CssValue::inherit() => CssOption::none(),
-  letter_spacing: CssOption<LengthUnit> = CssValue::inherit() => CssOption::none(),
-  word_spacing: CssOption<LengthUnit> = CssValue::inherit() => CssOption::none(),
-  image_rendering: ImageScalingAlgorithm = CssValue::inherit() => Default::default(),
-  overflow_wrap: OverflowWrap = CssValue::inherit() => Default::default(),
-  word_break: WordBreak = CssValue::inherit() => Default::default(),
-  clip_path: CssOption<BasicShape> = CssOption::none() => CssOption::none(),
-  clip_rule: FillRule = CssValue::inherit() => FillRule::NonZero,
-  white_space: WhiteSpace = CssValue::inherit() => WhiteSpace::normal(),
-  white_space_collapse: CssOption<WhiteSpaceCollapse> = CssValue::inherit() => CssOption::none(),
-  text_wrap_mode: CssOption<TextWrapMode> = CssValue::inherit() => CssOption::none(),
-  text_wrap: CssOption<TextWrapMode> = CssValue::inherit() => CssOption::none(),
+  box_sizing: BoxSizing,
+  opacity: PercentageNumber,
+  display: Display,
+  width: LengthUnit,
+  height: LengthUnit,
+  max_width: LengthUnit,
+  max_height: LengthUnit,
+  min_width: LengthUnit,
+  min_height: LengthUnit,
+  aspect_ratio: AspectRatio,
+  padding: Sides<LengthUnit<false>>,
+  padding_inline: Option<SpacePair<LengthUnit<false>>>,
+  padding_block: Option<SpacePair<LengthUnit<false>>>,
+  padding_top: Option<LengthUnit<false>>,
+  padding_right: Option<LengthUnit<false>>,
+  padding_bottom: Option<LengthUnit<false>>,
+  padding_left: Option<LengthUnit<false>>,
+  margin: Sides<LengthUnit<false>>,
+  margin_inline: Option<SpacePair<LengthUnit<false>>>,
+  margin_block: Option<SpacePair<LengthUnit<false>>>,
+  margin_top: Option<LengthUnit<false>>,
+  margin_right: Option<LengthUnit<false>>,
+  margin_bottom: Option<LengthUnit<false>>,
+  margin_left: Option<LengthUnit<false>>,
+  inset: Sides<LengthUnit>,
+  inset_inline: Option<SpacePair<LengthUnit>>,
+  inset_block: Option<SpacePair<LengthUnit>>,
+  top: Option<LengthUnit>,
+  right: Option<LengthUnit>,
+  bottom: Option<LengthUnit>,
+  left: Option<LengthUnit>,
+  flex_direction: FlexDirection,
+  justify_self: AlignItems,
+  justify_content: JustifyContent,
+  align_content: JustifyContent,
+  justify_items: AlignItems,
+  align_items: AlignItems,
+  align_self: AlignItems,
+  flex_wrap: FlexWrap,
+  flex_basis: Option<LengthUnit>,
+  position: Position,
+  rotate: Option<Angle>,
+  scale: Option<SpacePair<PercentageNumber>>,
+  scale_x: Option<PercentageNumber>,
+  scale_y: Option<PercentageNumber>,
+  transform: Option<Transforms>,
+  transform_origin: Option<BackgroundPosition>,
+  translate: Option<SpacePair<LengthUnit>>,
+  translate_x: Option<LengthUnit>,
+  translate_y: Option<LengthUnit>,
+  mask_image: Option<BackgroundImages>,
+  mask_size: Option<BackgroundSizes>,
+  mask_position: Option<BackgroundPositions>,
+  mask_repeat: Option<BackgroundRepeats>,
+  gap: SpacePair<LengthUnit<false>, true>,
+  column_gap: Option<LengthUnit<false>>,
+  row_gap: Option<LengthUnit<false>>,
+  flex: Option<Flex>,
+  flex_grow: Option<FlexGrow>,
+  flex_shrink: Option<FlexGrow>,
+  border_radius: Sides<LengthUnit<false>>,
+  border_top_left_radius: Option<LengthUnit<false>>,
+  border_top_right_radius: Option<LengthUnit<false>>,
+  border_bottom_right_radius: Option<LengthUnit<false>>,
+  border_bottom_left_radius: Option<LengthUnit<false>>,
+  border_width: Option<Sides<LengthUnit>>,
+  border_inline_width: Option<SpacePair<LengthUnit>>,
+  border_block_width: Option<SpacePair<LengthUnit>>,
+  border_top_width: Option<LengthUnit>,
+  border_right_width: Option<LengthUnit>,
+  border_bottom_width: Option<LengthUnit>,
+  border_left_width: Option<LengthUnit>,
+  border: Border,
+  object_fit: ObjectFit,
+  overflow: SpacePair<Overflow>,
+  overflow_x: Option<Overflow>,
+  overflow_y: Option<Overflow>,
+  object_position: BackgroundPosition where inherit = true,
+  background_image: Option<BackgroundImages>,
+  background_position: Option<BackgroundPositions>,
+  background_size: Option<BackgroundSizes>,
+  background_repeat: Option<BackgroundRepeats>,
+  background_color: ColorInput<false>,
+  box_shadow: Option<BoxShadows>,
+  grid_auto_columns: Option<GridTrackSizes>,
+  grid_auto_rows: Option<GridTrackSizes>,
+  grid_auto_flow: Option<GridAutoFlow>,
+  grid_column: Option<GridLine>,
+  grid_row: Option<GridLine>,
+  grid_template_columns: Option<GridTemplateComponents>,
+  grid_template_rows: Option<GridTemplateComponents>,
+  grid_template_areas: Option<GridTemplateAreas>,
+  text_overflow: TextOverflow,
+  text_transform: TextTransform where inherit = true,
+  font_style: FontStyle where inherit = true,
+  border_color: Option<ColorInput>,
+  color: ColorInput where inherit = true,
+  filter: Option<Filters>,
+  font_size: Option<LengthUnit> where inherit = true,
+  font_family: Option<FontFamily> where inherit = true,
+  line_height: LineHeight where inherit = true,
+  font_weight: FontWeight where inherit = true,
+  font_variation_settings: Option<FontVariationSettings> where inherit = true,
+  font_feature_settings: Option<FontFeatureSettings> where inherit = true,
+  line_clamp: Option<LineClamp> where inherit = true,
+  text_align: TextAlign where inherit = true,
+  #[serde(rename = "webkitTextStroke")]
+  webkit_text_stroke: Option<TextStroke> where inherit = true,
+  #[serde(rename = "webkitTextStrokeWidth")]
+  webkit_text_stroke_width: Option<LengthUnit<false>> where inherit = true,
+  #[serde(rename = "webkitTextStrokeColor")]
+  webkit_text_stroke_color: Option<ColorInput> where inherit = true,
+  text_shadow: Option<TextShadows> where inherit = true,
+  text_decoration: TextDecoration,
+  text_decoration_line: Option<TextDecorationLines> where inherit = true,
+  text_decoration_color: Option<ColorInput> where inherit = true,
+  letter_spacing: Option<LengthUnit> where inherit = true,
+  word_spacing: Option<LengthUnit> where inherit = true,
+  image_rendering: ImageScalingAlgorithm where inherit = true,
+  overflow_wrap: OverflowWrap where inherit = true,
+  word_break: WordBreak where inherit = true,
+  clip_path: Option<BasicShape>,
+  clip_rule: FillRule where inherit = true,
+  white_space: WhiteSpace where inherit = true,
+  white_space_collapse: Option<WhiteSpaceCollapse> where inherit = true,
+  text_wrap_mode: Option<TextWrapMode> where inherit = true,
+  text_wrap: Option<TextWrapMode> where inherit = true,
 );
 
 /// Sized font style with resolved font size and line height.
@@ -274,7 +261,6 @@ impl<'s> SizedFontStyle<'s> {
     if let Some(clamp) = &self
       .parent
       .line_clamp
-      .0
       .as_ref()
       .and_then(|clamp| clamp.ellipsis.as_deref())
     {
@@ -286,18 +272,36 @@ impl<'s> SizedFontStyle<'s> {
 }
 
 impl InheritedStyle {
-  pub(crate) fn resolve_overflows(&self) -> Overflows {
-    Overflows(SpacePair::from_pair(
+  pub(crate) fn resolve_overflows(&self) -> SpacePair<Overflow> {
+    SpacePair::from_pair(
       self.overflow_x.unwrap_or(self.overflow.x),
       self.overflow_y.unwrap_or(self.overflow.y),
-    ))
+    )
+  }
+
+  pub(crate) fn resolve_translate(&self) -> SpacePair<LengthUnit> {
+    SpacePair::from_pair(
+      self
+        .translate_x
+        .unwrap_or(self.translate.unwrap_or_default().x),
+      self
+        .translate_y
+        .unwrap_or(self.translate.unwrap_or_default().y),
+    )
+  }
+
+  pub(crate) fn resolve_scale(&self) -> SpacePair<PercentageNumber> {
+    SpacePair::from_pair(
+      self.scale_x.unwrap_or(self.scale.unwrap_or_default().x),
+      self.scale_y.unwrap_or(self.scale.unwrap_or_default().y),
+    )
   }
 
   pub(crate) fn white_space(&self) -> WhiteSpace {
     WhiteSpace {
       text_wrap_mode: self
         .text_wrap_mode
-        .or(self.text_wrap.0)
+        .or(self.text_wrap)
         .unwrap_or(self.white_space.text_wrap_mode),
       white_space_collapse: self
         .white_space_collapse
@@ -370,37 +374,37 @@ impl InheritedStyle {
   }
 
   #[inline]
-  fn resolve_rect_with_longhands(
-    base: Sides<LengthUnit>,
-    inline: CssOption<SpacePair<LengthUnit>>,
-    block: CssOption<SpacePair<LengthUnit>>,
-    top: CssOption<LengthUnit>,
-    right: CssOption<LengthUnit>,
-    bottom: CssOption<LengthUnit>,
-    left: CssOption<LengthUnit>,
-  ) -> taffy::Rect<LengthUnit> {
+  fn resolve_rect_with_longhands<const DEFAULT_AUTO: bool>(
+    base: Sides<LengthUnit<DEFAULT_AUTO>>,
+    inline: Option<SpacePair<LengthUnit<DEFAULT_AUTO>>>,
+    block: Option<SpacePair<LengthUnit<DEFAULT_AUTO>>>,
+    top: Option<LengthUnit<DEFAULT_AUTO>>,
+    right: Option<LengthUnit<DEFAULT_AUTO>>,
+    bottom: Option<LengthUnit<DEFAULT_AUTO>>,
+    left: Option<LengthUnit<DEFAULT_AUTO>>,
+  ) -> taffy::Rect<LengthUnit<DEFAULT_AUTO>> {
     let mut values = base.0;
 
-    if let Some(pair) = *inline {
+    if let Some(pair) = inline {
       values[3] = pair.x; // left
       values[1] = pair.y; // right
     }
 
-    if let Some(pair) = *block {
+    if let Some(pair) = block {
       values[0] = pair.x; // top
       values[2] = pair.y; // bottom
     }
 
-    if let Some(v) = *top {
+    if let Some(v) = top {
       values[0] = v;
     }
-    if let Some(v) = *right {
+    if let Some(v) = right {
       values[1] = v;
     }
-    if let Some(v) = *bottom {
+    if let Some(v) = bottom {
       values[2] = v;
     }
-    if let Some(v) = *left {
+    if let Some(v) = left {
       values[3] = v;
     }
     taffy::Rect {
@@ -412,7 +416,7 @@ impl InheritedStyle {
   }
 
   #[inline]
-  fn resolved_padding(&self) -> taffy::Rect<LengthUnit> {
+  fn resolved_padding(&self) -> taffy::Rect<LengthUnit<false>> {
     Self::resolve_rect_with_longhands(
       self.padding,
       self.padding_inline,
@@ -425,7 +429,7 @@ impl InheritedStyle {
   }
 
   #[inline]
-  fn resolved_margin(&self) -> taffy::Rect<LengthUnit> {
+  fn resolved_margin(&self) -> taffy::Rect<LengthUnit<false>> {
     Self::resolve_rect_with_longhands(
       self.margin,
       self.margin_inline,
@@ -451,10 +455,10 @@ impl InheritedStyle {
   }
 
   #[inline]
-  fn resolved_gap(&self) -> SpacePair<LengthUnit, true> {
+  fn resolved_gap(&self) -> SpacePair<LengthUnit<false>> {
     SpacePair::from_pair(
-      self.column_gap.unwrap_or(self.gap.y),
       self.row_gap.unwrap_or(self.gap.x),
+      self.column_gap.unwrap_or(self.gap.y),
     )
   }
 
@@ -475,11 +479,11 @@ impl InheritedStyle {
   }
 
   #[inline]
-  pub(crate) fn resolved_border_radius(&self) -> taffy::Rect<LengthUnit> {
+  pub(crate) fn resolved_border_radius(&self) -> taffy::Rect<LengthUnit<false>> {
     Self::resolve_rect_with_longhands(
       self.border_radius,
-      CssOption::none(),
-      CssOption::none(),
+      None,
+      None,
       self.border_top_left_radius,
       self.border_top_right_radius,
       self.border_bottom_right_radius,
@@ -491,9 +495,9 @@ impl InheritedStyle {
     let line_height = self.line_height.into_parley(context);
 
     let resolved_stroke_width = self
-      .text_stroke
-      .map(|stroke| stroke.width)
-      .unwrap_or(self.text_stroke_width)
+      .webkit_text_stroke_width
+      .or(self.webkit_text_stroke.map(|stroke| stroke.width))
+      .unwrap_or_default()
       .resolve_to_px(context, context.font_size);
 
     SizedFontStyle {
@@ -518,9 +522,9 @@ impl InheritedStyle {
       }),
       color: self.color.resolve(context.current_color, context.opacity),
       text_stroke_color: self
-        .text_stroke_color
-        .or(self.text_stroke.and_then(|stroke| stroke.color))
-        .unwrap_or(self.color)
+        .webkit_text_stroke_color
+        .or(self.webkit_text_stroke.and_then(|stroke| stroke.color))
+        .unwrap_or_default()
         .resolve(context.current_color, context.opacity),
       text_decoration_color: self
         .text_decoration_color
@@ -615,7 +619,7 @@ impl InheritedStyle {
       aspect_ratio: self.aspect_ratio.into(),
       align_self: self.align_self.into(),
       justify_self: self.justify_self.into(),
-      overflow: self.resolve_overflows().into(),
+      overflow: Point::from(self.resolve_overflows()).map(Into::into),
       dummy: PhantomData,
       item_is_table: false,
       item_is_replaced: false,

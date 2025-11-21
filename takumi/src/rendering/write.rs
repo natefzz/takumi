@@ -2,7 +2,7 @@ use std::{borrow::Cow, io::Write};
 
 use image::{ExtendedColorType, ImageEncoder, ImageFormat, RgbaImage, codecs::jpeg::JpegEncoder};
 use png::{ColorType, Compression, Filter};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use image_webp::WebPEncoder;
 
@@ -12,7 +12,7 @@ use rayon::prelude::*;
 use crate::Error::IoError;
 
 /// Output format for rendered images.
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum ImageOutputFormat {
   /// WebP image format, provides good compression and supports animation.
