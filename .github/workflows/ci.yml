@@ -9,6 +9,13 @@ env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: "0"
   MACOSX_DEPLOYMENT_TARGET: '10.13'
+  # Remove file paths to reduce binary size
+  RUSTFLAGS: >-
+    --remap-path-prefix=/home/runner=~
+    --remap-path-prefix=/Users/runner=~
+    --remap-path-prefix=/root=~
+    --remap-path-prefix=$HOME/.cargo/registry=~/.cargo/registry
+    --remap-path-prefix=$HOME/.rustup=~/.rustup
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
