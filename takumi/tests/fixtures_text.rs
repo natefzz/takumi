@@ -363,8 +363,8 @@ fn fixtures_text_stroke_black_red() {
         .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
         .color(ColorInput::Value(Color([0, 0, 0, 255]))) // Black text
         .font_size(Some(Px(72.0)))
-        .text_stroke_width(Px(2.0))
-        .text_stroke_color(Some(ColorInput::Value(Color([255, 0, 0, 255])))) // Red stroke
+        .webkit_text_stroke_width(Some(Px(2.0)))
+        .webkit_text_stroke_color(Some(ColorInput::Value(Color([255, 0, 0, 255])))) // Red stroke
         .build()
         .unwrap(),
     ),

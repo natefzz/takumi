@@ -237,13 +237,6 @@ function createSvgElement(element: ReactElement<ComponentProps<"svg">, "svg">) {
   });
 }
 
-// Takumi support the following WebKit features without the `Webkit` prefix
-const webkitPropertiesMapping = {
-  WebkitTextStroke: "textStroke",
-  WebkitTextStrokeWidth: "textStrokeWidth",
-  WebkitTextStrokeColor: "textStrokeColor",
-} satisfies Partial<Record<keyof CSSProperties, string>>;
-
 function extractStyle(element: ReactElementLike): CSSProperties {
   const base = {};
 
@@ -264,13 +257,6 @@ function extractStyle(element: ReactElementLike): CSSProperties {
       : undefined;
 
   if (style && Object.keys(style).length > 0) {
-    for (const [from, to] of Object.entries(webkitPropertiesMapping)) {
-      if (from in style) {
-        base[to as keyof typeof base] = style[from as keyof typeof style];
-        delete style[from as keyof typeof style];
-      }
-    }
-
     Object.assign(base, style);
   }
 

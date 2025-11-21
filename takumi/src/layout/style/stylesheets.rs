@@ -16,13 +16,14 @@ use crate::{
 
 /// Helper macro to define the `Style` struct and `InheritedStyle` struct.
 macro_rules! define_style {
-  ($( $property:ident: $type:ty $(where inherit = $inherit:expr)? ),* $(,)?) => {
+  ($( $(#[$attr:meta])? $property:ident: $type:ty $(where inherit = $inherit:expr)? ),* $(,)?) => {
     /// Defines the style of an element.
     #[derive(Debug, Default, Clone, Deserialize, Builder, PartialEq)]
     #[serde(default, rename_all = "camelCase")]
     #[builder(default, setter(into))]
     pub struct Style {
       $(
+        $(#[$attr])?
         #[allow(missing_docs)]
         pub $property: CssValue<$type$(, $inherit)?>,
       )*
@@ -154,9 +155,12 @@ define_style!(
   font_feature_settings: Option<FontFeatureSettings> where inherit = true,
   line_clamp: Option<LineClamp> where inherit = true,
   text_align: TextAlign where inherit = true,
-  text_stroke_width: LengthUnit<false> where inherit = true,
-  text_stroke_color: Option<ColorInput> where inherit = true,
-  text_stroke: Option<TextStroke> where inherit = true,
+  #[serde(rename = "webkitTextStroke")]
+  webkit_text_stroke: Option<TextStroke> where inherit = true,
+  #[serde(rename = "webkitTextStrokeWidth")]
+  webkit_text_stroke_width: Option<LengthUnit<false>> where inherit = true,
+  #[serde(rename = "webkitTextStrokeColor")]
+  webkit_text_stroke_color: Option<ColorInput> where inherit = true,
   text_shadow: Option<TextShadows> where inherit = true,
   text_decoration: TextDecoration,
   text_decoration_line: Option<TextDecorationLines> where inherit = true,
@@ -272,6 +276,24 @@ impl InheritedStyle {
     SpacePair::from_pair(
       self.overflow_x.unwrap_or(self.overflow.x),
       self.overflow_y.unwrap_or(self.overflow.y),
+    )
+  }
+
+  pub(crate) fn resolve_translate(&self) -> SpacePair<LengthUnit> {
+    SpacePair::from_pair(
+      self
+        .translate_x
+        .unwrap_or(self.translate.unwrap_or_default().x),
+      self
+        .translate_y
+        .unwrap_or(self.translate.unwrap_or_default().y),
+    )
+  }
+
+  pub(crate) fn resolve_scale(&self) -> SpacePair<PercentageNumber> {
+    SpacePair::from_pair(
+      self.scale_x.unwrap_or(self.scale.unwrap_or_default().x),
+      self.scale_y.unwrap_or(self.scale.unwrap_or_default().y),
     )
   }
 
@@ -473,9 +495,9 @@ impl InheritedStyle {
     let line_height = self.line_height.into_parley(context);
 
     let resolved_stroke_width = self
-      .text_stroke
-      .map(|stroke| stroke.width)
-      .unwrap_or(self.text_stroke_width)
+      .webkit_text_stroke_width
+      .or(self.webkit_text_stroke.map(|stroke| stroke.width))
+      .unwrap_or_default()
       .resolve_to_px(context, context.font_size);
 
     SizedFontStyle {
@@ -500,9 +522,9 @@ impl InheritedStyle {
       }),
       color: self.color.resolve(context.current_color, context.opacity),
       text_stroke_color: self
-        .text_stroke_color
-        .or(self.text_stroke.and_then(|stroke| stroke.color))
-        .unwrap_or(self.color)
+        .webkit_text_stroke_color
+        .or(self.webkit_text_stroke.and_then(|stroke| stroke.color))
+        .unwrap_or_default()
         .resolve(context.current_color, context.opacity),
       text_decoration_color: self
         .text_decoration_color

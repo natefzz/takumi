@@ -85,7 +85,7 @@ describe("fromJsx", () => {
       text: "Hello",
       style: {
         ...stylePresets.p,
-        textStroke: "1px red",
+        WebkitTextStroke: "1px red",
       },
     } satisfies TextNode);
   });
@@ -117,8 +117,8 @@ describe("fromJsx", () => {
         { type: "text", text: "Second" },
       ],
       style: {
-        width: { percentage: 100 },
-        height: { percentage: 100 },
+        width: "100%",
+        height: "100%",
       },
     } satisfies ContainerNode);
   });

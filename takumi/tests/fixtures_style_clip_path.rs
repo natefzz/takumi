@@ -53,8 +53,8 @@ fn fixtures_clip_path_text_stroke_filled() {
             .left(Some(Percentage(50.0)))
             .translate(Some(SpacePair::from_single(Percentage(-50.0))))
             .color(ColorInput::Value(Color::transparent())) // Transparent fill
-            .text_stroke_width(Px(2.0))
-            .text_stroke_color(Some(ColorInput::Value(Color([128, 128, 128, 255])))) // Semi-transparent white stroke
+            .webkit_text_stroke_width(Some(Px(2.0)))
+            .webkit_text_stroke_color(Some(ColorInput::Value(Color([128, 128, 128, 255])))) // Semi-transparent white stroke
             .clip_path(Some(BasicShape::from_str("inset(50% 0 0 0)").unwrap()))
             .build()
             .unwrap(),

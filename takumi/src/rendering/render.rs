@@ -9,7 +9,7 @@ use crate::{
   layout::{
     Viewport,
     node::Node,
-    style::{Affine, Display, InheritedStyle},
+    style::{Affine, Display, InheritedStyle, SpacePair},
     tree::NodeTree,
   },
   rendering::{Canvas, CanvasConstrain, CanvasConstrainResult, draw_debug_border},
@@ -114,11 +114,15 @@ fn create_transform(
     transform *= Affine::rotation(rotate);
   }
 
-  if let Some(scale) = style.scale {
+  let scale = style.resolve_scale();
+
+  if scale != SpacePair::default() {
     transform *= Affine::scale(scale.x.0, scale.y.0);
   }
 
-  if let Some(translate) = style.translate {
+  let translate = style.resolve_translate();
+
+  if translate != SpacePair::default() {
     transform *= Affine::translation(
       translate.x.resolve_to_px(context, border_box.width),
       translate.y.resolve_to_px(context, border_box.height),
