@@ -2,6 +2,7 @@ use serde::Deserialize;
 use taffy::{AvailableSpace, Layout, Size};
 
 use crate::{
+  Result,
   layout::{
     Viewport,
     inline::{InlineBrush, InlineContentKind, break_lines, create_inline_constraint},
@@ -53,12 +54,17 @@ impl<Nodes: Node<Nodes>> Node<Nodes> for TextNode {
     Some(InlineContentKind::Text(collapsed.into_owned()))
   }
 
-  fn draw_content(&self, context: &RenderContext, canvas: &mut Canvas, layout: Layout) {
+  fn draw_content(
+    &self,
+    context: &RenderContext,
+    canvas: &mut Canvas,
+    layout: Layout,
+  ) -> Result<()> {
     let font_style = context.style.to_sized_font_style(context);
     let size = layout.content_box_size();
 
     if font_style.font_size == 0.0 {
-      return;
+      return Ok(());
     }
 
     let max_height = match font_style.parent.line_clamp.as_ref() {
@@ -75,7 +81,8 @@ impl<Nodes: Node<Nodes>> Node<Nodes> for TextNode {
       false,
     );
 
-    draw_inline_layout(context, canvas, layout, inline_layout, &font_style);
+    draw_inline_layout(context, canvas, layout, inline_layout, &font_style)?;
+    Ok(())
   }
 
   fn measure(

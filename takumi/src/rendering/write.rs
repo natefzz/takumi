@@ -175,7 +175,11 @@ fn extract_vp8_payload(buf: &[u8]) -> Result<Vec<u8>, crate::Error> {
   let mut i = 12usize; // skip RIFF header
   while i + 8 <= buf.len() {
     let name = &buf[i..i + 4];
-    let len = u32::from_le_bytes(buf[i + 4..i + 8].try_into().unwrap()) as usize;
+    let len = u32::from_le_bytes(
+      buf[i + 4..i + 8]
+        .try_into()
+        .map_err(|_| IoError(std::io::Error::other("Invalid buffer size")))?,
+    ) as usize;
     let start = i + 8;
     let end = start + len;
     if end > buf.len() {
@@ -362,7 +366,11 @@ pub fn encode_animated_png<W: Write>(
   encoder.set_animated(frames.len() as u32, loop_count.unwrap_or(0) as u32)?;
 
   // Since APNG doesn't support variable frame duration, we use the minimum duration of all frames.
-  let min_duration_ms = frames.iter().map(|frame| frame.duration_ms).min().unwrap();
+  let min_duration_ms = frames
+    .iter()
+    .map(|frame| frame.duration_ms)
+    .min()
+    .unwrap_or(0);
 
   encoder.set_frame_delay(min_duration_ms.clamp(0, u16::MAX as u32) as u16, 1000)?;
 

@@ -54,8 +54,7 @@ impl<'i, T: Copy + for<'j> FromCss<'j>> FromCss<'i> for Sides<T> {
       1 => Sides([values[0]; 4]),
       2 => Sides([values[0], values[1], values[0], values[1]]),
       3 => Sides([values[0], values[1], values[2], values[1]]),
-      4 => Sides([values[0], values[1], values[2], values[3]]),
-      _ => unreachable!(),
+      _ => Sides([values[0], values[1], values[2], values[3]]),
     };
 
     Ok(sides)
@@ -104,45 +103,43 @@ mod tests {
 
   #[test]
   fn deserialize_single_number() {
-    let json = "5";
-    let sides: Sides<LengthUnit> = Sides::from_str(json).expect("should deserialize");
-    assert_eq!(sides, Sides([LengthUnit::Px(5.0); 4]));
+    assert_eq!(
+      Sides::<LengthUnit>::from_str("5"),
+      Ok(Sides([LengthUnit::Px(5.0); 4]))
+    );
   }
 
   #[test]
   fn deserialize_axis_pair_numbers() {
-    let sides: Sides<LengthUnit> = Sides::from_str("10 20").unwrap();
-
     assert_eq!(
-      sides,
-      Sides([
+      Sides::<LengthUnit>::from_str("10 20"),
+      Ok(Sides([
         LengthUnit::Px(10.0),
         LengthUnit::Px(20.0),
         LengthUnit::Px(10.0),
         LengthUnit::Px(20.0)
-      ])
+      ]))
     );
   }
 
   #[test]
   fn deserialize_css_single_value() {
-    let sides: Sides<LengthUnit> = Sides::from_str("10px").unwrap();
-
-    assert_eq!(sides, Sides([LengthUnit::Px(10.0); 4]));
+    assert_eq!(
+      Sides::<LengthUnit>::from_str("10px"),
+      Ok(Sides([LengthUnit::Px(10.0); 4]))
+    );
   }
 
   #[test]
   fn deserialize_css_multi_values() {
-    let sides: Sides<LengthUnit> = Sides::from_str("1px 2px 3px 4px").unwrap();
-
     assert_eq!(
-      sides,
-      Sides([
+      Sides::<LengthUnit>::from_str("1px 2px 3px 4px"),
+      Ok(Sides([
         LengthUnit::Px(1.0),
         LengthUnit::Px(2.0),
         LengthUnit::Px(3.0),
         LengthUnit::Px(4.0)
-      ])
+      ]))
     );
   }
 }

@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use derive_builder::Builder;
 use image::RgbaImage;
-use taffy::{AvailableSpace, NodeId, TaffyTree, geometry::Size};
+use taffy::{AvailableSpace, NodeId, TaffyError, TaffyTree, geometry::Size};
 
 use crate::{
   GlobalContext,
@@ -46,31 +46,28 @@ pub fn render<'g, N: Node<N>>(options: RenderOptions<'g, N>) -> Result<RgbaImage
 
   let tree = NodeTree::from_node(&render_context, options.node);
 
-  let root_node_id = tree.insert_into_taffy(&mut taffy);
+  let root_node_id = tree.insert_into_taffy(&mut taffy)?;
 
-  taffy
-    .compute_layout_with_measure(
-      root_node_id,
-      render_context.viewport.into(),
-      |known_dimensions, available_space, _node_id, node_context, style| {
-        if let Size {
-          width: Some(width),
-          height: Some(height),
-        } = known_dimensions.maybe_apply_aspect_ratio(style.aspect_ratio)
-        {
-          Size { width, height }
-        } else {
-          node_context
-            .unwrap()
-            .measure(available_space, known_dimensions, style)
-        }
-      },
-    )
-    .unwrap();
+  taffy.compute_layout_with_measure(
+    root_node_id,
+    render_context.viewport.into(),
+    |known_dimensions, available_space, _node_id, node_context, style| {
+      if let Size {
+        width: Some(width),
+        height: Some(height),
+      } = known_dimensions.maybe_apply_aspect_ratio(style.aspect_ratio)
+      {
+        Size { width, height }
+      } else if let Some(context) = node_context {
+        context.measure(available_space, known_dimensions, style)
+      } else {
+        Size::ZERO
+      }
+    },
+  )?;
 
   let root_size = taffy
-    .layout(root_node_id)
-    .unwrap()
+    .layout(root_node_id)?
     .size
     .map(|size| size.round() as u32);
 
@@ -88,7 +85,7 @@ pub fn render<'g, N: Node<N>>(options: RenderOptions<'g, N>) -> Result<RgbaImage
 
   let mut canvas = Canvas::new(root_size);
 
-  render_node(&mut taffy, root_node_id, &mut canvas, Affine::IDENTITY);
+  render_node(&mut taffy, root_node_id, &mut canvas, Affine::IDENTITY)?;
 
   Ok(canvas.into_inner())
 }
@@ -139,12 +136,15 @@ fn render_node<'g, Nodes: Node<Nodes>>(
   node_id: NodeId,
   canvas: &mut Canvas,
   mut transform: Affine,
-) {
-  let layout = *taffy.layout(node_id).unwrap();
-  let node = taffy.get_node_context_mut(node_id).unwrap();
+) -> Result<(), crate::Error> {
+  let layout = *taffy.layout(node_id)?;
+
+  let Some(node) = taffy.get_node_context_mut(node_id) else {
+    return Err(TaffyError::InvalidInputNode(node_id).into());
+  };
 
   if node.context.opacity == 0.0 || node.context.style.display == Display::None {
-    return;
+    return Ok(());
   }
 
   transform = Affine::translation(layout.location.x, layout.location.y) * transform;
@@ -154,7 +154,7 @@ fn render_node<'g, Nodes: Node<Nodes>>(
   // If a transform function causes the current transformation matrix of an object to be non-invertible, the object and its content do not get displayed.
   // https://drafts.csswg.org/css-transforms/#transform-function-lists
   if !transform.is_invertible() {
-    return;
+    return Ok(());
   }
 
   node.context.transform = transform;
@@ -165,41 +165,43 @@ fn render_node<'g, Nodes: Node<Nodes>>(
 
   match constrain {
     CanvasConstrainResult::SkipRendering => {
-      return;
+      return Ok(());
     }
     CanvasConstrainResult::None => {
-      node.draw_shell(canvas, layout);
+      node.draw_shell(canvas, layout)?;
     }
     CanvasConstrainResult::Some(constrain) => match constrain {
       // Notice the order is important here.
       // Clip path clips everything include the border, so it should be pushed first.
       CanvasConstrain::ClipPath { .. } => {
         canvas.push_constrain(constrain);
-        node.draw_shell(canvas, layout);
+        node.draw_shell(canvas, layout)?;
       }
       // Overflow clips only the inner children, so the shell should be drawn first.
       CanvasConstrain::Overflow { .. } => {
-        node.draw_shell(canvas, layout);
+        node.draw_shell(canvas, layout)?;
         canvas.push_constrain(constrain);
       }
     },
   }
 
-  node.draw_content(canvas, layout);
+  node.draw_content(canvas, layout)?;
 
   if node.context.draw_debug_border {
     draw_debug_border(canvas, layout, transform);
   }
 
   if node.should_create_inline_layout() {
-    node.draw_inline(canvas, layout);
+    node.draw_inline(canvas, layout)?;
   } else {
-    for child_id in taffy.children(node_id).unwrap() {
-      render_node(taffy, child_id, canvas, transform);
+    for child_id in taffy.children(node_id)? {
+      render_node(taffy, child_id, canvas, transform)?;
     }
   }
 
   if has_constrain {
     canvas.pop_constrain();
   }
+
+  Ok(())
 }

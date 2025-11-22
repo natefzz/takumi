@@ -6,7 +6,7 @@ use taffy::{Layout, Size};
 use zeno::{Command, Join, Mask, PathData, Stroke};
 
 use crate::{
-  GlobalContext,
+  GlobalContext, Result,
   layout::{
     inline::{InlineBrush, break_lines},
     style::{
@@ -53,7 +53,7 @@ pub(crate) fn draw_glyph(
   image_fill: Option<&RgbaImage>,
   mut transform: Affine,
   text_style: &parley::Style<InlineBrush>,
-) {
+) -> Result<()> {
   transform = Affine::translation(
     layout.border.left + layout.padding.left + glyph.x,
     layout.border.top + layout.padding.top + glyph.y,
@@ -100,13 +100,14 @@ pub(crate) fn draw_glyph(
         }
       }
 
-      return canvas.overlay_image(
+      canvas.overlay_image(
         &bottom,
         border,
         transform,
         ImageScalingAlgorithm::Auto,
         None,
       );
+      return Ok(());
     }
 
     let image = RgbaImage::from_raw(
@@ -114,9 +115,15 @@ pub(crate) fn draw_glyph(
       bitmap.placement.height,
       bitmap.data.clone(),
     )
-    .unwrap();
+    .ok_or(crate::Error::ImageError(image::ImageError::Decoding(
+      image::error::DecodingError::new(
+        image::error::ImageFormatHint::Unknown,
+        "Failed to create image from raw data",
+      ),
+    )))?;
 
-    return canvas.overlay_image(&image, border, transform, ImageScalingAlgorithm::Auto, None);
+    canvas.overlay_image(&image, border, transform, ImageScalingAlgorithm::Auto, None);
+    return Ok(());
   }
 
   if let ResolvedGlyph::Outline(outline) = glyph_content {
@@ -182,6 +189,8 @@ pub(crate) fn draw_glyph(
       );
     }
   }
+
+  Ok(())
 }
 
 #[derive(Clone, Copy, Debug)]

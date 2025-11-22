@@ -211,11 +211,12 @@ mod tests {
     let context = GlobalContext::default();
     let render_context = RenderContext::new(&context, (40, 40).into(), Default::default());
 
-    let resolved = resolve_stops_along_axis(
-      &stops,
-      render_context.viewport.width.unwrap() as f32,
-      &render_context,
-    );
+    let width = render_context.viewport.width;
+
+    assert!(width.is_some());
+
+    let resolved =
+      resolve_stops_along_axis(&stops, width.unwrap_or_default() as f32, &render_context);
 
     assert_eq!(
       resolved[0],

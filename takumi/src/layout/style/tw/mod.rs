@@ -21,7 +21,7 @@ use crate::layout::{
 pub const TW_VAR_SPACING: f32 = 0.25;
 
 /// Represents a collection of tailwind properties.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TailwindValues {
   inner: Vec<TailwindValue>,
 }
@@ -924,11 +924,11 @@ mod tests {
 
   #[test]
   fn test_parse_arbitrary_color() {
-    let parsed = TailwindProperty::parse("text-[rgb(0, 191, 255)]").unwrap();
-
     assert_eq!(
-      parsed,
-      TailwindProperty::Color(ColorInput::Value(Color([0, 191, 255, 255])))
+      TailwindProperty::parse("text-[rgb(0, 191, 255)]"),
+      Some(TailwindProperty::Color(ColorInput::Value(Color([
+        0, 191, 255, 255
+      ]))))
     );
   }
 
@@ -1064,7 +1064,7 @@ mod tests {
   fn test_breakpoint_matches() {
     let viewport = (1000, 1000).into();
 
-    assert!(Breakpoint::parse("sm").unwrap().matches(viewport));
+    assert!(Breakpoint::parse("sm").is_some_and(|bp| bp.matches(viewport)));
   }
 
   #[test]
@@ -1072,7 +1072,7 @@ mod tests {
     let viewport = (1000, 1000).into();
 
     // 80 * 16 = 1280 > 1000
-    assert!(!Breakpoint::parse("xl").unwrap().matches(viewport));
+    assert!(Breakpoint::parse("xl").is_some_and(|bp| !bp.matches(viewport)));
   }
 
   #[test]
@@ -1089,36 +1089,36 @@ mod tests {
 
   #[test]
   fn test_values_sorting() {
-    let values = TailwindValues::from_str("md:!mt-4 sm:mt-8 !mt-12 mt-16").unwrap();
-
     assert_eq!(
-      values.inner.as_slice(),
-      &[
-        // mt-16
-        TailwindValue {
-          property: TailwindProperty::MarginTop(LengthUnit::Rem(4.0)),
-          breakpoint: None,
-          important: false,
-        },
-        // sm:mt-8
-        TailwindValue {
-          property: TailwindProperty::MarginTop(LengthUnit::Rem(2.0)),
-          breakpoint: Some(Breakpoint(LengthUnit::Rem(40.0))),
-          important: false,
-        },
-        // !mt-12
-        TailwindValue {
-          property: TailwindProperty::MarginTop(LengthUnit::Rem(3.0)),
-          breakpoint: None,
-          important: true,
-        },
-        // md:!mt-4
-        TailwindValue {
-          property: TailwindProperty::MarginTop(LengthUnit::Rem(1.0)),
-          breakpoint: Some(Breakpoint(LengthUnit::Rem(48.0))),
-          important: true,
-        },
-      ]
-    );
+      TailwindValues::from_str("md:!mt-4 sm:mt-8 !mt-12 mt-16"),
+      Ok(TailwindValues {
+        inner: vec![
+          // mt-16
+          TailwindValue {
+            property: TailwindProperty::MarginTop(LengthUnit::Rem(4.0)),
+            breakpoint: None,
+            important: false,
+          },
+          // sm:mt-8
+          TailwindValue {
+            property: TailwindProperty::MarginTop(LengthUnit::Rem(2.0)),
+            breakpoint: Some(Breakpoint(LengthUnit::Rem(40.0))),
+            important: false,
+          },
+          // !mt-12
+          TailwindValue {
+            property: TailwindProperty::MarginTop(LengthUnit::Rem(3.0)),
+            breakpoint: None,
+            important: true,
+          },
+          // md:!mt-4
+          TailwindValue {
+            property: TailwindProperty::MarginTop(LengthUnit::Rem(1.0)),
+            breakpoint: Some(Breakpoint(LengthUnit::Rem(48.0))),
+            important: true,
+          },
+        ]
+      })
+    )
   }
 }

@@ -9,9 +9,10 @@ use taffy::{Layout, Point, Size};
 
 use crate::layout::style::Affine;
 use crate::{
+  Result,
   layout::style::{ImageScalingAlgorithm, LengthUnit, ObjectFit},
   rendering::{BorderProperties, Canvas, RenderContext},
-  resources::image::ImageSource,
+  resources::image::{ImageResourceError, ImageSource},
 };
 
 /// Calculate offset for object-position within available space.
@@ -39,7 +40,7 @@ pub fn process_image_for_object_fit<'i>(
   image: &'i ImageSource,
   context: &RenderContext,
   content_box: Size<f32>,
-) -> (Cow<'i, RgbaImage>, Point<f32>) {
+) -> Result<(Cow<'i, RgbaImage>, Point<f32>)> {
   let (image_width, image_height) = image.size();
 
   let object_position_x =
@@ -48,14 +49,14 @@ pub fn process_image_for_object_fit<'i>(
     LengthUnit::from(context.style.object_position.0.y).resolve_to_px(context, content_box.height);
 
   match context.style.object_fit {
-    ObjectFit::Fill => (
+    ObjectFit::Fill => Ok((
       image.render_to_rgba_image(
         content_box.width as u32,
         content_box.height as u32,
         context.style.image_rendering,
-      ),
+      )?,
       Point::zero(),
-    ),
+    )),
     ObjectFit::Contain => {
       let scale_x = content_box.width / image_width;
       let scale_y = content_box.height / image_height;
@@ -72,17 +73,17 @@ pub fn process_image_for_object_fit<'i>(
       let offset_y =
         calculate_object_position_offset(available_y, content_box.height, object_position_y);
 
-      (
+      Ok((
         image.render_to_rgba_image(
           new_width as u32,
           new_height as u32,
           context.style.image_rendering,
-        ),
+        )?,
         Point {
           x: offset_x,
           y: offset_y,
         },
-      )
+      ))
     }
     ObjectFit::Cover => {
       let scale_x = content_box.width / image_width;
@@ -96,7 +97,7 @@ pub fn process_image_for_object_fit<'i>(
         new_width as u32,
         new_height as u32,
         context.style.image_rendering,
-      );
+      )?;
 
       let available_crop_x = new_width - content_box.width;
       let available_crop_y = new_height - content_box.height;
@@ -115,7 +116,7 @@ pub fn process_image_for_object_fit<'i>(
       )
       .to_image();
 
-      (Cow::Owned(cropped), Point::zero())
+      Ok((Cow::Owned(cropped), Point::zero()))
     }
     ObjectFit::ScaleDown => {
       let scale_x = content_box.width / image_width;
@@ -130,13 +131,13 @@ pub fn process_image_for_object_fit<'i>(
           new_width as u32,
           new_height as u32,
           context.style.image_rendering,
-        )
+        )?
       } else {
         image.render_to_rgba_image(
           image_width as u32,
           image_height as u32,
           context.style.image_rendering,
-        )
+        )?
       };
 
       let available_x = content_box.width - new_width;
@@ -147,13 +148,13 @@ pub fn process_image_for_object_fit<'i>(
       let offset_y =
         calculate_object_position_offset(available_y, content_box.height, object_position_y);
 
-      (
+      Ok((
         processed_image,
         Point {
           x: offset_x,
           y: offset_y,
         },
-      )
+      ))
     }
     ObjectFit::None => {
       // If the image is smaller than the content box, we don't need to crop
@@ -166,17 +167,17 @@ pub fn process_image_for_object_fit<'i>(
         let offset_y =
           calculate_object_position_offset(available_y, content_box.height, object_position_y);
 
-        return (
+        return Ok((
           image.render_to_rgba_image(
             image_width as u32,
             image_height as u32,
             context.style.image_rendering,
-          ),
+          )?,
           Point {
             x: offset_x,
             y: offset_y,
           },
-        );
+        ));
       }
 
       let available_crop_x = (image_width - content_box.width).max(0.0);
@@ -194,7 +195,7 @@ pub fn process_image_for_object_fit<'i>(
         image_width as u32,
         image_height as u32,
         context.style.image_rendering,
-      );
+      )?;
 
       let cropped = crop_imm(
         source_image.as_ref(),
@@ -216,13 +217,13 @@ pub fn process_image_for_object_fit<'i>(
         object_position_y,
       );
 
-      (
+      Ok((
         Cow::Owned(cropped),
         Point {
           x: offset_x,
           y: offset_y,
         },
-      )
+      ))
     }
   }
 }
@@ -236,8 +237,8 @@ pub fn draw_image(
   context: &RenderContext,
   canvas: &mut Canvas,
   layout: Layout,
-) {
-  let (image, offset) = process_image_for_object_fit(image, context, layout.content_box_size());
+) -> Result<()> {
+  let (image, offset) = process_image_for_object_fit(image, context, layout.content_box_size())?;
 
   // manually apply the border and padding to ensure rotation with origin is applied correctly
   let transform_with_content_offset = Affine::translation(
@@ -255,6 +256,8 @@ pub fn draw_image(
     context.style.image_rendering,
     context.style.filter.as_ref(),
   );
+
+  Ok(())
 }
 
 pub(crate) fn fast_resize(
@@ -262,19 +265,18 @@ pub(crate) fn fast_resize(
   width: u32,
   height: u32,
   algorithm: ImageScalingAlgorithm,
-) -> RgbaImage {
+) -> std::result::Result<RgbaImage, ImageResourceError> {
   let mut resizer = Resizer::new();
   let mut dest = Image::new(width, height, PixelType::U8x4);
 
-  resizer
-    .resize(
-      &RgbaImageView(image),
-      &mut dest,
-      Some(&ResizeOptions::default().resize_alg(algorithm.into())),
-    )
-    .unwrap();
+  resizer.resize(
+    &RgbaImageView(image),
+    &mut dest,
+    Some(&ResizeOptions::default().resize_alg(algorithm.into())),
+  )?;
 
-  RgbaImage::from_raw(dest.width(), dest.height(), dest.into_vec()).unwrap()
+  RgbaImage::from_raw(dest.width(), dest.height(), dest.into_vec())
+    .ok_or(ImageResourceError::MismatchedBufferSize)
 }
 
 struct RgbaImageView<'a>(&'a RgbaImage);
@@ -294,9 +296,7 @@ impl<'a> IntoImageView for RgbaImageView<'a> {
 
   fn image_view<P: PixelTrait>(&self) -> Option<impl ImageView<Pixel = P>> {
     if P::pixel_type() == PixelType::U8x4 {
-      Some(
-        TypedImageRef::<P>::from_buffer(self.0.width(), self.0.height(), self.0.as_raw()).unwrap(),
-      )
+      Some(TypedImageRef::<P>::from_buffer(self.0.width(), self.0.height(), self.0.as_raw()).ok()?)
     } else {
       None
     }

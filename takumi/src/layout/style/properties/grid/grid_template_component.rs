@@ -115,27 +115,29 @@ impl<'i> FromCss<'i> for GridTemplateComponents {
 
 #[cfg(test)]
 mod tests {
-  use crate::layout::style::GridRepetitionKeyword;
+  use crate::layout::style::{GridLengthUnit, GridRepetitionKeyword};
 
   use super::*;
-  use cssparser::{Parser, ParserInput};
 
   #[test]
   fn test_parse_template_component_repeat() {
-    let mut input = ParserInput::new("repeat(auto-fill, [a] 1fr [b] 2fr)");
-    let mut parser = Parser::new(&mut input);
-    let tpl = GridTemplateComponent::from_css(&mut parser).unwrap();
-    match tpl {
-      GridTemplateComponent::Repeat(repetition, tracks) => {
-        assert_eq!(
-          repetition,
-          GridRepetitionCount::Keyword(GridRepetitionKeyword::AutoFill)
-        );
-        assert_eq!(tracks.len(), 2);
-        assert_eq!(tracks[0].names, vec!["a".to_string()]);
-        assert_eq!(tracks[1].names, vec!["b".to_string()]);
-      }
-      _ => panic!("expected repeat template"),
-    }
+    assert_eq!(
+      GridTemplateComponent::from_str("repeat(auto-fill, [a] 1fr [b] 2fr)"),
+      Ok(GridTemplateComponent::Repeat(
+        GridRepetitionCount::Keyword(GridRepetitionKeyword::AutoFill),
+        vec![
+          GridRepeatTrack {
+            names: vec!["a".to_string()],
+            size: GridTrackSize::Fixed(GridLengthUnit::Fr(1.0)),
+            end_names: None
+          },
+          GridRepeatTrack {
+            names: vec!["b".to_string()],
+            size: GridTrackSize::Fixed(GridLengthUnit::Fr(2.0)),
+            end_names: None
+          }
+        ]
+      ))
+    );
   }
 }

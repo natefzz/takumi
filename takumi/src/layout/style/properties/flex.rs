@@ -125,57 +125,49 @@ mod tests {
 
   #[test]
   fn test_flex_three_values() {
-    let flex = Flex::from_str("1 1 auto").unwrap();
-
     assert_eq!(
-      flex,
-      Flex {
+      Flex::from_str("1 1 auto"),
+      Ok(Flex {
         grow: 1.0,
         shrink: 1.0,
         basis: LengthUnit::Auto
-      }
+      })
     );
   }
 
   #[test]
   fn test_flex_single_number() {
-    let flex = Flex::from_str("2").unwrap();
-
     assert_eq!(
-      flex,
-      Flex {
+      Flex::from_str("2"),
+      Ok(Flex {
         grow: 2.0,
         shrink: 1.0,
         basis: LengthUnit::zero()
-      }
+      })
     );
   }
 
   #[test]
   fn test_flex_number_and_length() {
-    let flex = Flex::from_str("1 30px").unwrap();
-
     assert_eq!(
-      flex,
-      Flex {
+      Flex::from_str("1 30px"),
+      Ok(Flex {
         grow: 1.0,
         shrink: 1.0,
         basis: LengthUnit::Px(30.0)
-      }
+      })
     );
   }
 
   #[test]
   fn test_flex_two_numbers() {
-    let flex = Flex::from_str("2 2").unwrap();
-
     assert_eq!(
-      flex,
-      Flex {
+      Flex::from_str("2 2"),
+      Ok(Flex {
         grow: 2.0,
         shrink: 2.0,
         basis: LengthUnit::zero()
-      }
+      })
     );
   }
 }

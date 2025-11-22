@@ -5,6 +5,7 @@ use smallvec::{SmallVec, smallvec};
 use taffy::Layout;
 
 use crate::{
+  Result,
   layout::style::{
     Affine, BackgroundImage, BackgroundImages, BackgroundPosition, BackgroundPositions,
     BackgroundRepeat, BackgroundRepeatStyle, BackgroundRepeats, BackgroundSize, BackgroundSizes,
@@ -97,21 +98,21 @@ pub(crate) fn render_gradient_tile(
   tile_w: u32,
   tile_h: u32,
   context: &RenderContext,
-) -> RgbaImage {
-  match image {
+) -> Result<RgbaImage> {
+  Ok(match image {
     BackgroundImage::Linear(gradient) => gradient.to_image(tile_w, tile_h, context),
     BackgroundImage::Radial(gradient) => gradient.to_image(tile_w, tile_h, context),
     BackgroundImage::Noise(noise) => noise.to_image(tile_w, tile_h, context),
-    BackgroundImage::Url(url) => context
-      .fetched_resources
-      .get(url)
-      .map(|source| {
+    BackgroundImage::Url(url) => {
+      if let Some(source) = context.fetched_resources.get(url) {
         source
-          .render_to_rgba_image(tile_w, tile_h, context.style.image_rendering)
+          .render_to_rgba_image(tile_w, tile_h, context.style.image_rendering)?
           .into_owned()
-      })
-      .unwrap_or_else(|| RgbaImage::new(tile_w, tile_h)),
-  }
+      } else {
+        RgbaImage::new(tile_w, tile_h)
+      }
+    }
+  })
 }
 
 /// Resolve tile image, positions along X and Y for a background-like layer.
@@ -124,16 +125,16 @@ pub(crate) fn resolve_layer_tiles(
   area_w: u32,
   area_h: u32,
   context: &RenderContext,
-) -> Option<ImageTiles> {
+) -> Result<Option<ImageTiles>> {
   // Compute tile size
   let (mut tile_w, mut tile_h) = resolve_background_size(size, (area_w, area_h), context);
 
   if tile_w == 0 || tile_h == 0 {
-    return None;
+    return Ok(None);
   }
 
   // Build tile image (use context-aware resolver where possible)
-  let mut tile_image = render_gradient_tile(image, tile_w, tile_h, context);
+  let mut tile_image = render_gradient_tile(image, tile_w, tile_h, context)?;
 
   // Handle round adjustment (rescale per axis)
   let xs: SmallVec<[i32; 1]> = match repeat.0 {
@@ -150,7 +151,7 @@ pub(crate) fn resolve_layer_tiles(
       let (px, new_w) = collect_stretched_tile_positions(area_w, tile_w);
       if new_w != tile_w {
         tile_w = new_w;
-        tile_image = fast_resize(&tile_image, tile_w, tile_h, context.style.image_rendering);
+        tile_image = fast_resize(&tile_image, tile_w, tile_h, context.style.image_rendering)?;
       }
       px
     }
@@ -170,13 +171,13 @@ pub(crate) fn resolve_layer_tiles(
       let (py, new_h) = collect_stretched_tile_positions(area_h, tile_h);
       if new_h != tile_h {
         tile_h = new_h;
-        tile_image = fast_resize(&tile_image, tile_w, tile_h, context.style.image_rendering);
+        tile_image = fast_resize(&tile_image, tile_w, tile_h, context.style.image_rendering)?;
       }
       py
     }
   };
 
-  Some((tile_image, xs, ys))
+  Ok(Some((tile_image, xs, ys)))
 }
 
 /// Collects a list of tile positions to place along an axis.
@@ -256,7 +257,7 @@ pub(crate) fn resolve_layers_tiles(
   repeats: Option<&BackgroundRepeats>,
   context: &RenderContext,
   layout: Layout,
-) -> Vec<ImageTiles> {
+) -> Result<Vec<ImageTiles>> {
   let last_position = positions
     .and_then(|p| p.0.last().copied())
     .unwrap_or_default();
@@ -290,11 +291,17 @@ pub(crate) fn resolve_layers_tiles(
   {
     use rayon::prelude::*;
 
-    images.0.par_iter().enumerate().filter_map(map_fn).collect()
+    let results: Result<Vec<Option<ImageTiles>>> =
+      images.0.par_iter().enumerate().map(map_fn).collect();
+    Ok(results?.into_iter().flatten().collect())
   }
 
   #[cfg(not(feature = "rayon"))]
-  images.0.iter().enumerate().filter_map(map_fn).collect()
+  {
+    let results: Result<Vec<Option<ImageTiles>>> =
+      images.0.iter().enumerate().map(map_fn).collect();
+    Ok(results?.into_iter().flatten().collect())
+  }
 }
 
 /// Draw layered backgrounds (gradients) with support for background-size, -position, and -repeat.

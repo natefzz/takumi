@@ -75,164 +75,161 @@ mod tests {
   use crate::layout::style::Color;
 
   use super::*;
-  use cssparser::{Parser, ParserInput};
-
-  fn parse_border_str(input: &str) -> ParseResult<'_, Border> {
-    let mut parser_input = ParserInput::new(input);
-    let mut parser = Parser::new(&mut parser_input);
-
-    Border::from_css(&mut parser)
-  }
-
-  fn parse_border_style_str(input: &str) -> ParseResult<'_, BorderStyle> {
-    let mut parser_input = ParserInput::new(input);
-    let mut parser = Parser::new(&mut parser_input);
-
-    BorderStyle::from_css(&mut parser)
-  }
 
   #[test]
   fn test_parse_border_style_solid() {
-    let result = parse_border_style_str("solid").unwrap();
-    assert_eq!(result, BorderStyle::Solid);
+    assert_eq!(BorderStyle::from_str("solid"), Ok(BorderStyle::Solid));
   }
 
   #[test]
   fn test_parse_border_style_invalid() {
-    let result = parse_border_style_str("dashed");
-    assert!(result.is_err());
+    assert!(BorderStyle::from_str("dashed").is_err());
   }
 
   #[test]
   fn test_parse_border_width_only() {
-    let result = parse_border_str("10px").unwrap();
-    assert_eq!(result.width, Some(LengthUnit::Px(10.0)));
-    assert_eq!(result.style, None);
-    assert_eq!(result.color, None);
+    assert_eq!(
+      Border::from_str("10px"),
+      Ok(Border {
+        width: Some(LengthUnit::Px(10.0)),
+        style: None,
+        color: None,
+      })
+    );
   }
 
   #[test]
   fn test_parse_border_style_only() {
-    let result = parse_border_str("solid").unwrap();
-    assert_eq!(result.width, None);
-    assert_eq!(result.style, Some(BorderStyle::Solid));
-    assert_eq!(result.color, None);
+    assert_eq!(
+      Border::from_str("solid"),
+      Ok(Border {
+        width: None,
+        style: Some(BorderStyle::Solid),
+        color: None,
+      })
+    );
   }
 
   #[test]
   fn test_parse_border_color_only() {
-    let result = parse_border_str("red").unwrap();
-    assert_eq!(result.width, None);
-    assert_eq!(result.style, None);
     assert_eq!(
-      result.color,
-      Some(ColorInput::Value(Color([255, 0, 0, 255])))
+      Border::from_str("red"),
+      Ok(Border {
+        width: None,
+        style: None,
+        color: Some(ColorInput::Value(Color([255, 0, 0, 255]))),
+      })
     );
   }
 
   #[test]
   fn test_parse_border_width_and_style() {
-    let result = parse_border_str("2px solid").unwrap();
-    assert_eq!(result.width, Some(LengthUnit::Px(2.0)));
-    assert_eq!(result.style, Some(BorderStyle::Solid));
-    assert_eq!(result.color, None);
+    assert_eq!(
+      Border::from_str("2px solid"),
+      Ok(Border {
+        width: Some(LengthUnit::Px(2.0)),
+        style: Some(BorderStyle::Solid),
+        color: None,
+      })
+    );
   }
 
   #[test]
   fn test_parse_border_width_style_color() {
-    let result = parse_border_str("2px solid red").unwrap();
-    assert_eq!(result.width, Some(LengthUnit::Px(2.0)));
-    assert_eq!(result.style, Some(BorderStyle::Solid));
     assert_eq!(
-      result.color,
-      Some(ColorInput::Value(Color([255, 0, 0, 255])))
+      Border::from_str("2px solid red"),
+      Ok(Border {
+        width: Some(LengthUnit::Px(2.0)),
+        style: Some(BorderStyle::Solid),
+        color: Some(ColorInput::Value(Color([255, 0, 0, 255]))),
+      })
     );
   }
 
   #[test]
   fn test_parse_border_style_width_color() {
-    let result = parse_border_str("solid 2px red").unwrap();
-    assert_eq!(result.width, Some(LengthUnit::Px(2.0)));
-    assert_eq!(result.style, Some(BorderStyle::Solid));
     assert_eq!(
-      result.color,
-      Some(ColorInput::Value(Color([255, 0, 0, 255])))
+      Border::from_str("solid 2px red"),
+      Ok(Border {
+        width: Some(LengthUnit::Px(2.0)),
+        style: Some(BorderStyle::Solid),
+        color: Some(ColorInput::Value(Color([255, 0, 0, 255]))),
+      })
     );
   }
 
   #[test]
   fn test_parse_border_color_style_width() {
-    let result = parse_border_str("red solid 2px").unwrap();
-    assert_eq!(result.width, Some(LengthUnit::Px(2.0)));
-    assert_eq!(result.style, Some(BorderStyle::Solid));
     assert_eq!(
-      result.color,
-      Some(ColorInput::Value(Color([255, 0, 0, 255])))
+      Border::from_str("red solid 2px"),
+      Ok(Border {
+        width: Some(LengthUnit::Px(2.0)),
+        style: Some(BorderStyle::Solid),
+        color: Some(ColorInput::Value(Color([255, 0, 0, 255]))),
+      })
     );
   }
 
   #[test]
   fn test_parse_border_rem_units() {
-    let result = parse_border_str("1.5rem solid blue").unwrap();
-    assert_eq!(result.width, Some(LengthUnit::Rem(1.5)));
-    assert_eq!(result.style, Some(BorderStyle::Solid));
     assert_eq!(
-      result.color,
-      Some(ColorInput::Value(Color([0, 0, 255, 255])))
+      Border::from_str("1.5rem solid blue"),
+      Ok(Border {
+        width: Some(LengthUnit::Rem(1.5)),
+        style: Some(BorderStyle::Solid),
+        color: Some(ColorInput::Value(Color([0, 0, 255, 255]))),
+      })
     );
   }
 
   #[test]
   fn test_parse_border_hex_color() {
-    let result = parse_border_str("3px solid #ff0000").unwrap();
-    assert_eq!(result.width, Some(LengthUnit::Px(3.0)));
-    assert_eq!(result.style, Some(BorderStyle::Solid));
     assert_eq!(
-      result.color,
-      Some(ColorInput::Value(Color([255, 0, 0, 255])))
+      Border::from_str("3px solid #ff0000"),
+      Ok(Border {
+        width: Some(LengthUnit::Px(3.0)),
+        style: Some(BorderStyle::Solid),
+        color: Some(ColorInput::Value(Color([255, 0, 0, 255]))),
+      })
     );
   }
 
   #[test]
   fn test_parse_border_rgb_color() {
-    let result = parse_border_str("4px solid rgb(0, 255, 0)").unwrap();
-    assert_eq!(result.width, Some(LengthUnit::Px(4.0)));
-    assert_eq!(result.style, Some(BorderStyle::Solid));
     assert_eq!(
-      result.color,
-      Some(ColorInput::Value(Color([0, 255, 0, 255])))
+      Border::from_str("4px solid rgb(0, 255, 0)"),
+      Ok(Border {
+        width: Some(LengthUnit::Px(4.0)),
+        style: Some(BorderStyle::Solid),
+        color: Some(ColorInput::Value(Color([0, 255, 0, 255]))),
+      })
     );
   }
 
   #[test]
   fn test_parse_border_invalid_style() {
-    let result = parse_border_str("2px dashed red");
-    assert!(result.is_err());
+    assert!(Border::from_str("2px dashed red").is_err());
   }
 
   #[test]
   fn test_parse_border_invalid_color() {
-    let result = parse_border_str("2px solid invalid-color");
-    assert!(result.is_err());
+    assert!(Border::from_str("2px solid invalid-color").is_err());
   }
 
   #[test]
   fn test_parse_border_empty() {
-    let result = parse_border_str("").unwrap();
-    assert_eq!(result.width, None);
-    assert_eq!(result.style, None);
-    assert_eq!(result.color, None);
+    assert_eq!(Border::from_str(""), Ok(Border::default()));
   }
 
   #[test]
   fn test_border_value_from_css() {
-    let border = Border::from_str("3px solid blue").unwrap();
-
-    assert_eq!(border.width, Some(LengthUnit::Px(3.0)));
-    assert_eq!(border.style, Some(BorderStyle::Solid));
     assert_eq!(
-      border.color,
-      Some(ColorInput::Value(Color([0, 0, 255, 255])))
+      Border::from_str("3px solid blue"),
+      Ok(Border {
+        width: Some(LengthUnit::Px(3.0)),
+        style: Some(BorderStyle::Solid),
+        color: Some(ColorInput::Value(Color([0, 0, 255, 255]))),
+      })
     );
   }
 

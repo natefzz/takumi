@@ -7,6 +7,7 @@ use taffy::{AvailableSpace, Layout, Size};
 use crate::layout::Viewport;
 use crate::resources::image::{ImageResult, load_image_source_from_bytes};
 use crate::{
+  Result,
   layout::{
     inline::InlineContentKind,
     node::Node,
@@ -102,12 +103,18 @@ impl<Nodes: Node<Nodes>> Node<Nodes> for ImageNode {
     overridden_size
   }
 
-  fn draw_content(&self, context: &RenderContext, canvas: &mut Canvas, layout: Layout) {
+  fn draw_content(
+    &self,
+    context: &RenderContext,
+    canvas: &mut Canvas,
+    layout: Layout,
+  ) -> Result<()> {
     let Ok(image) = resolve_image(&self.src, context) else {
-      return;
+      return Ok(());
     };
 
-    draw_image(&image, context, canvas, layout);
+    draw_image(&image, context, canvas, layout)?;
+    Ok(())
   }
 
   fn get_style(&self) -> Option<&Style> {

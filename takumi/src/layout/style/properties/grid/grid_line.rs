@@ -48,14 +48,15 @@ impl<'i> FromCss<'i> for GridLine {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use cssparser::{Parser, ParserInput};
 
   #[test]
   fn test_parse_line() {
-    let mut input = ParserInput::new("span 2 / 3");
-    let mut parser = Parser::new(&mut input);
-    let line = GridLine::from_css(&mut parser).unwrap();
-    assert_eq!(line.start, Some(GridPlacement::span(2)));
-    assert_eq!(line.end, Some(GridPlacement::Line(3)));
+    assert_eq!(
+      GridLine::from_str("span 2 / 3"),
+      Ok(GridLine {
+        start: Some(GridPlacement::span(2)),
+        end: Some(GridPlacement::Line(3)),
+      })
+    );
   }
 }

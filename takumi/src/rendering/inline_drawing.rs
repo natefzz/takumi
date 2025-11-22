@@ -3,6 +3,7 @@ use parley::{GlyphRun, PositionedInlineBox, PositionedLayoutItem};
 use taffy::{Layout, Size};
 
 use crate::{
+  Result,
   layout::{
     inline::{InlineBrush, InlineLayout},
     node::Node,
@@ -20,7 +21,7 @@ fn draw_glyph_run(
   layout: Layout,
   context: &RenderContext,
   image_fill: Option<&RgbaImage>,
-) {
+) -> Result<()> {
   let decoration_line = style
     .parent
     .text_decoration_line
@@ -47,10 +48,10 @@ fn draw_glyph_run(
   // Collect all glyph IDs for batch processing
   let glyph_ids = glyph_run.positioned_glyphs().map(|glyph| glyph.id);
 
-  let resolved_glyphs = context.global.font_context.resolve_glyphs(run, glyph_ids);
+  let resolved_glyphs = context.global.font_context.resolve_glyphs(run, glyph_ids)?;
 
   // Draw each glyph using the batch-resolved cache
-  glyph_run.positioned_glyphs().for_each(|glyph| {
+  for glyph in glyph_run.positioned_glyphs() {
     if let Some(cached_glyph) = resolved_glyphs.get(&glyph.id) {
       draw_glyph(
         glyph,
@@ -61,9 +62,9 @@ fn draw_glyph_run(
         image_fill,
         context.transform,
         glyph_run.style(),
-      );
+      )?;
     }
-  });
+  }
 
   if decoration_line.has(TextDecorationLine::LineThrough) {
     let size = glyph_run.run().font_size() / 18.0;
@@ -91,6 +92,8 @@ fn draw_glyph_run(
       context.transform,
     );
   }
+
+  Ok(())
 }
 
 pub(crate) fn draw_inline_box<N: Node<N>>(
@@ -99,9 +102,9 @@ pub(crate) fn draw_inline_box<N: Node<N>>(
   context: &RenderContext,
   canvas: &mut Canvas,
   transform: Affine,
-) {
+) -> Result<()> {
   if context.opacity == 0.0 {
-    return;
+    return Ok(());
   }
 
   let context = RenderContext {
@@ -119,7 +122,7 @@ pub(crate) fn draw_inline_box<N: Node<N>>(
       },
       ..Default::default()
     },
-  );
+  )
 }
 
 pub(crate) fn draw_inline_layout(
@@ -128,12 +131,12 @@ pub(crate) fn draw_inline_layout(
   layout: Layout,
   inline_layout: InlineLayout,
   font_style: &SizedFontStyle,
-) -> Vec<PositionedInlineBox> {
+) -> Result<Vec<PositionedInlineBox>> {
   let content_box = layout.content_box_size();
 
   // If we have a mask image on the style, render it using the background tiling logic into a
   // temporary image and use that as the glyph fill.
-  let fill_image = create_fill_image(context, layout, content_box);
+  let fill_image = create_fill_image(context, layout, content_box)?;
 
   let mut positioned_inline_boxes = Vec::new();
 
@@ -148,22 +151,25 @@ pub(crate) fn draw_inline_layout(
             layout,
             context,
             fill_image.as_ref(),
-          );
+          )?;
         }
         PositionedLayoutItem::InlineBox(inline_box) => positioned_inline_boxes.push(inline_box),
       }
     }
   }
 
-  positioned_inline_boxes
+  Ok(positioned_inline_boxes)
 }
 
 fn create_fill_image(
   context: &RenderContext,
   layout: Layout,
   size: Size<f32>,
-) -> Option<RgbaImage> {
-  let images = context.style.mask_image.as_ref()?;
+) -> Result<Option<RgbaImage>> {
+  let images = match context.style.mask_image.as_ref() {
+    Some(images) => images,
+    None => return Ok(None),
+  };
   let resolved_tiles = resolve_layers_tiles(
     images,
     context.style.mask_position.as_ref(),
@@ -171,10 +177,10 @@ fn create_fill_image(
     context.style.mask_repeat.as_ref(),
     context,
     layout,
-  );
+  )?;
 
   if resolved_tiles.is_empty() {
-    return None;
+    return Ok(None);
   }
 
   let mut composed = RgbaImage::new(size.width as u32, size.height as u32);
@@ -195,5 +201,5 @@ fn create_fill_image(
     }
   }
 
-  Some(composed)
+  Ok(Some(composed))
 }

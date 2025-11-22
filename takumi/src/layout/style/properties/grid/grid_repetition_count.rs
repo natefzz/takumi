@@ -92,18 +92,20 @@ mod tests {
   #[test]
   fn test_parse_repetition_count() {
     assert_eq!(
-      GridRepetitionCount::from_str("auto-fill").unwrap(),
-      GridRepetitionCount::Keyword(GridRepetitionKeyword::AutoFill)
+      GridRepetitionCount::from_str("auto-fill"),
+      Ok(GridRepetitionCount::Keyword(
+        GridRepetitionKeyword::AutoFill
+      ))
     );
 
     assert_eq!(
-      GridRepetitionCount::from_str("auto-fit").unwrap(),
-      GridRepetitionCount::Keyword(GridRepetitionKeyword::AutoFit)
+      GridRepetitionCount::from_str("auto-fit"),
+      Ok(GridRepetitionCount::Keyword(GridRepetitionKeyword::AutoFit))
     );
 
     assert_eq!(
-      GridRepetitionCount::from_str("3").unwrap(),
-      GridRepetitionCount::Count(3)
+      GridRepetitionCount::from_str("3"),
+      Ok(GridRepetitionCount::Count(3))
     );
   }
 }

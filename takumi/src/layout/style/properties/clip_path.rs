@@ -378,213 +378,197 @@ mod tests {
 
   #[test]
   fn test_parse_inset_simple() {
-    let result = BasicShape::from_str("inset(10px)").unwrap();
-    if let BasicShape::Inset(inset) = result {
-      assert_eq!(inset.inset.0, [Px(10.0); 4]);
-    } else {
-      panic!("Expected inset shape");
-    }
+    assert_eq!(
+      BasicShape::from_str("inset(10px)"),
+      Ok(BasicShape::Inset(InsetShape {
+        inset: Sides([Px(10.0); 4]),
+        border_radius: None,
+      }))
+    );
   }
 
   #[test]
   fn test_parse_inset_four_values() {
-    let result = BasicShape::from_str("inset(10px 20px 30px 40px)").unwrap();
-    if let BasicShape::Inset(inset) = result {
-      assert_eq!(inset.inset.0[0], LengthUnit::Px(10.0));
-      assert_eq!(inset.inset.0[1], LengthUnit::Px(20.0));
-      assert_eq!(inset.inset.0[2], LengthUnit::Px(30.0));
-      assert_eq!(inset.inset.0[3], LengthUnit::Px(40.0));
-      assert_eq!(inset.border_radius, None);
-    } else {
-      panic!("Expected inset shape");
-    }
+    assert_eq!(
+      BasicShape::from_str("inset(10px 20px 30px 40px)"),
+      Ok(BasicShape::Inset(InsetShape {
+        inset: Sides([Px(10.0), Px(20.0), Px(30.0), Px(40.0)]),
+        border_radius: None,
+      }))
+    );
   }
 
   #[test]
   fn test_parse_inset_with_border_radius() {
-    let result = BasicShape::from_str("inset(10px round 5px)").unwrap();
-    if let BasicShape::Inset(inset) = result {
-      assert_eq!(inset.inset.0[0], LengthUnit::Px(10.0));
-      assert_eq!(inset.inset.0[1], LengthUnit::Px(10.0));
-      assert_eq!(inset.inset.0[2], LengthUnit::Px(10.0));
-      assert_eq!(inset.inset.0[3], LengthUnit::Px(10.0));
-
-      let border_radius = inset.border_radius.expect("Should have border radius");
-      assert_eq!(border_radius.0[0], LengthUnit::Px(5.0)); // top-left
-      assert_eq!(border_radius.0[1], LengthUnit::Px(5.0)); // top-right
-      assert_eq!(border_radius.0[2], LengthUnit::Px(5.0)); // bottom-right
-      assert_eq!(border_radius.0[3], LengthUnit::Px(5.0)); // bottom-left
-    } else {
-      panic!("Expected inset shape");
-    }
+    assert_eq!(
+      BasicShape::from_str("inset(10px round 5px)"),
+      Ok(BasicShape::Inset(InsetShape {
+        inset: Sides::from(Px(10.0)),
+        border_radius: Some(Sides::from(Px(5.0))),
+      }))
+    );
   }
 
   #[test]
   fn test_parse_inset_with_complex_border_radius() {
-    let result =
-      BasicShape::from_str("inset(10px 20px 30px 40px round 5px 10px 15px 20px)").unwrap();
-    if let BasicShape::Inset(inset) = result {
-      assert_eq!(inset.inset.0[0], LengthUnit::Px(10.0));
-      assert_eq!(inset.inset.0[1], LengthUnit::Px(20.0));
-      assert_eq!(inset.inset.0[2], LengthUnit::Px(30.0));
-      assert_eq!(inset.inset.0[3], LengthUnit::Px(40.0));
-
-      let border_radius = inset.border_radius.expect("Should have border radius");
-      assert_eq!(border_radius.0[0], LengthUnit::Px(5.0)); // top-left
-      assert_eq!(border_radius.0[1], LengthUnit::Px(10.0)); // top-right
-      assert_eq!(border_radius.0[2], LengthUnit::Px(15.0)); // bottom-right
-      assert_eq!(border_radius.0[3], LengthUnit::Px(20.0)); // bottom-left
-    } else {
-      panic!("Expected inset shape");
-    }
+    assert_eq!(
+      BasicShape::from_str("inset(10px 20px 30px 40px round 5px 10px 15px 20px)"),
+      Ok(BasicShape::Inset(InsetShape {
+        inset: Sides([Px(10.0), Px(20.0), Px(30.0), Px(40.0)]),
+        border_radius: Some(Sides([Px(5.0), Px(10.0), Px(15.0), Px(20.0)])),
+      }))
+    );
   }
 
   #[test]
   fn test_parse_circle_simple() {
-    let result = BasicShape::from_str("circle(50px)").unwrap();
-    if let BasicShape::Ellipse(circle) = result {
-      assert_eq!(circle.radius_x, circle.radius_y);
-      assert_eq!(circle.radius_x, ShapeRadius::Length(LengthUnit::Px(50.0)));
-      assert_eq!(circle.position.0.x, LengthUnit::Percentage(50.0));
-      assert_eq!(circle.position.0.y, LengthUnit::Percentage(50.0));
-    } else {
-      panic!("Expected circle shape");
-    }
+    assert_eq!(
+      BasicShape::from_str("circle(50px)"),
+      Ok(BasicShape::Ellipse(EllipseShape {
+        radius_x: ShapeRadius::Length(Px(50.0)),
+        radius_y: ShapeRadius::Length(Px(50.0)),
+        position: ShapePosition::default(),
+      }))
+    );
   }
 
   #[test]
   fn test_parse_circle_with_position() {
-    let result = BasicShape::from_str("circle(50px at 25% 75%)").unwrap();
-    if let BasicShape::Ellipse(circle) = result {
-      assert_eq!(circle.radius_x, circle.radius_y);
-      assert_eq!(circle.radius_x, ShapeRadius::Length(LengthUnit::Px(50.0)));
-      assert_eq!(circle.position.0.x, LengthUnit::Percentage(25.0));
-      assert_eq!(circle.position.0.y, LengthUnit::Percentage(75.0));
-    } else {
-      panic!("Expected circle shape");
-    }
+    assert_eq!(
+      BasicShape::from_str("circle(50px at 25% 75%)"),
+      Ok(BasicShape::Ellipse(EllipseShape {
+        radius_x: ShapeRadius::Length(Px(50.0)),
+        radius_y: ShapeRadius::Length(Px(50.0)),
+        position: ShapePosition(SpacePair {
+          x: LengthUnit::Percentage(25.0),
+          y: LengthUnit::Percentage(75.0),
+        }),
+      }))
+    );
   }
 
   #[test]
   fn test_parse_circle_default_radius() {
-    let result = BasicShape::from_str("circle(at 25% 75%)").unwrap();
-    if let BasicShape::Ellipse(circle) = result {
-      assert_eq!(circle.radius_x, circle.radius_y);
-      assert_eq!(circle.radius_x, ShapeRadius::ClosestSide);
-      assert_eq!(circle.position.0.x, LengthUnit::Percentage(25.0));
-      assert_eq!(circle.position.0.y, LengthUnit::Percentage(75.0));
-    } else {
-      panic!("Expected circle shape");
-    }
+    assert_eq!(
+      BasicShape::from_str("circle(at 25% 75%)"),
+      Ok(BasicShape::Ellipse(EllipseShape {
+        radius_x: ShapeRadius::ClosestSide,
+        radius_y: ShapeRadius::ClosestSide,
+        position: ShapePosition(SpacePair {
+          x: LengthUnit::Percentage(25.0),
+          y: LengthUnit::Percentage(75.0),
+        }),
+      }))
+    );
   }
 
   #[test]
   fn test_parse_ellipse_simple() {
-    let result = BasicShape::from_str("ellipse(50px 30px)").unwrap();
-    if let BasicShape::Ellipse(ellipse) = result {
-      assert_eq!(ellipse.radius_x, ShapeRadius::Length(LengthUnit::Px(50.0)));
-      assert_eq!(ellipse.radius_y, ShapeRadius::Length(LengthUnit::Px(30.0)));
-      assert_eq!(ellipse.position.0.x, LengthUnit::Percentage(50.0));
-      assert_eq!(ellipse.position.0.y, LengthUnit::Percentage(50.0));
-    } else {
-      panic!("Expected ellipse shape");
-    }
+    assert_eq!(
+      BasicShape::from_str("ellipse(50px 30px)"),
+      Ok(BasicShape::Ellipse(EllipseShape {
+        radius_x: ShapeRadius::Length(Px(50.0)),
+        radius_y: ShapeRadius::Length(Px(30.0)),
+        position: ShapePosition::default(),
+      }))
+    );
   }
 
   #[test]
   fn test_parse_ellipse_with_position() {
-    let result = BasicShape::from_str("ellipse(50px 30px at 25% 75%)").unwrap();
-    if let BasicShape::Ellipse(ellipse) = result {
-      assert_eq!(ellipse.radius_x, ShapeRadius::Length(LengthUnit::Px(50.0)));
-      assert_eq!(ellipse.radius_y, ShapeRadius::Length(LengthUnit::Px(30.0)));
-      assert_eq!(ellipse.position.0.x, LengthUnit::Percentage(25.0));
-      assert_eq!(ellipse.position.0.y, LengthUnit::Percentage(75.0));
-    } else {
-      panic!("Expected ellipse shape");
-    }
+    assert_eq!(
+      BasicShape::from_str("ellipse(50px 30px at 25% 75%)"),
+      Ok(BasicShape::Ellipse(EllipseShape {
+        radius_x: ShapeRadius::Length(Px(50.0)),
+        radius_y: ShapeRadius::Length(Px(30.0)),
+        position: ShapePosition(SpacePair {
+          x: LengthUnit::Percentage(25.0),
+          y: LengthUnit::Percentage(75.0),
+        }),
+      }))
+    );
   }
 
   #[test]
   fn test_parse_polygon_triangle() {
-    let result = BasicShape::from_str("polygon(50% 0%, 0% 100%, 100% 100%)").unwrap();
-    if let BasicShape::Polygon(polygon) = result {
-      assert_eq!(polygon.fill_rule, None);
-      assert_eq!(polygon.coordinates.len(), 3);
-
-      assert_eq!(polygon.coordinates[0].x, LengthUnit::Percentage(50.0));
-      assert_eq!(polygon.coordinates[0].y, LengthUnit::Percentage(0.0));
-      assert_eq!(polygon.coordinates[1].x, LengthUnit::Percentage(0.0));
-      assert_eq!(polygon.coordinates[1].y, LengthUnit::Percentage(100.0));
-      assert_eq!(polygon.coordinates[2].x, LengthUnit::Percentage(100.0));
-      assert_eq!(polygon.coordinates[2].y, LengthUnit::Percentage(100.0));
-    } else {
-      panic!("Expected polygon shape");
-    }
+    assert!(matches!(
+      BasicShape::from_str("polygon(50% 0%, 0% 100%, 100% 100%)"),
+      Ok(BasicShape::Polygon(PolygonShape {
+        fill_rule: None,
+        coordinates: coords,
+      })) if coords.len() == 3 &&
+            coords[0] == SpacePair { x: LengthUnit::Percentage(50.0), y: LengthUnit::Percentage(0.0) } &&
+            coords[1] == SpacePair { x: LengthUnit::Percentage(0.0), y: LengthUnit::Percentage(100.0) } &&
+            coords[2] == SpacePair { x: LengthUnit::Percentage(100.0), y: LengthUnit::Percentage(100.0) }
+    ));
   }
 
   #[test]
   fn test_parse_polygon_with_fill_rule() {
-    let result = BasicShape::from_str("polygon(evenodd, 50% 0%, 0% 100%, 100% 100%)").unwrap();
-    if let BasicShape::Polygon(polygon) = result {
-      assert_eq!(polygon.fill_rule, Some(FillRule::EvenOdd));
-      assert_eq!(polygon.coordinates.len(), 3);
-    } else {
-      panic!("Expected polygon shape");
-    }
+    assert!(matches!(
+      BasicShape::from_str("polygon(evenodd, 50% 0%, 0% 100%, 100% 100%)"),
+      Ok(BasicShape::Polygon(PolygonShape {
+        fill_rule: Some(FillRule::EvenOdd),
+        coordinates: coords,
+      })) if coords.len() == 3
+    ));
   }
 
   #[test]
   fn test_parse_path() {
-    let result = BasicShape::from_str("path('M 10 10 L 90 90')").unwrap();
-    if let BasicShape::Path(path) = result {
-      assert_eq!(path.fill_rule, None);
-      assert_eq!(path.path, "M 10 10 L 90 90");
-    } else {
-      panic!("Expected path shape");
-    }
+    assert_eq!(
+      BasicShape::from_str("path('M 10 10 L 90 90')"),
+      Ok(BasicShape::Path(PathShape {
+        fill_rule: None,
+        path: "M 10 10 L 90 90".to_string(),
+      }))
+    );
   }
 
   #[test]
   fn test_parse_path_with_fill_rule() {
-    let result = BasicShape::from_str("path(evenodd, 'M 10 10 L 90 90')").unwrap();
-    if let BasicShape::Path(path) = result {
-      assert_eq!(path.fill_rule, Some(FillRule::EvenOdd));
-      assert_eq!(path.path, "M 10 10 L 90 90");
-    } else {
-      panic!("Expected path shape");
-    }
+    assert_eq!(
+      BasicShape::from_str("path(evenodd, 'M 10 10 L 90 90')"),
+      Ok(BasicShape::Path(PathShape {
+        fill_rule: Some(FillRule::EvenOdd),
+        path: "M 10 10 L 90 90".to_string(),
+      }))
+    );
   }
 
   #[test]
   fn test_parse_circle_percentage_radius() {
-    let result = BasicShape::from_str("circle(50%)").unwrap();
-    if let BasicShape::Ellipse(circle) = result {
-      assert_eq!(
-        circle.radius_x,
-        ShapeRadius::Length(LengthUnit::Percentage(50.0))
-      );
-    } else {
-      panic!("Expected circle shape");
-    }
+    assert_eq!(
+      BasicShape::from_str("circle(50%)"),
+      Ok(BasicShape::Ellipse(EllipseShape {
+        radius_x: ShapeRadius::Length(LengthUnit::Percentage(50.0)),
+        radius_y: ShapeRadius::Length(LengthUnit::Percentage(50.0)),
+        position: ShapePosition::default(),
+      }))
+    );
   }
 
   #[test]
   fn test_parse_circle_closest_side() {
-    let result = BasicShape::from_str("circle(closest-side)").unwrap();
-    if let BasicShape::Ellipse(circle) = result {
-      assert_eq!(circle.radius_x, ShapeRadius::ClosestSide);
-    } else {
-      panic!("Expected circle shape");
-    }
+    assert_eq!(
+      BasicShape::from_str("circle(closest-side)"),
+      Ok(BasicShape::Ellipse(EllipseShape {
+        radius_x: ShapeRadius::ClosestSide,
+        radius_y: ShapeRadius::ClosestSide,
+        position: ShapePosition::default(),
+      }))
+    );
   }
 
   #[test]
   fn test_parse_circle_farthest_side() {
-    let result = BasicShape::from_str("circle(farthest-side)").unwrap();
-    if let BasicShape::Ellipse(circle) = result {
-      assert_eq!(circle.radius_x, ShapeRadius::FarthestSide);
-    } else {
-      panic!("Expected circle shape");
-    }
+    assert_eq!(
+      BasicShape::from_str("circle(farthest-side)"),
+      Ok(BasicShape::Ellipse(EllipseShape {
+        radius_x: ShapeRadius::FarthestSide,
+        radius_y: ShapeRadius::FarthestSide,
+        position: ShapePosition::default(),
+      }))
+    );
   }
 }

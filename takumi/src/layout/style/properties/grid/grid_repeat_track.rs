@@ -60,14 +60,15 @@ mod tests {
   fn test_parse_repeat_track_with_names() {
     let mut parser_input = ParserInput::new("[a b] 1fr [c]");
     let mut parser = Parser::new(&mut parser_input);
-    let track = GridRepeatTrack::from_css(&mut parser).unwrap();
+    let track = GridRepeatTrack::from_css(&mut parser);
+
     assert_eq!(
-      track.size,
-      super::GridTrackSize::Fixed(GridLengthUnit::Fr(1.0))
-    );
-    assert_eq!(
-      track.names,
-      vec!["a".to_string(), "b".to_string(), "c".to_string()]
+      track,
+      Ok(GridRepeatTrack {
+        size: GridTrackSize::Fixed(GridLengthUnit::Fr(1.0)),
+        names: vec!["a".to_string(), "b".to_string(), "c".to_string()],
+        end_names: None,
+      })
     );
   }
 }

@@ -116,22 +116,35 @@ mod tests {
 
   #[test]
   fn test_parse_text_shadow_no_blur_radius() {
-    let result = TextShadows::from_str("5px 5px #558abb").unwrap();
-
-    assert_eq!(result.0.len(), 1);
-
-    let shadow = result.0[0];
-
-    assert_eq!(shadow.offset_x, Px(5.0));
-    assert_eq!(shadow.offset_y, Px(5.0));
-    assert_eq!(shadow.blur_radius, Px(0.0));
-    assert_eq!(shadow.color, Color([85, 138, 187, 255]).into());
+    assert_eq!(
+      TextShadows::from_str("5px 5px #558abb"),
+      Ok(TextShadows(smallvec::smallvec![TextShadow {
+        offset_x: Px(5.0),
+        offset_y: Px(5.0),
+        blur_radius: Px(0.0),
+        color: Color([85, 138, 187, 255]).into(),
+      }]))
+    );
   }
 
   #[test]
   fn test_parse_text_shadow_multiple_values() {
-    let result = TextShadows::from_str("5px 5px #558abb, 10px 10px #558abb").unwrap();
-
-    assert_eq!(result.0.len(), 2);
+    assert_eq!(
+      TextShadows::from_str("5px 5px #558abb, 10px 10px #558abb"),
+      Ok(TextShadows(smallvec::smallvec![
+        TextShadow {
+          offset_x: Px(5.0),
+          offset_y: Px(5.0),
+          blur_radius: Px(0.0),
+          color: Color([85, 138, 187, 255]).into(),
+        },
+        TextShadow {
+          offset_x: Px(10.0),
+          offset_y: Px(10.0),
+          blur_radius: Px(0.0),
+          color: Color([85, 138, 187, 255]).into(),
+        }
+      ]))
+    );
   }
 }

@@ -137,53 +137,64 @@ mod tests {
 
   #[test]
   fn test_parse_text_decoration_underline() {
-    let result = TextDecoration::from_str("underline").unwrap();
-    assert_eq!(result.line.0.as_slice(), &[TextDecorationLine::Underline]);
-    assert_eq!(result.style, None);
-    assert_eq!(result.color, None);
+    assert_eq!(
+      TextDecoration::from_str("underline"),
+      Ok(TextDecoration {
+        line: TextDecorationLines(smallvec::smallvec![TextDecorationLine::Underline]),
+        style: None,
+        color: None,
+      })
+    );
   }
 
   #[test]
   fn test_parse_text_decoration_line_through() {
-    let result = TextDecoration::from_str("line-through").unwrap();
-    assert_eq!(result.line.0.as_slice(), &[TextDecorationLine::LineThrough]);
-    assert_eq!(result.style, None);
-    assert_eq!(result.color, None);
+    assert_eq!(
+      TextDecoration::from_str("line-through"),
+      Ok(TextDecoration {
+        line: TextDecorationLines(smallvec::smallvec![TextDecorationLine::LineThrough]),
+        style: None,
+        color: None,
+      })
+    );
   }
 
   #[test]
   fn test_parse_text_decoration_underline_solid() {
-    let result = TextDecoration::from_str("underline solid").unwrap();
-    assert_eq!(result.line.0.as_slice(), &[TextDecorationLine::Underline]);
-    assert_eq!(result.style, Some(TextDecorationStyle::Solid));
-    assert_eq!(result.color, None);
+    assert_eq!(
+      TextDecoration::from_str("underline solid"),
+      Ok(TextDecoration {
+        line: TextDecorationLines(smallvec::smallvec![TextDecorationLine::Underline]),
+        style: Some(TextDecorationStyle::Solid),
+        color: None,
+      })
+    );
   }
 
   #[test]
   fn test_parse_text_decoration_line_through_solid_red() {
-    let result = TextDecoration::from_str("line-through solid red").unwrap();
-    assert_eq!(result.line.0.as_slice(), &[TextDecorationLine::LineThrough]);
-    assert_eq!(result.style, Some(TextDecorationStyle::Solid));
     assert_eq!(
-      result.color,
-      Some(ColorInput::Value(Color([255, 0, 0, 255])))
+      TextDecoration::from_str("line-through solid red"),
+      Ok(TextDecoration {
+        line: TextDecorationLines(smallvec::smallvec![TextDecorationLine::LineThrough]),
+        style: Some(TextDecorationStyle::Solid),
+        color: Some(ColorInput::Value(Color([255, 0, 0, 255]))),
+      })
     );
   }
 
   #[test]
   fn test_parse_text_decoration_multiple_lines() {
-    let result = TextDecoration::from_str("underline line-through solid red").unwrap();
     assert_eq!(
-      result.line.0.as_slice(),
-      &[
-        TextDecorationLine::Underline,
-        TextDecorationLine::LineThrough
-      ]
-    );
-    assert_eq!(result.style, Some(TextDecorationStyle::Solid));
-    assert_eq!(
-      result.color,
-      Some(ColorInput::Value(Color([255, 0, 0, 255])))
+      TextDecoration::from_str("underline line-through solid red"),
+      Ok(TextDecoration {
+        line: TextDecorationLines(smallvec::smallvec![
+          TextDecorationLine::Underline,
+          TextDecorationLine::LineThrough
+        ]),
+        style: Some(TextDecorationStyle::Solid),
+        color: Some(ColorInput::Value(Color([255, 0, 0, 255]))),
+      })
     );
   }
 

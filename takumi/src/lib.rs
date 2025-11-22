@@ -2,16 +2,23 @@
   html_logo_url = "https://raw.githubusercontent.com/kane50613/takumi/master/assets/images/takumi.svg",
   html_favicon_url = "https://raw.githubusercontent.com/kane50613/takumi/master/assets/images/takumi.svg"
 )]
-#![deny(missing_docs)]
-#![deny(clippy::all)]
-#![deny(clippy::redundant_closure_for_method_calls)]
-#![allow(clippy::module_name_repetitions)]
-#![allow(clippy::missing_errors_doc)]
-#![allow(clippy::missing_panics_doc)]
-#![allow(clippy::use_self)]
-#![allow(clippy::doc_markdown)]
-#![allow(clippy::must_use_candidate)]
-#![allow(clippy::missing_const_for_fn)]
+#![deny(
+  missing_docs,
+  clippy::unwrap_used,
+  clippy::expect_used,
+  clippy::panic,
+  clippy::all,
+  clippy::redundant_closure_for_method_calls
+)]
+#![allow(
+  clippy::module_name_repetitions,
+  clippy::missing_errors_doc,
+  clippy::missing_panics_doc,
+  clippy::use_self,
+  clippy::doc_markdown,
+  clippy::must_use_candidate,
+  clippy::missing_const_for_fn
+)]
 
 //! Takumi is a library with different parts to render your React components to images. This crate contains the core logic for layout, rendering.
 //!
@@ -98,17 +105,18 @@ pub mod layout;
 /// Rendering related modules, including the image renderer, canvas operations.
 pub mod rendering;
 
+/// Error handling types and utilities.
+pub mod error;
 /// External resource management (fonts, images)
 pub mod resources;
+
+pub use error::{Result, TakumiError as Error};
 
 pub use image;
 pub use parley;
 pub use taffy;
 
-use crate::resources::{
-  font::FontContext,
-  image::{ImageResourceError, PersistentImageStore},
-};
+use crate::resources::{font::FontContext, image::PersistentImageStore};
 
 /// The main context for image rendering.
 ///
@@ -120,37 +128,4 @@ pub struct GlobalContext {
   pub font_context: FontContext,
   /// The image store for persisting contents
   pub persistent_image_store: PersistentImageStore,
-}
-
-/// Represents errors that can occur.
-#[derive(Debug)]
-pub enum Error {
-  /// Represents an error that occurs during image resolution.
-  ImageResolveError(ImageResourceError),
-  /// Represents an error that occurs during IO operations.
-  IoError(std::io::Error),
-  /// Represents an error that occurs during PNG encoding.
-  PngError(png::EncodingError),
-  /// Represents an error that occurs from image crate.
-  ImageError(image::ImageError),
-  /// Represents an error that occurs when the viewport is invalid, the width or height is 0.
-  InvalidViewport,
-}
-
-impl From<std::io::Error> for Error {
-  fn from(error: std::io::Error) -> Self {
-    Error::IoError(error)
-  }
-}
-
-impl From<png::EncodingError> for Error {
-  fn from(error: png::EncodingError) -> Self {
-    Error::PngError(error)
-  }
-}
-
-impl From<image::ImageError> for Error {
-  fn from(error: image::ImageError) -> Self {
-    Error::ImageError(error)
-  }
 }

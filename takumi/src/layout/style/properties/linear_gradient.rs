@@ -428,12 +428,9 @@ mod tests {
 
   #[test]
   fn test_parse_linear_gradient() {
-    let gradient =
-      LinearGradient::from_str("linear-gradient(to top right, #ff0000, #0000ff)").unwrap();
-
     assert_eq!(
-      gradient,
-      LinearGradient {
+      LinearGradient::from_str("linear-gradient(to top right, #ff0000, #0000ff)"),
+      Ok(LinearGradient {
         angle: Angle::new(45.0),
         stops: smallvec![
           GradientStop::ColorHint {
@@ -445,99 +442,85 @@ mod tests {
             hint: None,
           },
         ]
-      }
-    );
+      })
+    )
   }
 
   #[test]
   fn test_parse_angle() {
-    let angle = Angle::from_str("45deg").unwrap();
-    assert_eq!(angle, Angle::new(45.0));
+    assert_eq!(Angle::from_str("45deg"), Ok(Angle::new(45.0)));
   }
 
   #[test]
   fn test_parse_angle_grad() {
-    let angle = Angle::from_str("200grad").unwrap();
     // 200 grad = 200 * (π/200) = π radians = 180 degrees
-    assert_eq!(angle, Angle::new(180.0));
+    assert_eq!(Angle::from_str("200grad"), Ok(Angle::new(180.0)));
   }
 
   #[test]
   fn test_parse_angle_turn() {
-    let angle = Angle::from_str("0.5turn").unwrap();
     // 0.5 turn = 0.5 * 2π = π radians = 180 degrees
-    assert_eq!(angle, Angle::new(180.0));
+    assert_eq!(Angle::from_str("0.5turn"), Ok(Angle::new(180.0)));
   }
 
   #[test]
   fn test_parse_angle_rad() {
-    let angle = Angle::from_str("3.14159rad").unwrap();
     // π radians = 180 degrees
     // Use approximate equality due to floating point precision
-    assert!((angle.0 - 180.0).abs() < 0.001);
+    assert!(Angle::from_str("3.14159rad").is_ok_and(|angle| (angle.0 - 180.0).abs() < 0.001));
   }
 
   #[test]
   fn test_parse_angle_number() {
-    let angle = Angle::from_str("90").unwrap();
-    assert_eq!(angle, Angle::new(90.0));
+    assert_eq!(Angle::from_str("90"), Ok(Angle::new(90.0)));
   }
 
   #[test]
   fn test_parse_direction_keywords_top() {
-    let angle = Angle::from_str("to top").unwrap();
-    assert_eq!(angle, Angle::new(0.0));
+    assert_eq!(Angle::from_str("to top"), Ok(Angle::new(0.0)));
   }
 
   #[test]
   fn test_parse_direction_keywords_right() {
-    let angle = Angle::from_str("to right").unwrap();
-    assert_eq!(angle, Angle::new(90.0)); // "to right" = 90deg
+    assert_eq!(Angle::from_str("to right"), Ok(Angle::new(90.0)));
   }
 
   #[test]
   fn test_parse_direction_keywords_bottom() {
-    let angle = Angle::from_str("to bottom").unwrap();
-    assert_eq!(angle, Angle::new(180.0));
+    assert_eq!(Angle::from_str("to bottom"), Ok(Angle::new(180.0)));
   }
 
   #[test]
   fn test_parse_direction_keywords_left() {
-    let angle = Angle::from_str("to left").unwrap();
-    assert_eq!(angle, Angle::new(270.0));
+    assert_eq!(Angle::from_str("to left"), Ok(Angle::new(270.0)));
   }
 
   #[test]
   fn test_parse_direction_keywords_top_right() {
-    let angle = Angle::from_str("to top right").unwrap();
-    assert_eq!(angle, Angle::new(45.0));
+    assert_eq!(Angle::from_str("to top right"), Ok(Angle::new(45.0)));
   }
 
   #[test]
   fn test_parse_direction_keywords_bottom_left() {
-    let angle = Angle::from_str("to bottom left").unwrap();
     // 45 + 180 = 225 degrees
-    assert_eq!(angle, Angle::new(225.0));
+    assert_eq!(Angle::from_str("to bottom left"), Ok(Angle::new(225.0)));
   }
 
   #[test]
   fn test_parse_direction_keywords_top_left() {
-    let angle = Angle::from_str("to top left").unwrap();
-    assert_eq!(angle, Angle::new(315.0));
+    assert_eq!(Angle::from_str("to top left"), Ok(Angle::new(315.0)));
   }
 
   #[test]
   fn test_parse_direction_keywords_bottom_right() {
-    let angle = Angle::from_str("to bottom right").unwrap();
-    assert_eq!(angle, Angle::new(135.0));
+    assert_eq!(Angle::from_str("to bottom right"), Ok(Angle::new(135.0)));
   }
 
   #[test]
   fn test_parse_linear_gradient_with_angle() {
-    let gradient = LinearGradient::from_str("linear-gradient(45deg, #ff0000, #0000ff)").unwrap();
     assert_eq!(
-      gradient,
-      LinearGradient {
+      LinearGradient::from_str("linear-gradient(45deg, #ff0000, #0000ff)"),
+      Ok(LinearGradient {
         angle: Angle::new(45.0),
         stops: smallvec![
           GradientStop::ColorHint {
@@ -549,18 +532,15 @@ mod tests {
             hint: None,
           },
         ]
-      }
+      })
     )
   }
 
   #[test]
   fn test_parse_linear_gradient_with_stops() {
-    let gradient =
-      LinearGradient::from_str("linear-gradient(to right, #ff0000 0%, #0000ff 100%)").unwrap();
-
     assert_eq!(
-      gradient,
-      LinearGradient {
+      LinearGradient::from_str("linear-gradient(to right, #ff0000 0%, #0000ff 100%)"),
+      Ok(LinearGradient {
         angle: Angle::new(90.0), // "to right" = 90deg
         stops: smallvec![
           GradientStop::ColorHint {
@@ -572,18 +552,15 @@ mod tests {
             hint: Some(StopPosition(LengthUnit::Percentage(100.0))),
           },
         ]
-      }
+      })
     );
   }
 
   #[test]
   fn test_parse_linear_gradient_with_hint() {
-    let gradient =
-      LinearGradient::from_str("linear-gradient(to right, #ff0000, 50%, #0000ff)").unwrap();
-
     assert_eq!(
-      gradient,
-      LinearGradient {
+      LinearGradient::from_str("linear-gradient(to right, #ff0000, 50%, #0000ff)"),
+      Ok(LinearGradient {
         angle: Angle::new(90.0), // "to right" = 90deg
         stops: smallvec![
           GradientStop::ColorHint {
@@ -596,34 +573,30 @@ mod tests {
             hint: None,
           },
         ]
-      }
+      })
     );
   }
 
   #[test]
   fn test_parse_linear_gradient_single_color() {
-    let gradient = LinearGradient::from_str("linear-gradient(to bottom, #ff0000)").unwrap();
-
     assert_eq!(
-      gradient,
-      LinearGradient {
+      LinearGradient::from_str("linear-gradient(to bottom, #ff0000)"),
+      Ok(LinearGradient {
         angle: Angle::new(180.0),
         stops: smallvec![GradientStop::ColorHint {
           color: ColorInput::Value(Color([255, 0, 0, 255])),
           hint: None,
         },]
-      }
+      })
     );
   }
 
   #[test]
   fn test_parse_linear_gradient_default_angle() {
-    let gradient = LinearGradient::from_str("linear-gradient(#ff0000, #0000ff)").unwrap();
-
     // Default angle is 180 degrees (to bottom)
     assert_eq!(
-      gradient,
-      LinearGradient {
+      LinearGradient::from_str("linear-gradient(#ff0000, #0000ff)"),
+      Ok(LinearGradient {
         angle: Angle::new(180.0),
         stops: smallvec![
           GradientStop::ColorHint {
@@ -635,30 +608,28 @@ mod tests {
             hint: None,
           },
         ]
-      }
+      })
     );
   }
 
   #[test]
   fn test_parse_gradient_hint_color() {
-    let gradient_hint = GradientStop::from_str("#ff0000").unwrap();
-
     assert_eq!(
-      gradient_hint,
-      GradientStop::ColorHint {
+      GradientStop::from_str("#ff0000"),
+      Ok(GradientStop::ColorHint {
         color: ColorInput::Value(Color([255, 0, 0, 255])),
         hint: None,
-      }
+      })
     );
   }
 
   #[test]
   fn test_parse_gradient_hint_numeric() {
-    let gradient_hint = GradientStop::from_str("50%").unwrap();
-
     assert_eq!(
-      gradient_hint,
-      GradientStop::Hint(StopPosition(LengthUnit::Percentage(50.0)))
+      GradientStop::from_str("50%"),
+      Ok(GradientStop::Hint(StopPosition(LengthUnit::Percentage(
+        50.0
+      ))))
     );
   }
 
@@ -711,12 +682,9 @@ mod tests {
 
   #[test]
   fn test_parse_linear_gradient_mixed_hints_and_colors() {
-    let gradient =
-      LinearGradient::from_str("linear-gradient(45deg, #ff0000, 25%, #00ff00, 75%, #0000ff)")
-        .unwrap();
     assert_eq!(
-      gradient,
-      LinearGradient {
+      LinearGradient::from_str("linear-gradient(45deg, #ff0000, 25%, #00ff00, 75%, #0000ff)"),
+      Ok(LinearGradient {
         angle: Angle::new(45.0),
         stops: smallvec![
           GradientStop::ColorHint {
@@ -734,7 +702,7 @@ mod tests {
             hint: None,
           },
         ]
-      }
+      })
     );
   }
 
@@ -837,9 +805,9 @@ mod tests {
   }
 
   #[test]
-  fn test_linear_gradient_px_stops_crisp_line() {
+  fn test_linear_gradient_px_stops_crisp_line() -> ParseResult<'static, ()> {
     let gradient =
-      LinearGradient::from_str("linear-gradient(to right, grey 1px, transparent 1px)").unwrap();
+      LinearGradient::from_str("linear-gradient(to right, grey 1px, transparent 1px)")?;
 
     let context = GlobalContext::default();
     let dummy_context = RenderContext::new(&context, (40, 40).into(), Default::default());
@@ -856,12 +824,14 @@ mod tests {
     // transparent till the end
     let c2 = gradient.at(40, 0, &ctx);
     assert_eq!(c2, Color([0, 0, 0, 0]));
+
+    Ok(())
   }
 
   #[test]
-  fn test_linear_gradient_vertical_px_stops_top_pixel() {
+  fn test_linear_gradient_vertical_px_stops_top_pixel() -> ParseResult<'static, ()> {
     let gradient =
-      LinearGradient::from_str("linear-gradient(to bottom, grey 1px, transparent 1px)").unwrap();
+      LinearGradient::from_str("linear-gradient(to bottom, grey 1px, transparent 1px)")?;
 
     let context = GlobalContext::default();
     let dummy_context = RenderContext::new(&context, (40, 40).into(), Default::default());
@@ -869,33 +839,45 @@ mod tests {
 
     // color at top-left (0, 0) should be grey (1px hard stop)
     assert_eq!(gradient.at(0, 0, &ctx), Color([128, 128, 128, 255]));
+
+    Ok(())
   }
 
   #[test]
   fn test_stop_position_parsing_fraction_number() {
-    let pos = StopPosition::from_str("0.25").unwrap();
-    assert_eq!(pos, StopPosition(LengthUnit::Percentage(25.0)));
+    assert_eq!(
+      StopPosition::from_str("0.25"),
+      Ok(StopPosition(LengthUnit::Percentage(25.0)))
+    );
   }
 
   #[test]
   fn test_stop_position_parsing_percentage() {
-    let pos = StopPosition::from_str("75%").unwrap();
-    assert_eq!(pos, StopPosition(LengthUnit::Percentage(75.0)));
+    assert_eq!(
+      StopPosition::from_str("75%"),
+      Ok(StopPosition(LengthUnit::Percentage(75.0)))
+    );
   }
 
   #[test]
   fn test_stop_position_parsing_length_px() {
-    let pos = StopPosition::from_str("12px").unwrap();
-    assert_eq!(pos, StopPosition(LengthUnit::Px(12.0)));
+    assert_eq!(
+      StopPosition::from_str("12px"),
+      Ok(StopPosition(LengthUnit::Px(12.0)))
+    );
   }
 
   #[test]
   fn test_stop_position_value_css_roundtrip() {
-    let value = StopPosition::from_str("50%").unwrap();
-    assert_eq!(value, StopPosition(LengthUnit::Percentage(50.0)));
+    assert_eq!(
+      StopPosition::from_str("50%"),
+      Ok(StopPosition(LengthUnit::Percentage(50.0)))
+    );
 
-    let value = StopPosition::from_str("8px").unwrap();
-    assert_eq!(value, StopPosition(LengthUnit::Px(8.0)));
+    assert_eq!(
+      StopPosition::from_str("8px"),
+      Ok(StopPosition(LengthUnit::Px(8.0)))
+    );
   }
 
   #[test]

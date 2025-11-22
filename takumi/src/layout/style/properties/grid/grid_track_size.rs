@@ -84,16 +84,17 @@ mod tests {
 
   #[test]
   fn test_parse_minmax_and_track_size() {
-    let minmax = GridTrackSize::from_str("minmax(10px, 1fr)").unwrap();
-    match minmax {
-      GridTrackSize::MinMax(m) => {
-        assert_eq!(m.min, GridLengthUnit::Unit(LengthUnit::Px(10.0)));
-        assert_eq!(m.max, GridLengthUnit::Fr(1.0));
-      }
-      _ => panic!("expected minmax"),
-    }
+    assert_eq!(
+      GridTrackSize::from_str("minmax(10px, 1fr)"),
+      Ok(GridTrackSize::MinMax(GridMinMaxSize {
+        min: GridLengthUnit::Unit(LengthUnit::Px(10.0)),
+        max: GridLengthUnit::Fr(1.0)
+      }))
+    );
 
-    let fixed = GridTrackSize::from_str("2fr").unwrap();
-    assert_eq!(fixed, GridTrackSize::Fixed(GridLengthUnit::Fr(2.0)));
+    assert_eq!(
+      GridTrackSize::from_str("2fr"),
+      Ok(GridTrackSize::Fixed(GridLengthUnit::Fr(2.0)))
+    );
   }
 }

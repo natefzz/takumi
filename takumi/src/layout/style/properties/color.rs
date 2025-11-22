@@ -371,90 +371,90 @@ impl<'i> FromCss<'i> for Color {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use cssparser::{Parser, ParserInput};
-
-  fn parse_color_str(input: &str) -> ParseResult<'_, ColorInput> {
-    let mut parser_input = ParserInput::new(input);
-    let mut parser = Parser::new(&mut parser_input);
-
-    ColorInput::from_css(&mut parser)
-  }
 
   #[test]
   fn test_parse_hex_color_3_digits() {
     // Test 3-digit hex color
-    let result = parse_color_str("#f09").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([255, 0, 153, 255])));
+    assert_eq!(
+      ColorInput::from_str("#f09"),
+      Ok(ColorInput::<true>::Value(Color([255, 0, 153, 255])))
+    );
   }
 
   #[test]
   fn test_parse_hex_color_6_digits() {
     // Test 6-digit hex color
-    let result = parse_color_str("#ff0099").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([255, 0, 153, 255])));
+    assert_eq!(
+      ColorInput::from_str("#ff0099"),
+      Ok(ColorInput::<true>::Value(Color([255, 0, 153, 255])))
+    );
   }
 
   #[test]
   fn test_parse_color_transparent() {
     // Test parsing transparent keyword
-    let result = parse_color_str("transparent").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([0, 0, 0, 0])));
+    assert_eq!(
+      ColorInput::from_str("transparent"),
+      Ok(ColorInput::<true>::Value(Color([0, 0, 0, 0])))
+    );
   }
 
   #[test]
   fn test_parse_color_rgb_function() {
     // Test parsing rgb() function through main parse function
-    let result = parse_color_str("rgb(255, 0, 153)").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([255, 0, 153, 255])));
+    assert_eq!(
+      ColorInput::from_str("rgb(255, 0, 153)"),
+      Ok(ColorInput::<true>::Value(Color([255, 0, 153, 255])))
+    );
   }
 
   #[test]
   fn test_parse_color_rgba_function() {
     // Test parsing rgba() function through main parse function
-    let result = parse_color_str("rgba(255, 0, 153, 0.5)").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([255, 0, 153, 128])));
+    assert_eq!(
+      ColorInput::from_str("rgba(255, 0, 153, 0.5)"),
+      Ok(ColorInput::<true>::Value(Color([255, 0, 153, 128])))
+    );
   }
 
   #[test]
   fn test_parse_color_rgb_space_separated() {
     // Test parsing rgb() function with space-separated values
-    let result = parse_color_str("rgb(255 0 153)").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([255, 0, 153, 255])));
+    assert_eq!(
+      ColorInput::from_str("rgb(255 0 153)"),
+      Ok(ColorInput::<true>::Value(Color([255, 0, 153, 255])))
+    );
   }
 
   #[test]
   fn test_parse_color_rgb_with_alpha_slash() {
     // Test parsing rgb() function with alpha value using slash
-    let result = parse_color_str("rgb(255 0 153 / 0.5)").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([255, 0, 153, 128])));
+    assert_eq!(
+      ColorInput::from_str("rgb(255 0 153 / 0.5)"),
+      Ok(ColorInput::<true>::Value(Color([255, 0, 153, 128])))
+    );
   }
 
   #[test]
   fn test_parse_named_color_grey() {
-    let result = parse_color_str("grey").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([128, 128, 128, 255])));
+    assert_eq!(
+      ColorInput::from_str("grey"),
+      Ok(ColorInput::<true>::Value(Color([128, 128, 128, 255])))
+    );
   }
 
   #[test]
   fn test_parse_color_invalid_function() {
     // Test parsing invalid function
-    let result = parse_color_str("invalid(255, 0, 153)");
-    assert!(result.is_err());
+    assert!(ColorInput::<true>::from_str("invalid(255, 0, 153)").is_err());
   }
 
   #[test]
   fn test_parse_arbitrary_color_from_str() {
     // Test that ColorInput::from_str can parse arbitrary color names like deepskyblue
-    let result = ColorInput::<false>::from_str("deepskyblue").unwrap();
-    match result {
-      ColorInput::Value(color) => {
-        // deepskyblue is rgb(0, 191, 255)
-        assert_eq!(color.0[0], 0); // red
-        assert_eq!(color.0[1], 191); // green
-        assert_eq!(color.0[2], 255); // blue
-        assert_eq!(color.0[3], 255); // alpha
-      }
-      _ => panic!("Expected ColorInput::Value"),
-    }
+    assert_eq!(
+      ColorInput::from_str("deepskyblue"),
+      Ok(ColorInput::<true>::Value(Color([0, 191, 255, 255])))
+    );
   }
 }

@@ -12,6 +12,7 @@ use swash::{
   FontRef, Setting,
   scale::{ScaleContext, image::Image, outline::Outline},
 };
+use thiserror::Error;
 
 use crate::layout::inline::{InlineBrush, InlineLayout};
 
@@ -25,15 +26,18 @@ pub enum ResolvedGlyph {
 }
 
 /// Errors that can occur during font loading and conversion.
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum FontError {
-  /// I/O error occurred while reading the font file
-  Io(std::io::Error),
   /// Error occurred during WOFF conversion
   #[cfg(any(feature = "woff", feature = "woff2"))]
+  #[error("Error occurred during WOFF conversion.")]
   Woff(wuff::WuffErr),
   /// Unsupported Font Format
+  #[error("Unsupported font format")]
   UnsupportedFormat,
+  /// Font index is invalid
+  #[error("Font index is invalid")]
+  InvalidFontIndex,
 }
 
 /// Supported font formats for loading and processing
@@ -118,13 +122,14 @@ impl FontContext {
     &self,
     run: &Run<'_, InlineBrush>,
     glyph_ids: impl Iterator<Item = u32> + Clone,
-  ) -> HashMap<u32, ResolvedGlyph> {
+  ) -> Result<HashMap<u32, ResolvedGlyph>, FontError> {
     // Collect unique glyph IDs to avoid duplicate work
     let unique_glyph_ids: HashSet<u32> = glyph_ids.collect();
 
     // Prepare font info for scaler creation
     let font = run.font();
-    let font_ref = FontRef::from_index(font.data.as_ref(), font.index as usize).unwrap();
+    let font_ref = FontRef::from_index(font.data.as_ref(), font.index as usize)
+      .ok_or(FontError::InvalidFontIndex)?;
 
     let mut result = HashMap::new();
 
@@ -167,7 +172,7 @@ impl FontContext {
       }
     }
 
-    result
+    Ok(result)
   }
 
   /// Create an inline layout with the given root style and function

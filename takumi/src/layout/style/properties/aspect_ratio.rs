@@ -50,47 +50,40 @@ impl<'i> FromCss<'i> for AspectRatio {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use cssparser::{Parser, ParserInput};
-
-  fn parse_aspect_ratio(input: &str) -> ParseResult<'_, AspectRatio> {
-    let mut parser_input = ParserInput::new(input);
-    let mut parser = Parser::new(&mut parser_input);
-    AspectRatio::from_css(&mut parser)
-  }
 
   #[test]
   fn parses_auto_keyword() {
-    let result = parse_aspect_ratio("auto").unwrap();
-    assert_eq!(result, AspectRatio::Auto);
+    assert_eq!(AspectRatio::from_str("auto"), Ok(AspectRatio::Auto));
   }
 
   #[test]
   fn parses_single_number_as_ratio() {
-    let result = parse_aspect_ratio("1.5").unwrap();
-    assert_eq!(result, AspectRatio::Ratio(1.5));
+    assert_eq!(AspectRatio::from_str("1.5"), Ok(AspectRatio::Ratio(1.5)));
   }
 
   #[test]
   fn parses_ratio_with_slash() {
-    let result = parse_aspect_ratio("16/9").unwrap();
-    assert_eq!(result, AspectRatio::Ratio(16.0 / 9.0));
+    assert_eq!(
+      AspectRatio::from_str("16/9"),
+      Ok(AspectRatio::Ratio(16.0 / 9.0))
+    );
   }
 
   #[test]
   fn parses_ratio_with_decimal_values() {
-    let result = parse_aspect_ratio("1.777/1").unwrap();
-    assert_eq!(result, AspectRatio::Ratio(1.777));
+    assert_eq!(
+      AspectRatio::from_str("1.777/1"),
+      Ok(AspectRatio::Ratio(1.777))
+    );
   }
 
   #[test]
   fn errors_on_invalid_input() {
-    let result = parse_aspect_ratio("invalid");
-    assert!(result.is_err());
+    assert!(AspectRatio::from_str("invalid").is_err());
   }
 
   #[test]
   fn errors_on_empty_slash() {
-    let result = parse_aspect_ratio("16/");
-    assert!(result.is_err());
+    assert!(AspectRatio::from_str("16/").is_err());
   }
 }

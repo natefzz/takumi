@@ -68,10 +68,11 @@ mod tests {
 
   #[test]
   fn test_parse_fr_and_unit() {
-    let fr = GridLengthUnit::from_str("1fr").unwrap();
-    assert_eq!(fr, GridLengthUnit::Fr(1.0));
+    assert_eq!(GridLengthUnit::from_str("1fr"), Ok(GridLengthUnit::Fr(1.0)));
 
-    let px = GridLengthUnit::from_str("10px").unwrap();
-    assert_eq!(px, GridLengthUnit::Unit(LengthUnit::Px(10.0)));
+    assert_eq!(
+      GridLengthUnit::from_str("10px"),
+      Ok(GridLengthUnit::Unit(LengthUnit::Px(10.0)))
+    );
   }
 }
