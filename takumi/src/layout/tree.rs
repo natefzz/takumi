@@ -4,7 +4,7 @@ use parley::InlineBox;
 use taffy::{AvailableSpace, Layout, NodeId, Size, TaffyTree};
 
 use crate::{
-  GlobalContext,
+  GlobalContext, Result,
   layout::{
     inline::{InlineContentKind, InlineItem, InlineLayout, break_lines, create_inline_constraint},
     node::Node,
@@ -23,27 +23,29 @@ pub(crate) struct NodeTree<'g, N: Node<N>> {
 }
 
 impl<'g, N: Node<N>> NodeTree<'g, N> {
-  pub(crate) fn draw_shell(&self, canvas: &mut Canvas, layout: Layout) {
+  pub(crate) fn draw_shell(&self, canvas: &mut Canvas, layout: Layout) -> Result<()> {
     let Some(node) = &self.node else {
-      return;
+      return Ok(());
     };
 
-    node.draw_outset_box_shadow(&self.context, canvas, layout);
-    node.draw_background_color(&self.context, canvas, layout);
-    node.draw_background_image(&self.context, canvas, layout);
-    node.draw_inset_box_shadow(&self.context, canvas, layout);
-    node.draw_border(&self.context, canvas, layout);
+    node.draw_outset_box_shadow(&self.context, canvas, layout)?;
+    node.draw_background_color(&self.context, canvas, layout)?;
+    node.draw_background_image(&self.context, canvas, layout)?;
+    node.draw_inset_box_shadow(&self.context, canvas, layout)?;
+    node.draw_border(&self.context, canvas, layout)?;
+    Ok(())
   }
 
-  pub(crate) fn draw_content(&self, canvas: &mut Canvas, layout: Layout) {
+  pub(crate) fn draw_content(&self, canvas: &mut Canvas, layout: Layout) -> Result<()> {
     if let Some(node) = &self.node {
-      node.draw_content(&self.context, canvas, layout);
+      node.draw_content(&self.context, canvas, layout)?;
     }
+    Ok(())
   }
 
-  pub fn draw_inline(&mut self, canvas: &mut Canvas, layout: Layout) {
+  pub fn draw_inline(&mut self, canvas: &mut Canvas, layout: Layout) -> Result<()> {
     if self.context.opacity == 0.0 {
-      return;
+      return Ok(());
     }
 
     let (inline_layout, _, boxes) = self.create_inline_layout(layout.content_box_size());
@@ -51,12 +53,13 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
 
     // Draw the inline layout without a callback first
     let positioned_inline_boxes =
-      draw_inline_layout(&self.context, canvas, layout, inline_layout, &font_style);
+      draw_inline_layout(&self.context, canvas, layout, inline_layout, &font_style)?;
 
     // Then handle the inline boxes directly by zipping the node refs with their positioned boxes
     for ((node, context, _), positioned) in boxes.iter().zip(positioned_inline_boxes.iter()) {
-      draw_inline_box(positioned, *node, context, canvas, self.context.transform);
+      draw_inline_box(positioned, *node, context, canvas, self.context.transform)?;
     }
+    Ok(())
   }
 
   pub fn is_inline(&self) -> bool {
@@ -186,33 +189,35 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
     }
   }
 
-  pub(crate) fn insert_into_taffy(mut self, tree: &mut TaffyTree<NodeTree<'g, N>>) -> NodeId {
+  pub(crate) fn insert_into_taffy(
+    mut self,
+    tree: &mut TaffyTree<NodeTree<'g, N>>,
+  ) -> Result<NodeId> {
     if self.context.style.display == Display::Inline {
       unreachable!("Inline nodes should be wrapped in anonymous block boxes");
     }
 
     if self.should_create_inline_layout() {
-      return tree
-        .new_leaf_with_context(self.context.style.to_taffy_style(&self.context), self)
-        .unwrap();
+      return Ok(
+        tree.new_leaf_with_context(self.context.style.to_taffy_style(&self.context), self)?,
+      );
     }
 
     let children = self.children.take();
 
-    let node_id = tree
-      .new_leaf_with_context(self.context.style.to_taffy_style(&self.context), self)
-      .unwrap();
+    let node_id =
+      tree.new_leaf_with_context(self.context.style.to_taffy_style(&self.context), self)?;
 
     if let Some(children) = children {
       let children_ids = children
         .into_iter()
         .map(|child| child.insert_into_taffy(tree))
-        .collect::<Vec<_>>();
+        .collect::<Result<Vec<_>>>()?;
 
-      tree.set_children(node_id, &children_ids).unwrap();
+      tree.set_children(node_id, &children_ids)?;
     }
 
-    node_id
+    Ok(node_id)
   }
 
   pub(crate) fn measure(
@@ -555,9 +560,10 @@ fn flush_inline_group<'g, N: Node<N>>(
   }
 
   if inline_group.len() == 1 {
-    let mut child = take(inline_group).into_iter().next().unwrap();
-    child.context.style.display.blockify();
-    final_children.push(child);
+    if let Some(mut child) = take(inline_group).into_iter().next() {
+      child.context.style.display.blockify();
+      final_children.push(child);
+    }
   } else {
     final_children.push(NodeTree {
       context: RenderContext {

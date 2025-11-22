@@ -2361,6 +2361,7 @@ dependencies = [
  "smallvec",
  "swash",
  "taffy",
+ "thiserror",
  "tiny-skia",
  "wuff",
  "zeno",

@@ -88,99 +88,88 @@ impl<'i> FromCss<'i> for BackgroundSizes {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use cssparser::{Parser, ParserInput};
-
-  fn parse_bg_size(input: &str) -> ParseResult<'_, BackgroundSize> {
-    let mut parser_input = ParserInput::new(input);
-    let mut parser = Parser::new(&mut parser_input);
-    BackgroundSize::from_css(&mut parser)
-  }
 
   #[test]
   fn parses_cover_keyword() {
-    let result = parse_bg_size("cover").unwrap();
-    assert_eq!(result, BackgroundSize::Cover);
+    assert_eq!(BackgroundSize::from_str("cover"), Ok(BackgroundSize::Cover));
   }
 
   #[test]
   fn parses_contain_keyword() {
-    let result = parse_bg_size("contain").unwrap();
-    assert_eq!(result, BackgroundSize::Contain);
+    assert_eq!(
+      BackgroundSize::from_str("contain"),
+      Ok(BackgroundSize::Contain)
+    );
   }
 
   #[test]
   fn parses_single_percentage_value_as_both_dimensions() {
-    let result = parse_bg_size("50%\t").unwrap();
     assert_eq!(
-      result,
-      BackgroundSize::Explicit {
+      BackgroundSize::from_str("50%\t"),
+      Ok(BackgroundSize::Explicit {
         width: LengthUnit::Percentage(50.0),
         height: LengthUnit::Percentage(50.0),
-      }
+      })
     );
   }
 
   #[test]
   fn parses_single_auto_value_as_both_dimensions() {
-    let result = parse_bg_size("auto").unwrap();
     assert_eq!(
-      result,
-      BackgroundSize::Explicit {
+      BackgroundSize::from_str("auto"),
+      Ok(BackgroundSize::Explicit {
         width: LengthUnit::Auto,
         height: LengthUnit::Auto,
-      }
+      })
     );
   }
 
   #[test]
   fn parses_two_values_mixed_units() {
-    let result = parse_bg_size("100px auto").unwrap();
     assert_eq!(
-      result,
-      BackgroundSize::Explicit {
+      BackgroundSize::from_str("100px auto"),
+      Ok(BackgroundSize::Explicit {
         width: LengthUnit::Px(100.0),
         height: LengthUnit::Auto,
-      }
+      })
     );
   }
 
   #[test]
   fn errors_on_unknown_identifier() {
-    let result = parse_bg_size("bogus");
-    assert!(result.is_err());
+    assert!(BackgroundSize::from_str("bogus").is_err());
   }
 
   #[test]
   fn parses_multiple_layers_with_keywords_and_values() {
-    let parsed = BackgroundSizes::from_str("cover, 50% auto").unwrap();
-    assert_eq!(parsed.0.len(), 2);
-    assert_eq!(parsed.0[0], BackgroundSize::Cover);
     assert_eq!(
-      parsed.0[1],
-      BackgroundSize::Explicit {
-        width: LengthUnit::Percentage(50.0),
-        height: LengthUnit::Auto,
-      }
+      BackgroundSizes::from_str("cover, 50% auto"),
+      Ok(BackgroundSizes(vec![
+        BackgroundSize::Cover,
+        BackgroundSize::Explicit {
+          width: LengthUnit::Percentage(50.0),
+          height: LengthUnit::Auto,
+        }
+      ]))
     );
   }
 
   #[test]
   fn parses_multiple_layers_with_single_value_duplication() {
-    let parsed = BackgroundSizes::from_str("25%, contain").unwrap();
-    assert_eq!(parsed.0.len(), 2);
     assert_eq!(
-      parsed.0[0],
-      BackgroundSize::Explicit {
-        width: LengthUnit::Percentage(25.0),
-        height: LengthUnit::Percentage(25.0),
-      }
+      BackgroundSizes::from_str("25%, contain"),
+      Ok(BackgroundSizes(vec![
+        BackgroundSize::Explicit {
+          width: LengthUnit::Percentage(25.0),
+          height: LengthUnit::Percentage(25.0),
+        },
+        BackgroundSize::Contain
+      ]))
     );
-    assert_eq!(parsed.0[1], BackgroundSize::Contain);
   }
 
   #[test]
   fn errors_on_invalid_first_layer() {
-    let result = BackgroundSizes::from_str("nope");
-    assert!(result.is_err());
+    assert!(BackgroundSizes::from_str("nope").is_err());
   }
 }

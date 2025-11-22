@@ -383,56 +383,72 @@ mod tests {
   #[test]
   fn test_parse_hex_color_3_digits() {
     // Test 3-digit hex color
-    let result = parse_color_str("#f09").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([255, 0, 153, 255])));
+    assert_eq!(
+      parse_color_str("#f09"),
+      Ok(ColorInput::Value(Color([255, 0, 153, 255])))
+    );
   }
 
   #[test]
   fn test_parse_hex_color_6_digits() {
     // Test 6-digit hex color
-    let result = parse_color_str("#ff0099").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([255, 0, 153, 255])));
+    assert_eq!(
+      parse_color_str("#ff0099"),
+      Ok(ColorInput::Value(Color([255, 0, 153, 255])))
+    );
   }
 
   #[test]
   fn test_parse_color_transparent() {
     // Test parsing transparent keyword
-    let result = parse_color_str("transparent").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([0, 0, 0, 0])));
+    assert_eq!(
+      parse_color_str("transparent"),
+      Ok(ColorInput::Value(Color([0, 0, 0, 0])))
+    );
   }
 
   #[test]
   fn test_parse_color_rgb_function() {
     // Test parsing rgb() function through main parse function
-    let result = parse_color_str("rgb(255, 0, 153)").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([255, 0, 153, 255])));
+    assert_eq!(
+      parse_color_str("rgb(255, 0, 153)"),
+      Ok(ColorInput::Value(Color([255, 0, 153, 255])))
+    );
   }
 
   #[test]
   fn test_parse_color_rgba_function() {
     // Test parsing rgba() function through main parse function
-    let result = parse_color_str("rgba(255, 0, 153, 0.5)").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([255, 0, 153, 128])));
+    assert_eq!(
+      parse_color_str("rgba(255, 0, 153, 0.5)"),
+      Ok(ColorInput::Value(Color([255, 0, 153, 128])))
+    );
   }
 
   #[test]
   fn test_parse_color_rgb_space_separated() {
     // Test parsing rgb() function with space-separated values
-    let result = parse_color_str("rgb(255 0 153)").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([255, 0, 153, 255])));
+    assert_eq!(
+      parse_color_str("rgb(255 0 153)"),
+      Ok(ColorInput::Value(Color([255, 0, 153, 255])))
+    );
   }
 
   #[test]
   fn test_parse_color_rgb_with_alpha_slash() {
     // Test parsing rgb() function with alpha value using slash
-    let result = parse_color_str("rgb(255 0 153 / 0.5)").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([255, 0, 153, 128])));
+    assert_eq!(
+      parse_color_str("rgb(255 0 153 / 0.5)"),
+      Ok(ColorInput::Value(Color([255, 0, 153, 128])))
+    );
   }
 
   #[test]
   fn test_parse_named_color_grey() {
-    let result = parse_color_str("grey").unwrap();
-    assert_eq!(result, ColorInput::Value(Color([128, 128, 128, 255])));
+    assert_eq!(
+      parse_color_str("grey"),
+      Ok(ColorInput::Value(Color([128, 128, 128, 255])))
+    );
   }
 
   #[test]
@@ -445,7 +461,7 @@ mod tests {
   #[test]
   fn test_parse_arbitrary_color_from_str() {
     // Test that ColorInput::from_str can parse arbitrary color names like deepskyblue
-    let result = ColorInput::<false>::from_str("deepskyblue").unwrap();
+    let result = ColorInput::<false>::from_str("deepskyblue").expect("Should parse deepskyblue");
     match result {
       ColorInput::Value(color) => {
         // deepskyblue is rgb(0, 191, 255)

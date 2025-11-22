@@ -60,26 +60,25 @@ mod tests {
 
   #[test]
   fn parses_auto_keyword() {
-    let result = parse_aspect_ratio("auto").unwrap();
-    assert_eq!(result, AspectRatio::Auto);
+    assert_eq!(parse_aspect_ratio("auto"), Ok(AspectRatio::Auto));
   }
 
   #[test]
   fn parses_single_number_as_ratio() {
-    let result = parse_aspect_ratio("1.5").unwrap();
-    assert_eq!(result, AspectRatio::Ratio(1.5));
+    assert_eq!(parse_aspect_ratio("1.5"), Ok(AspectRatio::Ratio(1.5)));
   }
 
   #[test]
   fn parses_ratio_with_slash() {
-    let result = parse_aspect_ratio("16/9").unwrap();
-    assert_eq!(result, AspectRatio::Ratio(16.0 / 9.0));
+    assert_eq!(
+      parse_aspect_ratio("16/9"),
+      Ok(AspectRatio::Ratio(16.0 / 9.0))
+    );
   }
 
   #[test]
   fn parses_ratio_with_decimal_values() {
-    let result = parse_aspect_ratio("1.777/1").unwrap();
-    assert_eq!(result, AspectRatio::Ratio(1.777));
+    assert_eq!(parse_aspect_ratio("1.777/1"), Ok(AspectRatio::Ratio(1.777)));
   }
 
   #[test]

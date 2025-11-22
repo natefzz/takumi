@@ -343,25 +343,27 @@ mod tests {
 
   #[test]
   fn test_transform_from_str() {
-    let transform = Transform::from_str("translate(10, 20px)").unwrap();
-
     assert_eq!(
-      transform,
-      Transform::Translate(LengthUnit::Px(10.0), LengthUnit::Px(20.0))
+      Transform::from_str("translate(10, 20px)"),
+      Ok(Transform::Translate(
+        LengthUnit::Px(10.0),
+        LengthUnit::Px(20.0)
+      ))
     );
   }
 
   #[test]
   fn test_transform_scale_from_str() {
-    let transform = Transform::from_str("scale(10)").unwrap();
-
-    assert_eq!(transform, Transform::Scale(10.0, 10.0));
+    assert_eq!(
+      Transform::from_str("scale(10)"),
+      Ok(Transform::Scale(10.0, 10.0))
+    );
   }
 
   #[test]
   fn test_transform_invert() {
     let transform = Affine::rotation(Angle::new(45.0));
-    let inverse = transform.invert().unwrap();
+    let inverse = transform.invert().expect("Failed to invert");
 
     let random_point = Point {
       x: 1234.0,

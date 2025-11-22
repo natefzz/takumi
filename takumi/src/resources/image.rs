@@ -9,6 +9,7 @@ use dashmap::DashMap;
 use image::RgbaImage;
 
 use crate::{layout::style::ImageScalingAlgorithm, rendering::fast_resize};
+use thiserror::Error;
 
 /// Represents the state of an image resource.
 pub type ImageResult = Result<Arc<ImageSource>, ImageResourceError>;
@@ -48,20 +49,20 @@ impl ImageSource {
     width: u32,
     height: u32,
     algorithm: ImageScalingAlgorithm,
-  ) -> Cow<'i, RgbaImage> {
+  ) -> Result<Cow<'i, RgbaImage>, ImageResourceError> {
     match self {
       ImageSource::Bitmap(bitmap) => {
         if bitmap.width() == width && bitmap.height() == height {
-          return Cow::Borrowed(bitmap);
+          return Ok(Cow::Borrowed(bitmap));
         }
 
-        Cow::Owned(fast_resize(bitmap, width, height, algorithm))
+        Ok(Cow::Owned(fast_resize(bitmap, width, height, algorithm)?))
       }
       #[cfg(feature = "svg")]
       ImageSource::Svg(svg) => {
         use resvg::{tiny_skia::Pixmap, usvg::Transform};
 
-        let mut pixmap = Pixmap::new(width, height).unwrap();
+        let mut pixmap = Pixmap::new(width, height).ok_or(ImageResourceError::InvalidPixmapSize)?;
 
         let original_size = svg.size();
         let sx = width as f32 / original_size.width();
@@ -69,7 +70,10 @@ impl ImageSource {
 
         resvg::render(svg, Transform::from_scale(sx, sy), &mut pixmap.as_mut());
 
-        Cow::Owned(RgbaImage::from_raw(width, height, pixmap.take()).unwrap())
+        Ok(Cow::Owned(
+          RgbaImage::from_raw(width, height, pixmap.take())
+            .ok_or(ImageResourceError::MismatchedBufferSize)?,
+        ))
       }
     }
   }
@@ -115,20 +119,35 @@ pub fn parse_svg_str(src: &str) -> ImageResult {
 ///
 /// This enum tracks whether an image has been successfully loaded and decoded,
 /// or if there was an error during the process.
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ImageResourceError {
   /// An error occurred while decoding the image data
-  DecodeError(image::ImageError),
+  #[error("An error occurred while decoding the image data: {0}")]
+  DecodeError(#[from] image::ImageError),
   /// The image data URI is in an invalid format
+  #[error("The image data URI is in an invalid format")]
   InvalidDataUriFormat,
   /// The image data URI is malformed and cannot be parsed
+  #[error("The image data URI is malformed and cannot be parsed")]
   MalformedDataUri,
   #[cfg(feature = "svg")]
   /// An error occurred while parsing an SVG image
-  SvgParseError(resvg::usvg::Error),
+  #[error("An error occurred while parsing an SVG image: {0}")]
+  SvgParseError(#[from] resvg::usvg::Error),
   /// SVG parsing is not supported in this build
   #[cfg(not(feature = "svg"))]
+  #[error("SVG parsing is not supported in this build")]
   SvgParseNotSupported,
   /// The image source is unknown
+  #[error("The image source is unknown")]
   Unknown,
+  /// The pixmap size is invalid
+  #[error("The pixmap size is invalid")]
+  InvalidPixmapSize,
+  /// The buffer size does not match the target image size
+  #[error("The buffer size does not match the target image size")]
+  MismatchedBufferSize,
+  /// An error occurred while resizing the image
+  #[error("An error occurred while resizing the image: {0}")]
+  ResizeError(#[from] fast_image_resize::ResizeError),
 }

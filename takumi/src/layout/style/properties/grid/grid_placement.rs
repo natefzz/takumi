@@ -113,34 +113,25 @@ mod tests {
 
   #[test]
   fn test_parse_placement() {
+    assert_eq!(GridPlacement::from_str("auto"), Ok(GridPlacement::auto()));
+
     assert_eq!(
-      GridPlacement::from_str("auto").unwrap(),
-      GridPlacement::auto()
+      GridPlacement::from_str("span 2"),
+      Ok(GridPlacement::span(2))
     );
 
     assert_eq!(
-      GridPlacement::from_str("span 2").unwrap(),
-      GridPlacement::span(2)
+      GridPlacement::from_str("span name"),
+      Ok(GridPlacement::span(1))
     );
 
-    assert_eq!(
-      GridPlacement::from_str("span name").unwrap(),
-      GridPlacement::span(1)
-    );
+    assert_eq!(GridPlacement::from_str("3"), Ok(GridPlacement::Line(3)));
+
+    assert_eq!(GridPlacement::from_str("-1"), Ok(GridPlacement::Line(-1)));
 
     assert_eq!(
-      GridPlacement::from_str("3").unwrap(),
-      GridPlacement::Line(3)
-    );
-
-    assert_eq!(
-      GridPlacement::from_str("-1").unwrap(),
-      GridPlacement::Line(-1)
-    );
-
-    assert_eq!(
-      GridPlacement::from_str("header").unwrap(),
-      GridPlacement::Named("header".to_string())
+      GridPlacement::from_str("header"),
+      Ok(GridPlacement::Named("header".to_string()))
     );
   }
 }

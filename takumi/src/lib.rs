@@ -5,6 +5,7 @@
 #![deny(missing_docs)]
 #![deny(clippy::all)]
 #![deny(clippy::redundant_closure_for_method_calls)]
+#![deny(clippy::unwrap_used)]
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
@@ -98,17 +99,18 @@ pub mod layout;
 /// Rendering related modules, including the image renderer, canvas operations.
 pub mod rendering;
 
+/// Error handling types and utilities.
+pub mod error;
 /// External resource management (fonts, images)
 pub mod resources;
+
+pub use error::{Result, TakumiError as Error};
 
 pub use image;
 pub use parley;
 pub use taffy;
 
-use crate::resources::{
-  font::FontContext,
-  image::{ImageResourceError, PersistentImageStore},
-};
+use crate::resources::{font::FontContext, image::PersistentImageStore};
 
 /// The main context for image rendering.
 ///
@@ -120,37 +122,4 @@ pub struct GlobalContext {
   pub font_context: FontContext,
   /// The image store for persisting contents
   pub persistent_image_store: PersistentImageStore,
-}
-
-/// Represents errors that can occur.
-#[derive(Debug)]
-pub enum Error {
-  /// Represents an error that occurs during image resolution.
-  ImageResolveError(ImageResourceError),
-  /// Represents an error that occurs during IO operations.
-  IoError(std::io::Error),
-  /// Represents an error that occurs during PNG encoding.
-  PngError(png::EncodingError),
-  /// Represents an error that occurs from image crate.
-  ImageError(image::ImageError),
-  /// Represents an error that occurs when the viewport is invalid, the width or height is 0.
-  InvalidViewport,
-}
-
-impl From<std::io::Error> for Error {
-  fn from(error: std::io::Error) -> Self {
-    Error::IoError(error)
-  }
-}
-
-impl From<png::EncodingError> for Error {
-  fn from(error: png::EncodingError) -> Self {
-    Error::PngError(error)
-  }
-}
-
-impl From<image::ImageError> for Error {
-  fn from(error: image::ImageError) -> Self {
-    Error::ImageError(error)
-  }
 }
