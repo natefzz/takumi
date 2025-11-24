@@ -352,9 +352,9 @@ impl<'i> FromCss<'i> for JustifyContent {
       "flex-end" => Ok(JustifyContent::FlexEnd),
       "center" => Ok(JustifyContent::Center),
       "stretch" => Ok(JustifyContent::Stretch),
-      "between" => Ok(JustifyContent::SpaceBetween),
-      "around" => Ok(JustifyContent::SpaceAround),
-      "evenly" => Ok(JustifyContent::SpaceEvenly),
+      "space-between" => Ok(JustifyContent::SpaceBetween),
+      "space-around" => Ok(JustifyContent::SpaceAround),
+      "space-evenly" => Ok(JustifyContent::SpaceEvenly),
       _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
     }
   }
@@ -362,7 +362,12 @@ impl<'i> FromCss<'i> for JustifyContent {
 
 impl TailwindPropertyParser for JustifyContent {
   fn parse_tw(token: &str) -> Option<Self> {
-    Self::from_str(token).ok()
+    match token {
+      "between" => Some(JustifyContent::SpaceBetween),
+      "around" => Some(JustifyContent::SpaceAround),
+      "evenly" => Some(JustifyContent::SpaceEvenly),
+      _ => Self::from_str(token).ok(),
+    }
   }
 }
 
