@@ -1,5 +1,11 @@
 # takumi
 
+## 0.54.2
+
+### Patch Changes
+
+- df1aa7e: update `parley` to `0.7`
+
 ## 0.54.1
 
 ### Patch Changes
