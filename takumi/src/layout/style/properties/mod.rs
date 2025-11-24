@@ -641,6 +641,15 @@ pub enum TextWrapMode {
   NoWrap,
 }
 
+impl From<TextWrapMode> for parley::TextWrapMode {
+  fn from(value: TextWrapMode) -> Self {
+    match value {
+      TextWrapMode::Wrap => parley::TextWrapMode::Wrap,
+      TextWrapMode::NoWrap => parley::TextWrapMode::NoWrap,
+    }
+  }
+}
+
 impl<'i> FromCss<'i> for TextWrapMode {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
     let ident = input.expect_ident()?;

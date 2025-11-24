@@ -332,12 +332,7 @@ pub(crate) fn make_ellipsis_text<'s>(
         builder.push_text(&text_with_ellipsis);
       });
 
-    break_lines(
-      &mut inline_layout,
-      max_width,
-      Some(MaxHeight::Lines(2)),
-      font_style.parent.white_space().text_wrap_mode,
-    );
+    break_lines(&mut inline_layout, max_width, Some(MaxHeight::Lines(2)));
 
     // if the text fits, return the text with ellipsis character
     if inline_layout.lines().count() == 1 {

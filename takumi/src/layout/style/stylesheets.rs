@@ -233,6 +233,7 @@ impl<'s> From<&'s SizedFontStyle<'s>> for TextStyle<'s, InlineBrush> {
         decoration_color: style.text_decoration_color,
         stroke_color: style.text_stroke_color,
       },
+      text_wrap_mode: style.parent.white_space().text_wrap_mode.into(),
 
       font_width: FontWidth::NORMAL,
       locale: None,

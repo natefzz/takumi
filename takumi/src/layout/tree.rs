@@ -277,12 +277,7 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
             }
           });
 
-      break_lines(
-        &mut layout,
-        max_width,
-        max_height,
-        font_style.parent.white_space().text_wrap_mode,
-      );
+      break_lines(&mut layout, max_width, max_height);
 
       let (max_run_width, total_height) =
         layout
@@ -378,12 +373,7 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
       None => Some(MaxHeight::Absolute(size.height)),
     };
 
-    break_lines(
-      &mut layout,
-      size.width,
-      max_height,
-      font_style.parent.white_space().text_wrap_mode,
-    );
+    break_lines(&mut layout, size.width, max_height);
 
     let should_handle_ellipsis = font_style.parent.text_overflow == TextOverflow::Ellipsis;
 
@@ -462,12 +452,7 @@ fn create_ellipsis_layout<N: Node<N>>(
         builder.push_text(root_font_style.ellipsis_char());
       });
 
-    break_lines(
-      &mut layout,
-      max_width,
-      max_height,
-      root_font_style.parent.white_space().text_wrap_mode,
-    );
+    break_lines(&mut layout, max_width, max_height);
 
     if text_spans.is_empty() && boxes.is_empty() {
       return layout;

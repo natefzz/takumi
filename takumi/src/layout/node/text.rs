@@ -151,12 +151,7 @@ fn create_text_only_layout(
       })
   };
 
-  break_lines(
-    &mut inline_layout,
-    max_width,
-    max_height,
-    font_style.parent.white_space().text_wrap_mode,
-  );
+  break_lines(&mut inline_layout, max_width, max_height);
 
   if measure_only {
     return inline_layout;
