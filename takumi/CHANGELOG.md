@@ -1,5 +1,11 @@
 # takumi
 
+## 0.54.1
+
+### Patch Changes
+
+- b16fd1b: fix whitespace keywords parsing
+
 ## 0.54.0
 
 ### Minor Changes
