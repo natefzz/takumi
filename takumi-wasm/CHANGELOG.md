@@ -1,5 +1,7 @@
 # @takumi-rs/wasm
 
+## 0.55.0
+
 ## 0.54.3
 
 ### Patch Changes
