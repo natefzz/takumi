@@ -1,5 +1,15 @@
 # takumi
 
+## 0.55.0
+
+### Minor Changes
+
+- 5e79e33: support COLR emoji font drawing (e.g. twemoji)
+
+### Patch Changes
+
+- 5e79e33: reuse buffer for masking to reduce allocation
+
 ## 0.54.3
 
 ## 0.54.2
