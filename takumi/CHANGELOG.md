@@ -1,5 +1,11 @@
 # takumi
 
+## 0.55.2
+
+### Patch Changes
+
+- 274c716: reuse masking buffer to avoid allocation
+
 ## 0.55.1
 
 ### Patch Changes
