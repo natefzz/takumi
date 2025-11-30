@@ -48,27 +48,31 @@ impl<'g> RenderTask<'g> {
 
     let collection = collection.into_inner();
 
-    let fetch = options.fetch.unwrap_or_else(|| {
-      env
-        .get_global()
-        .unwrap()
-        .get_named_property("fetch")
-        .expect(
-          "No global fetch() function available. Please provide one using a third-party package.",
-        )
-    });
+    let fetch = options
+      .fetch
+      .or_else(|| {
+        env
+          .get_global()
+          .ok()
+          .and_then(|global| global.get_named_property("fetch").ok())
+      })
+      .ok_or(Error::from_reason(
+        "No global fetch() function available. Please provide one using a third-party package.",
+      ))?;
 
     let (tx, rx) = bounded(1);
 
     for task in collection {
       if let Some(resources_cache) = resources_cache.as_ref() {
-        let mut lock = resources_cache.lock().unwrap();
+        let mut lock = resources_cache
+          .lock()
+          .map_err(|e| Error::from_reason(e.to_string()))?;
 
         if let Some(cached) = lock.get(&task).cloned() {
           drop(lock);
 
           tx.send((task, MaybeInitialized::Initialized(cached)))
-            .unwrap();
+            .map_err(|e| Error::from_reason(e.to_string()))?;
 
           continue;
         }
@@ -86,7 +90,7 @@ impl<'g> RenderTask<'g> {
             task,
             MaybeInitialized::Uninitialized(ctx.value.into_buffer(&ctx.env)?),
           ))
-          .unwrap();
+          .map_err(|e| Error::from_reason(e.to_string()))?;
 
           Ok(())
         })
