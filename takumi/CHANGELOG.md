@@ -1,5 +1,11 @@
 # takumi
 
+## 0.55.4
+
+### Patch Changes
+
+- 34bf0af: fix mask image on text drawing overflows
+
 ## 0.55.3
 
 ### Patch Changes
