@@ -160,6 +160,82 @@ impl TailwindPropertyParser for ObjectFit {
   }
 }
 
+/// Defines how the background is clipped.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub enum BackgroundClip {
+  /// The background extends to the outside edge of the border
+  #[default]
+  BorderBox,
+  /// The background extends to the outside edge of the padding
+  PaddingBox,
+  /// The background extends to the inside edge of the content box
+  ContentBox,
+  /// The background extends to the outside edge of the text
+  Text,
+  /// The background extends to the outside edge of the border area
+  BorderArea,
+}
+
+impl<'i> FromCss<'i> for BackgroundClip {
+  fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
+    let location = input.current_source_location();
+    let token = input.expect_ident()?;
+
+    match_ignore_ascii_case! { token,
+      "border-box" => Ok(BackgroundClip::BorderBox),
+      "padding-box" => Ok(BackgroundClip::PaddingBox),
+      "content-box" => Ok(BackgroundClip::ContentBox),
+      "text" => Ok(BackgroundClip::Text),
+      "border-area" => Ok(BackgroundClip::BorderArea),
+      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+    }
+  }
+}
+
+impl TailwindPropertyParser for BackgroundClip {
+  fn parse_tw(token: &str) -> Option<Self> {
+    match_ignore_ascii_case! {token,
+      "border" => Some(BackgroundClip::BorderBox),
+      "padding" => Some(BackgroundClip::PaddingBox),
+      "content" => Some(BackgroundClip::ContentBox),
+      "text" => Some(BackgroundClip::Text),
+      _ => None,
+    }
+  }
+}
+
+/// Represents the CSS `border-radius` property, supporting elliptical corners.
+///
+/// Each corner can have independent horizontal and vertical radii, allowing for both circular and elliptical shapes.
+///
+/// This struct supports the full CSS syntax, including the elliptical form, e.g.:
+/// `border-radius: 10px 20px 30px 40px / 15px 25px 35px 45px;`
+///
+/// The inner `Sides<SpacePair<LengthUnit<false>>>` field stores the radii for each corner as pairs of horizontal and vertical values.
+/// The order of the `Sides` array follows the CSS specification:
+/// [top-left, top-right, bottom-right, bottom-left].
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct BorderRadius(pub Sides<SpacePair<LengthUnit<false>>>);
+
+impl<'i> FromCss<'i> for BorderRadius {
+  fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
+    let widths: Sides<LengthUnit<false>> = Sides::from_css(input)?;
+
+    let heights = if input.try_parse(|input| input.expect_delim('/')).is_ok() {
+      Sides::from_css(input)?
+    } else {
+      widths
+    };
+
+    Ok(BorderRadius(Sides([
+      SpacePair::from_pair(widths.0[0], heights.0[0]),
+      SpacePair::from_pair(widths.0[1], heights.0[1]),
+      SpacePair::from_pair(widths.0[2], heights.0[2]),
+      SpacePair::from_pair(widths.0[3], heights.0[3]),
+    ])))
+  }
+}
+
 /// Defines how the width and height of an element are calculated.
 ///
 /// This enum determines whether the width and height properties include padding and border, or just the content area.
