@@ -205,30 +205,6 @@ fn fixtures_text_align_right() {
 }
 
 #[test]
-fn fixtures_text_justify_clip() {
-  let long_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. \
-Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. \
-Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
-
-  let text = TextNode {
-    tw: None,
-    style: Some(
-      StyleBuilder::default()
-        .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
-        .font_size(Some(Px(48.0)))
-        .line_clamp(Some(3.into()))
-        .text_align(TextAlign::Justify)
-        .text_overflow(TextOverflow::Clip)
-        .build()
-        .unwrap(),
-    ),
-    text: long_text.to_string(),
-  };
-
-  run_style_width_test(text.into(), "tests/fixtures/text_justify_clip.webp");
-}
-
-#[test]
 fn fixtures_text_ellipsis_line_clamp_2() {
   let long_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 

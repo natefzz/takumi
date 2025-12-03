@@ -7,7 +7,7 @@ use crate::{
     Viewport,
     inline::{InlineBrush, InlineContentKind, break_lines, create_inline_constraint},
     node::Node,
-    style::{InheritedStyle, SizedFontStyle, Style, TextOverflow, tw::TailwindValues},
+    style::{InheritedStyle, SizedFontStyle, Style, tw::TailwindValues},
   },
   rendering::{
     Canvas, MaxHeight, RenderContext, apply_text_transform, apply_white_space_collapse,
@@ -156,8 +156,8 @@ fn create_text_only_layout(
     return inline_layout;
   };
 
-  let should_handle_ellipsis = font_style.parent.text_overflow == TextOverflow::Ellipsis
-    && last_line.text_range().end < text.len();
+  let should_handle_ellipsis =
+    font_style.parent.should_handle_ellipsis() && last_line.text_range().end < text.len();
 
   if should_handle_ellipsis {
     let truncated = make_ellipsis_text(
