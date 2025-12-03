@@ -15,7 +15,7 @@ use zeno::{Mask, PathData, Placement, Scratch};
 
 use crate::{
   layout::style::{Affine, Color, Filters, ImageScalingAlgorithm, InheritedStyle, Overflow},
-  rendering::{BorderProperties, RenderContext},
+  rendering::{BorderProperties, RenderContext, create_mask},
 };
 
 #[derive(Clone)]
@@ -135,9 +135,15 @@ pub(crate) enum CanvasConstrain {
     to: Point<u32>,
     inverse_transform: Affine,
   },
-  Mask {
+  ClipPath {
     mask: Vec<u8>,
     placement: Placement,
+  },
+  MaskImage {
+    mask: Vec<u8>,
+    from: Point<u32>,
+    to: Point<u32>,
+    inverse_transform: Affine,
   },
 }
 
@@ -148,7 +154,7 @@ impl CanvasConstrain {
     layout: Layout,
     transform: Affine,
     mask_memory: &mut MaskMemory,
-  ) -> CanvasConstrainResult {
+  ) -> crate::Result<CanvasConstrainResult> {
     // Clip path would just clip everything, and behaves like overflow: hidden.
     if let Some(clip_path) = &style.clip_path {
       let (mask, placement) = clip_path.render_mask(context, layout.size, mask_memory);
@@ -157,18 +163,30 @@ impl CanvasConstrain {
       let end_y = placement.top + placement.height as i32;
 
       if end_x < 0 || end_y < 0 {
-        return CanvasConstrainResult::SkipRendering;
+        return Ok(CanvasConstrainResult::SkipRendering);
       }
 
-      return CanvasConstrainResult::Some(CanvasConstrain::Mask {
+      return Ok(CanvasConstrainResult::Some(CanvasConstrain::ClipPath {
         mask: mask.to_vec(),
         placement,
-      });
+      }));
     }
 
     let Some(inverse_transform) = transform.invert() else {
-      return CanvasConstrainResult::SkipRendering;
+      return Ok(CanvasConstrainResult::SkipRendering);
     };
+
+    if let Some(mask) = create_mask(context, layout.size, mask_memory)? {
+      return Ok(CanvasConstrainResult::Some(CanvasConstrain::MaskImage {
+        mask,
+        from: Point { x: 0, y: 0 },
+        to: Point {
+          x: layout.size.width as u32,
+          y: layout.size.height as u32,
+        },
+        inverse_transform,
+      }));
+    }
 
     let overflow = style.resolve_overflows();
 
@@ -176,13 +194,13 @@ impl CanvasConstrain {
     let clip_y = overflow.y != Overflow::Visible;
 
     if !overflow.should_clip_content() {
-      return CanvasConstrainResult::None;
+      return Ok(CanvasConstrainResult::None);
     }
 
     if (clip_x && layout.content_box_width() < f32::EPSILON)
       || (clip_y && layout.content_box_height() < f32::EPSILON)
     {
-      return CanvasConstrainResult::SkipRendering;
+      return Ok(CanvasConstrainResult::SkipRendering);
     }
 
     let from = Point {
@@ -210,11 +228,11 @@ impl CanvasConstrain {
       },
     };
 
-    CanvasConstrainResult::Some(CanvasConstrain::Overflow {
+    Ok(CanvasConstrainResult::Some(CanvasConstrain::Overflow {
       from,
       to,
       inverse_transform,
-    })
+    }))
   }
 
   pub(crate) fn get_alpha(&self, x: u32, y: u32) -> u8 {
@@ -246,7 +264,35 @@ impl CanvasConstrain {
 
         u8::MAX
       }
-      CanvasConstrain::Mask {
+      CanvasConstrain::MaskImage {
+        ref mask,
+        from,
+        to,
+        inverse_transform,
+      } => {
+        let original_point = inverse_transform.transform_point(Point {
+          x: x as f32,
+          y: y as f32,
+        });
+
+        if original_point.x < 0.0 || original_point.y < 0.0 {
+          return 0;
+        }
+
+        let original_point = original_point.map(|point| point as u32);
+
+        let is_contained = original_point.x >= from.x
+          && original_point.x < to.x
+          && original_point.y >= from.y
+          && original_point.y < to.y;
+
+        if !is_contained {
+          return 0;
+        }
+
+        mask[mask_index_from_coord(original_point.x, original_point.y, to.x - from.x)]
+      }
+      CanvasConstrain::ClipPath {
         ref mask,
         placement,
       } => {
@@ -441,36 +487,41 @@ fn draw_pixel(
       return;
     }
 
-    color = apply_mask_alpha_to_pixel(color, constrain_alpha);
+    apply_mask_alpha_to_pixel(&mut color, constrain_alpha);
   }
 
   // image-rs blend will skip the operation if the source color is fully transparent
   let pixel = canvas.get_pixel_mut(x, y);
 
-  if pixel.0[3] == 0 {
+  blend_pixel(pixel, color);
+}
+
+#[inline(always)]
+pub(crate) fn blend_pixel(bottom: &mut Rgba<u8>, top: Rgba<u8>) {
+  if top.0[3] == 0 {
+    return;
+  }
+
+  if bottom.0[3] == 0 {
     // If the destination pixel is fully transparent, we directly assign the new color.
     // This is a performance optimization: blending with a fully transparent pixel is
     // equivalent to assignment, so we skip the blend operation. This deviates from the
     // standard alpha blending approach for efficiency.
-    *pixel = color;
+    *bottom = top;
   } else {
-    pixel.blend(&color);
+    bottom.blend(&top);
   }
 }
 
 #[inline(always)]
-pub(crate) fn apply_mask_alpha_to_pixel(mut pixel: Rgba<u8>, alpha: u8) -> Rgba<u8> {
+pub(crate) fn apply_mask_alpha_to_pixel(pixel: &mut Rgba<u8>, alpha: u8) {
   match alpha {
     0 => {
       pixel.0[3] = 0;
-
-      pixel
     }
-    255 => pixel,
+    255 => {}
     alpha => {
       pixel.0[3] = ((pixel.0[3] as f32) * (alpha as f32 / 255.0)).round() as u8;
-
-      pixel
     }
   }
 }
@@ -505,7 +556,11 @@ pub(crate) fn draw_mask<C: Into<Rgba<u8>>>(
   overlay_area(canvas, offset, top_size, constrain, |x, y| {
     let alpha = mask[mask_index_from_coord(x, y, placement.width)];
 
-    apply_mask_alpha_to_pixel(color, alpha)
+    let mut pixel = color;
+
+    apply_mask_alpha_to_pixel(&mut pixel, alpha);
+
+    pixel
   });
 }
 
@@ -564,10 +619,11 @@ pub(crate) fn overlay_image(
 
     // Fast path: If only border radius is applied, we can just map the pixel directly
     if is_identity && placement.left >= 0 && placement.top >= 0 {
-      return apply_mask_alpha_to_pixel(
-        image.get_pixel(x + placement.left as u32, y + placement.top as u32),
-        alpha,
-      );
+      let mut pixel = image.get_pixel(x + placement.left as u32, y + placement.top as u32);
+
+      apply_mask_alpha_to_pixel(&mut pixel, alpha);
+
+      return pixel;
     }
 
     let point = inverse.transform_point(Point {
@@ -580,11 +636,13 @@ pub(crate) fn overlay_image(
       _ => interpolate_bilinear(&image, point.x, point.y),
     };
 
-    let Some(pixel) = sampled_pixel else {
+    let Some(mut pixel) = sampled_pixel else {
       return Color::transparent().into();
     };
 
-    apply_mask_alpha_to_pixel(pixel, alpha)
+    apply_mask_alpha_to_pixel(&mut pixel, alpha);
+
+    pixel
   };
 
   overlay_area(
