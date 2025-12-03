@@ -10,13 +10,13 @@
   "dependencies": {
     "@takumi-rs/image-response": "workspace:*",
     "@takumi-rs/template": "workspace:*",
-    "@tanstack/react-router": "^1.136.11",
-    "@tanstack/react-router-ssr-query": "^1.136.11",
-    "@tanstack/react-start": "^1.136.11",
-    "@tanstack/router-plugin": "^1.136.11",
+    "@tanstack/react-router": "^1.139.14",
+    "@tanstack/react-router-ssr-query": "^1.139.14",
+    "@tanstack/react-start": "^1.139.14",
+    "@tanstack/router-plugin": "^1.139.14",
     "lucide-react": "catalog:",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
     "vite-tsconfig-paths": "^5.1.4"
   },
   "devDependencies": {
@@ -27,6 +27,6 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "typescript": "catalog:",
-    "vite": "^7.2.2"
+    "vite": "^7.2.6"
   }
 }

@@ -15,8 +15,8 @@
     "@types/react-dom": "^19.2.3",
     "bun-plugin-dts": "^0.3.0",
     "lucide-react": "catalog:",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
     "tsup": "^8.5.1",
     "typescript": "catalog:"
   },
