@@ -74,9 +74,7 @@ fn strip_alpha_channel(image: &RgbaImage) -> Vec<u8> {
   let mut rgb = Vec::with_capacity(pixel_count);
 
   for chunk in raw.chunks_exact(4) {
-    rgb.push(chunk[0]);
-    rgb.push(chunk[1]);
-    rgb.push(chunk[2]);
+    rgb.extend_from_slice(&chunk[..3]);
   }
 
   rgb
@@ -155,24 +153,27 @@ pub fn write_image<T: Write>(
 }
 
 /// Extracts VP8L/VP8 payload from a RIFF WEBP buffer produced by `WebPEncoder`.
-fn extract_vp8_payload(buf: &[u8]) -> Result<Vec<u8>, crate::Error> {
+fn extract_vp8_payload(buf: &[u8]) -> Result<&[u8], crate::Error> {
   let mut i = 12usize; // skip RIFF header
   while i + 8 <= buf.len() {
-    let name = &buf[i..i + 4];
     let len = u32::from_le_bytes(
       buf[i + 4..i + 8]
         .try_into()
         .map_err(|_| IoError(std::io::Error::other("Invalid buffer size")))?,
     ) as usize;
+
     let start = i + 8;
     let end = start + len;
+
     if end > buf.len() {
       break;
     }
-    if name == b"VP8L" || name == b"VP8 " {
-      return Ok(buf[start..end].to_vec());
+
+    if &buf[i..i + 4] == b"VP8L" || &buf[i..i + 4] == b"VP8 " {
+      return Ok(&buf[start..end]);
     }
-    i = end + (len % 2);
+
+    i = end + (len & 1);
   }
 
   Err(IoError(std::io::Error::other(
@@ -203,9 +204,7 @@ pub fn encode_animated_webp<W: Write>(
         image_webp::ColorType::Rgba8,
       )?;
 
-      let payload = extract_vp8_payload(&buf)?;
-
-      Ok((frame, payload))
+      Ok((frame, buf))
     })
     .collect::<Result<Vec<(&AnimationFrame, Vec<u8>)>, crate::Error>>()?;
 
@@ -223,108 +222,69 @@ pub fn encode_animated_webp<W: Write>(
         )
         .map_err(|_| IoError(std::io::Error::other("WebP encode error")))?;
 
-      Ok((frame, extract_vp8_payload(&buf)?))
+      Ok((frame, buf))
     })
     .collect::<Result<Vec<(&AnimationFrame, Vec<u8>)>, crate::Error>>()?;
 
   // assemble RIFF WEBP with VP8X + ANIM + ANMF frames
-  let mut chunks: Vec<u8> = Vec::new();
+  let mut output: Vec<u8> = Vec::new();
 
-  // VP8X: set animation bit and alpha bit
-  let mut vp8x = Vec::new();
-  let mut flags: u8 = 0;
+  // VP8X chunk
+  let vp8x_flags: u8 = (1 << 1) | (1 << 4); // animation + alpha
+  let cw = (frames[0].image.width() - 1).to_le_bytes();
+  let ch = (frames[0].image.height() - 1).to_le_bytes();
 
-  flags |= 1 << 1; // animation
-  flags |= 1 << 4; // alpha assumed
+  output.extend_from_slice(b"VP8X");
+  output.extend_from_slice(&10u32.to_le_bytes());
+  output.push(vp8x_flags);
+  output.extend_from_slice(&[0u8; 3]);
+  output.extend_from_slice(&cw[..3]);
+  output.extend_from_slice(&ch[..3]);
 
-  vp8x.push(flags);
-  vp8x.extend_from_slice(&[0u8; 3]);
+  // ANIM chunk
+  output.extend_from_slice(b"ANIM");
+  output.extend_from_slice(&6u32.to_le_bytes());
+  output.extend_from_slice(&[0u8; 4]); // bgcolor (4 bytes)
+  output.extend_from_slice(&loop_count.unwrap_or(0).to_le_bytes());
 
-  // canvas width/height (24-bit little-endian, stored as width-1 / height-1)
-  let cw = frames[0].image.width() - 1;
-  let ch = frames[0].image.height() - 1;
-  let cw = cw.to_le_bytes();
-  let ch = ch.to_le_bytes();
-
-  vp8x.extend_from_slice(&cw[..3]);
-  vp8x.extend_from_slice(&ch[..3]);
-
-  // write VP8X chunk
-  chunks.extend_from_slice(b"VP8X");
-  chunks.extend_from_slice(&(vp8x.len() as u32).to_le_bytes());
-  chunks.extend_from_slice(&vp8x);
-
-  if vp8x.len() % 2 == 1 {
-    chunks.push(0);
-  }
-
-  // ANIM chunk: background color (24-bit), loop count (u16)
-  let mut anim = Vec::new();
-
-  anim.extend_from_slice(&[0u8, 0u8, 0u8]); // bgcolor
-
-  let loop_value: u16 = loop_count.unwrap_or(0);
-
-  anim.extend_from_slice(&loop_value.to_le_bytes());
-
-  chunks.extend_from_slice(b"ANIM");
-  chunks.extend_from_slice(&(anim.len() as u32).to_le_bytes());
-  chunks.extend_from_slice(&anim);
-
-  if anim.len() % 2 == 1 {
-    chunks.push(0);
-  }
+  let frame_flags = ((blend as u8) << 1) | (dispose as u8);
 
   // ANMF frames
   for (frame, vp8_data) in frames_payloads.into_iter() {
-    let mut anmf = Vec::new();
-    // frame rect: x(24) y(24) w(24) h(24) - x/y = 0
-    anmf.extend_from_slice(&[0u8, 0u8, 0u8]); // x
-    anmf.extend_from_slice(&[0u8, 0u8, 0u8]); // y
-
     let w_bytes = (frame.image.width() - 1).to_le_bytes();
     let h_bytes = (frame.image.height() - 1).to_le_bytes();
+    let vp8_payload = extract_vp8_payload(&vp8_data)?;
 
-    anmf.extend_from_slice(&w_bytes[..3]);
-    anmf.extend_from_slice(&h_bytes[..3]);
+    let payload_padded = vp8_payload.len() + (vp8_payload.len() & 1);
+    let anmf_size = 16 + 4 + 4 + payload_padded; // x, y, w, h, duration, flags, payload
 
-    // frame duration as 24-bit little-endian (milliseconds per spec)
-    anmf.extend_from_slice(&frame.duration_ms.clamp(0, U24_MAX).to_le_bytes()[..3]);
+    output.extend_from_slice(b"ANMF");
+    output.extend_from_slice(&(anmf_size as u32).to_le_bytes());
 
-    // flags: 1 bit for dispose, 1 bit for blend in LSBs of a single byte
-    let mut f: u8 = 0;
-    if !blend {
-      f |= 1 << 1;
-    }
-    if dispose {
-      f |= 1 << 0;
-    }
-    anmf.push(f);
+    // frame header (16 bytes)
+    output.extend_from_slice(&[0u8; 6]); // x, y (3 bytes each)
+    output.extend_from_slice(&w_bytes[..3]); // w (3 bytes)
+    output.extend_from_slice(&h_bytes[..3]); // h (3 bytes)
+    output.extend_from_slice(&frame.duration_ms.clamp(0, U24_MAX).to_le_bytes()[..3]); // duration (3 bytes)
+    output.push(frame_flags); // flags (1 byte)
 
-    // append frame payload as nested chunk (VP8L or VP8)
-    anmf.extend_from_slice(b"VP8L");
-    anmf.extend_from_slice(&(vp8_data.len() as u32).to_le_bytes());
-    anmf.extend_from_slice(&vp8_data);
+    // VP8L chunk: VP8L payload
+    output.extend_from_slice(b"VP8L");
+    output.extend_from_slice(&(vp8_payload.len() as u32).to_le_bytes());
+    output.extend_from_slice(vp8_payload);
 
-    if vp8_data.len() % 2 == 1 {
-      anmf.push(0);
-    }
-
-    chunks.extend_from_slice(b"ANMF");
-    chunks.extend_from_slice(&(anmf.len() as u32).to_le_bytes());
-    chunks.extend_from_slice(&anmf);
-    if anmf.len() % 2 == 1 {
-      chunks.push(0);
+    if vp8_payload.len() & 1 == 1 {
+      output.push(0);
     }
   }
 
   // write RIFF header
   destination.write_all(b"RIFF")?;
-  let total_size = (4 + chunks.len()) as u32; // 'WEBP' + chunks
+  let total_size = (4 + output.len()) as u32; // 'WEBP' + chunks
 
   destination.write_all(&total_size.to_le_bytes())?;
   destination.write_all(b"WEBP")?;
-  destination.write_all(&chunks)?;
+  destination.write_all(&output)?;
 
   Ok(())
 }
