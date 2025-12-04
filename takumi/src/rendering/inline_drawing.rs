@@ -68,6 +68,7 @@ fn draw_glyph_run(
         layout,
         image_fill,
         context.transform,
+        context.opacity,
         glyph_run.style(),
         palette,
       )?;
@@ -111,7 +112,7 @@ pub(crate) fn draw_inline_box<N: Node<N>>(
   canvas: &mut Canvas,
   transform: Affine,
 ) -> Result<()> {
-  if context.opacity == 0.0 {
+  if context.opacity == 0 {
     return Ok(());
   }
 

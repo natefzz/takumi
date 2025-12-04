@@ -405,6 +405,7 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
             Affine::translation(layout.border.left, layout.border.top) * context.transform,
             context.style.image_rendering,
             context.style.filter.as_ref(),
+            context.opacity,
           );
         }
       }
@@ -431,6 +432,7 @@ pub trait Node<N: Node<N>>: Send + Sync + Clone {
             ) * context.transform,
             context.style.image_rendering,
             context.style.filter.as_ref(),
+            context.opacity,
           );
         }
       }

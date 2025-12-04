@@ -392,6 +392,7 @@ impl Canvas {
     transform: Affine,
     algorithm: ImageScalingAlgorithm,
     filters: Option<&Filters>,
+    opacity: u8,
   ) {
     overlay_image(
       &mut self.image,
@@ -400,6 +401,7 @@ impl Canvas {
       transform,
       algorithm,
       filters,
+      opacity,
       self.constrains.last(),
       &mut self.mask_memory,
     );
@@ -521,7 +523,7 @@ pub(crate) fn apply_mask_alpha_to_pixel(pixel: &mut Rgba<u8>, alpha: u8) {
     }
     255 => {}
     alpha => {
-      pixel.0[3] = ((pixel.0[3] as f32) * (alpha as f32 / 255.0)).round() as u8;
+      pixel.0[3] = (pixel.0[3] as u16 * alpha as u16 / 255) as u8;
     }
   }
 }
@@ -572,6 +574,7 @@ pub(crate) fn overlay_image(
   transform: Affine,
   algorithm: ImageScalingAlgorithm,
   filters: Option<&Filters>,
+  opacity: u8,
   constrain: Option<&CanvasConstrain>,
   mask_memory: &mut MaskMemory,
 ) {
@@ -590,7 +593,11 @@ pub(crate) fn overlay_image(
     let translation = transform.decompose_translation();
 
     return overlay_area(canvas, translation, image.size(), constrain, |x, y| {
-      image.get_pixel(x, y)
+      let mut pixel = image.get_pixel(x, y);
+
+      apply_mask_alpha_to_pixel(&mut pixel, opacity);
+
+      pixel
     });
   }
 
@@ -622,6 +629,7 @@ pub(crate) fn overlay_image(
       let mut pixel = image.get_pixel(x + placement.left as u32, y + placement.top as u32);
 
       apply_mask_alpha_to_pixel(&mut pixel, alpha);
+      apply_mask_alpha_to_pixel(&mut pixel, opacity);
 
       return pixel;
     }
@@ -641,6 +649,7 @@ pub(crate) fn overlay_image(
     };
 
     apply_mask_alpha_to_pixel(&mut pixel, alpha);
+    apply_mask_alpha_to_pixel(&mut pixel, opacity);
 
     pixel
   };

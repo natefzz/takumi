@@ -44,7 +44,7 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
   }
 
   pub fn draw_inline(&mut self, canvas: &mut Canvas, layout: Layout) -> Result<()> {
-    if self.context.opacity == 0.0 {
+    if self.context.opacity == 0 {
       return Ok(());
     }
 
@@ -96,9 +96,9 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
 
     // currentColor itself should NOT have opacity applied yet,
     // otherwise it will cause double applying.
-    let current_color = style.color.resolve(parent_context.current_color, 1.0);
+    let current_color = style.color.resolve(parent_context.current_color, 255);
 
-    let opacity = style.opacity.0 * parent_context.opacity;
+    let opacity = (style.opacity.0 * parent_context.opacity as f32) as u8;
 
     let mut context = RenderContext {
       style,

@@ -76,6 +76,7 @@ pub(crate) fn draw_glyph(
   layout: Layout,
   fill_image: Option<&RgbaImage>,
   mut transform: Affine,
+  opacity: u8,
   text_style: &parley::Style<InlineBrush>,
   palette: Option<ColorPalette>,
 ) -> Result<()> {
@@ -118,6 +119,7 @@ pub(crate) fn draw_glyph(
           };
 
           apply_mask_alpha_to_pixel(&mut pixel, alpha);
+          apply_mask_alpha_to_pixel(&mut pixel, opacity);
 
           pixel
         },
@@ -129,6 +131,7 @@ pub(crate) fn draw_glyph(
         transform,
         ImageScalingAlgorithm::Auto,
         None,
+        255,
       );
     }
     (ResolvedGlyph::Image(bitmap), None) => {
@@ -151,6 +154,7 @@ pub(crate) fn draw_glyph(
         transform,
         Default::default(),
         None,
+        opacity,
       );
     }
     (ResolvedGlyph::Outline(outline), Some(fill_image)) => {
@@ -205,6 +209,7 @@ pub(crate) fn draw_glyph(
 
           blend_pixel(&mut pixel, text_style.brush.color.into());
           apply_mask_alpha_to_pixel(&mut pixel, alpha);
+          apply_mask_alpha_to_pixel(&mut pixel, opacity);
 
           pixel
         },

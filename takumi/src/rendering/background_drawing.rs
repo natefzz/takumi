@@ -379,6 +379,7 @@ pub(crate) fn create_mask(
           Affine::translation(*x as f32, *y as f32),
           context.style.image_rendering,
           context.style.filter.as_ref(),
+          255,
           None,
           mask_memory,
         );
@@ -486,6 +487,7 @@ pub(crate) fn create_background_image(
           Affine::translation(*x as f32 - offset.x, *y as f32 - offset.y),
           context.style.image_rendering,
           context.style.filter.as_ref(),
+          255,
           None,
           mask_memory,
         );
@@ -512,6 +514,7 @@ pub(crate) fn draw_background_layers(
           Affine::translation(*x as f32, *y as f32) * context.transform,
           ImageScalingAlgorithm::Auto,
           context.style.filter.as_ref(),
+          context.opacity,
         );
       }
     }

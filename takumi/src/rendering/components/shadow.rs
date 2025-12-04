@@ -115,6 +115,7 @@ impl SizedShadow {
       ),
       ImageScalingAlgorithm::Auto,
       None,
+      255,
       constrain,
       mask_memory,
     );
@@ -135,6 +136,7 @@ impl SizedShadow {
       transform,
       ImageScalingAlgorithm::Auto,
       None,
+      255,
     );
   }
 }

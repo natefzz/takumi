@@ -257,6 +257,7 @@ pub fn draw_image(
     transform_with_content_offset,
     context.style.image_rendering,
     context.style.filter.as_ref(),
+    context.opacity,
   );
 
   Ok(())

@@ -143,7 +143,7 @@ fn render_node<'g, Nodes: Node<Nodes>>(
     return Err(TaffyError::InvalidInputNode(node_id).into());
   };
 
-  if node.context.opacity == 0.0 || node.context.style.display == Display::None {
+  if node.context.opacity == 0 || node.context.style.display == Display::None {
     return Ok(());
   }
 
