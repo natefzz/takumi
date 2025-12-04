@@ -3,4 +3,4 @@
 "takumi": minor
 ---
 
-drop `avif` format support
+**Drop `avif` format support**
