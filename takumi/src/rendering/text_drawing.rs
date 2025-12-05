@@ -232,6 +232,7 @@ pub(crate) fn draw_glyph(
           palette,
           text_style.brush.color,
           transform,
+          opacity,
           canvas.constrains.last(),
         );
       } else {
@@ -312,6 +313,7 @@ fn collect_outline_paths(outline: &Outline) -> Vec<Command> {
 }
 
 // https://github.com/dfrg/swash/blob/3d8e6a781c93454dadf97e5c15764ceafab228e0/src/scale/mod.rs#L921
+#[allow(clippy::too_many_arguments)]
 fn draw_color_outline_image(
   canvas: &mut RgbaImage,
   mask_memory: &mut MaskMemory,
@@ -319,6 +321,7 @@ fn draw_color_outline_image(
   palette: ColorPalette,
   default_color: Color,
   transform: Affine,
+  opacity: u8,
   constrain: Option<&CanvasConstrain>,
 ) {
   for i in 0..outline.len() {
@@ -328,7 +331,7 @@ fn draw_color_outline_image(
 
     let color = layer
       .color_index()
-      .map(|index| Color(palette.get(index)))
+      .map(|index| Color(palette.get(index)).with_opacity(opacity))
       .unwrap_or(default_color);
 
     let paths = layer
