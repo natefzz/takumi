@@ -20,7 +20,7 @@ use crate::{
   },
   rendering::{
     BorderProperties, Canvas, CanvasConstrain, MaskMemory, apply_mask_alpha_to_pixel, blend_pixel,
-    draw_mask, mask_index_from_coord, overlay_area,
+    draw_mask, mask_index_from_coord, overlay_area, overlay_image,
   },
   resources::font::ResolvedGlyph,
 };
@@ -230,7 +230,6 @@ pub(crate) fn draw_glyph(
           &mut canvas.mask_memory,
           outline,
           palette,
-          text_style.brush.color,
           transform,
           opacity,
           canvas.constrains.last(),
@@ -319,20 +318,58 @@ fn draw_color_outline_image(
   mask_memory: &mut MaskMemory,
   outline: &Outline,
   palette: ColorPalette,
-  default_color: Color,
-  transform: Affine,
+  mut transform: Affine,
   opacity: u8,
   constrain: Option<&CanvasConstrain>,
 ) {
+  // Fast path: if the opacity is 255, we can just draw the outline without any blending
+  if opacity == 255 {
+    for i in 0..outline.len() {
+      let Some(layer) = outline.get(i) else {
+        break;
+      };
+
+      let Some(color) = layer.color_index().map(|index| Color(palette.get(index))) else {
+        continue;
+      };
+
+      let paths = layer
+        .path()
+        .commands()
+        .map(invert_y_coordinate)
+        .collect::<Vec<_>>();
+
+      let (mask, placement) = mask_memory.render(&paths, Some(transform), None);
+
+      draw_mask(canvas, mask, placement, color, constrain);
+    }
+
+    return;
+  }
+
+  let translation = transform.decompose_translation();
+
+  transform.x = 0.0;
+  transform.y = 0.0;
+
+  let paths = outline
+    .path()
+    .commands()
+    .map(invert_y_coordinate)
+    .collect::<Vec<_>>();
+
+  let outer_placement = mask_memory.placement(&paths, Some(transform), None);
+
+  let mut image = RgbaImage::new(outer_placement.width, outer_placement.height);
+
   for i in 0..outline.len() {
     let Some(layer) = outline.get(i) else {
       break;
     };
 
-    let color = layer
-      .color_index()
-      .map(|index| Color(palette.get(index)).with_opacity(opacity))
-      .unwrap_or(default_color);
+    let Some(color) = layer.color_index().map(|index| Color(palette.get(index))) else {
+      continue;
+    };
 
     let paths = layer
       .path()
@@ -340,10 +377,28 @@ fn draw_color_outline_image(
       .map(invert_y_coordinate)
       .collect::<Vec<_>>();
 
-    let (mask, placement) = mask_memory.render(&paths, Some(transform), None);
+    let (mask, mut placement) = mask_memory.render(&paths, Some(transform), None);
 
-    draw_mask(canvas, mask, placement, color, constrain);
+    placement.left -= outer_placement.left;
+    placement.top -= outer_placement.top;
+
+    draw_mask(&mut image, mask, placement, color, constrain);
   }
+
+  overlay_image(
+    canvas,
+    image.into(),
+    BorderProperties::default(),
+    Affine::translation(
+      translation.x + outer_placement.left as f32,
+      translation.y + outer_placement.top as f32,
+    ),
+    Default::default(),
+    None,
+    opacity,
+    constrain,
+    mask_memory,
+  );
 }
 
 #[derive(Clone, Copy, Debug)]

@@ -321,6 +321,28 @@ pub(crate) struct MaskMemory {
 }
 
 impl MaskMemory {
+  pub(crate) fn placement<D: PathData>(
+    &mut self,
+    paths: D,
+    transform: Option<Affine>,
+    style: Option<zeno::Style>,
+  ) -> Placement {
+    let style = style.unwrap_or_default();
+    let mut bounds = self
+      .scratch
+      .bounds(&paths, style, transform.map(Into::into));
+
+    bounds.min = bounds.min.floor();
+    bounds.max = bounds.max.ceil();
+
+    Placement {
+      left: bounds.min.x as i32,
+      top: bounds.min.y as i32,
+      width: (bounds.max.x - bounds.min.x) as u32,
+      height: (bounds.max.y - bounds.min.y) as u32,
+    }
+  }
+
   pub(crate) fn render<D: PathData>(
     &mut self,
     paths: D,
