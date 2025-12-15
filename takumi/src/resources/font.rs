@@ -9,8 +9,8 @@ use parley::{
   fontique::{Blob, Collection, CollectionOptions, FallbackKey, FontInfoOverride, Script},
 };
 use swash::{
-  FontRef, Setting,
-  scale::{ScaleContext, image::Image, outline::Outline},
+  FontRef,
+  scale::{ScaleContext, StrikeWith, image::Image, outline::Outline},
 };
 use thiserror::Error;
 
@@ -129,28 +129,21 @@ impl FontContext {
 
     let mut result = HashMap::new();
 
+    if unique_glyph_ids.is_empty() {
+      return result;
+    }
+
     let mut scale = ScaleContext::with_max_entries(0);
+    let mut scaler = scale
+      .builder(font_ref)
+      .size(run.font_size())
+      .normalized_coords(run.normalized_coords())
+      .build();
 
     // Process each unique glyph ID
     for &glyph_id in &unique_glyph_ids {
-      let mut scaler = scale
-        .builder(font_ref)
-        .size(run.font_size())
-        .hint(true)
-        .variations(
-          run
-            .synthesis()
-            .variation_settings()
-            .iter()
-            .map(|(tag, value)| Setting {
-              tag: u32::from_be_bytes(tag.to_be_bytes()),
-              value: *value,
-            }),
-        )
-        .build();
-
       let resolved = scaler
-        .scale_color_bitmap(glyph_id as u16, swash::scale::StrikeWith::BestFit)
+        .scale_color_bitmap(glyph_id as u16, StrikeWith::BestFit)
         .map(ResolvedGlyph::Image)
         .or_else(|| {
           scaler

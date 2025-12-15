@@ -41,6 +41,11 @@ const TEST_FONTS: &[(&str, &str, GenericFamily)] = &[
     "Twemoji Mozilla",
     GenericFamily::Emoji,
   ),
+  (
+    "fonts/archivo/Archivo-VariableFont_wdth,wght.ttf",
+    "Archivo",
+    GenericFamily::SansSerif,
+  ),
 ];
 
 fn create_test_context() -> GlobalContext {

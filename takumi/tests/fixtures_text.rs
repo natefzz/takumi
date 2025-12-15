@@ -1,4 +1,6 @@
+use parley::FontVariation;
 use smallvec::smallvec;
+use swash::tag_from_bytes;
 use takumi::layout::{
   node::{ContainerNode, NodeKind, TextNode},
   style::{LengthUnit::*, *},
@@ -41,6 +43,55 @@ fn fixtures_text_typography_regular_24px() {
   run_style_width_test(
     text.into(),
     "tests/fixtures/text_typography_regular_24px.webp",
+  );
+}
+
+#[test]
+fn fixtures_text_typography_variable_width() {
+  const WIDTHS: &[f32] = &[60.0, 100.0, 130.0];
+
+  let nodes = WIDTHS
+    .iter()
+    .map(|width| {
+      TextNode {
+        tw: None,
+        style: Some(
+          StyleBuilder::default()
+            .font_variation_settings(Some(smallvec![FontVariation {
+              tag: tag_from_bytes(b"wdth"),
+              value: *width,
+            }]))
+            .build()
+            .unwrap(),
+        ),
+        text: format!(
+          "Hello world, this is a test of the variable width font: {}%",
+          width
+        ),
+      }
+      .into()
+    })
+    .collect::<Vec<_>>();
+
+  let container = ContainerNode {
+    tw: None,
+    style: Some(
+      StyleBuilder::default()
+        .background_color(ColorInput::Value(Color([240, 240, 240, 255])))
+        .font_family(FontFamily::from_str("Archivo").ok())
+        .font_size(Some(Px(48.0)))
+        .flex_wrap(FlexWrap::Wrap)
+        .row_gap(Some(Px(48.0)))
+        .width(Percentage(100.0))
+        .build()
+        .unwrap(),
+    ),
+    children: Some(nodes),
+  };
+
+  run_style_width_test(
+    container.into(),
+    "tests/fixtures/text_typography_variable_width.webp",
   );
 }
 
