@@ -243,10 +243,11 @@ pub fn draw_image(
   let (image, offset) = process_image_for_object_fit(image, context, layout.content_box_size())?;
 
   // manually apply the border and padding to ensure rotation with origin is applied correctly
-  let transform_with_content_offset = Affine::translation(
-    layout.border.left + layout.padding.left + offset.x,
-    layout.border.top + layout.padding.top + offset.y,
-  ) * context.transform;
+  let transform_with_content_offset = context.transform
+    * Affine::translation(
+      layout.border.left + layout.padding.left + offset.x,
+      layout.border.top + layout.padding.top + offset.y,
+    );
 
   let mut border = BorderProperties::from_context(context, layout.size, layout.border);
   border.inset_by_border_width();

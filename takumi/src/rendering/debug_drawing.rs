@@ -24,10 +24,11 @@ pub fn draw_debug_border(canvas: &mut Canvas, layout: Layout, transform: Affine)
   .draw(
     canvas,
     layout.content_box_size(),
-    Affine::translation(
-      layout.padding.left + layout.border.left,
-      layout.padding.top + layout.border.top,
-    ) * transform,
+    transform
+      * Affine::translation(
+        layout.padding.left + layout.border.left,
+        layout.padding.top + layout.border.top,
+      ),
     None,
   );
 }

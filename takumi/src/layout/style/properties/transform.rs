@@ -26,16 +26,16 @@ pub enum Transform {
   Matrix(Affine),
 }
 
-/// | a b x |
-/// | c d y |
+/// | a c x |
+/// | b d y |
 /// | 0 0 1 |
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct Affine {
   /// Horizontal scaling / cosine of rotation
   pub a: f32,
-  /// Vertical shear / sine of rotation
+  /// Horizontal shear / sine of rotation
   pub b: f32,
-  /// Horizontal shear / negative sine of rotation
+  /// Vertical shear / negative sine of rotation
   pub c: f32,
   /// Vertical scaling / cosine of rotation
   pub d: f32,
@@ -50,12 +50,12 @@ impl Mul<Affine> for Affine {
 
   fn mul(self, rhs: Affine) -> Self::Output {
     Affine {
-      a: self.a * rhs.a + self.b * rhs.c,
-      b: self.a * rhs.b + self.b * rhs.d,
-      c: self.c * rhs.a + self.d * rhs.c,
-      d: self.c * rhs.b + self.d * rhs.d,
-      x: self.x * rhs.a + self.y * rhs.c + rhs.x,
-      y: self.x * rhs.b + self.y * rhs.d + rhs.y,
+      a: self.a * rhs.a + self.c * rhs.b,
+      b: self.b * rhs.a + self.d * rhs.b,
+      c: self.a * rhs.c + self.c * rhs.d,
+      d: self.b * rhs.c + self.d * rhs.d,
+      x: self.a * rhs.x + self.c * rhs.y + self.x,
+      y: self.b * rhs.x + self.d * rhs.y + self.y,
     }
   }
 }
@@ -197,6 +197,10 @@ impl Affine {
   }
 
   /// Converts the transforms to a [`Affine`] instance
+  ///
+  /// CSS transform property applies transformations from left to right.
+  /// For `transform: translate() rotate()`, the resulting matrix is translate * rotate.
+  /// When applied to point p: translate * rotate * p, rotate is applied first.
   pub(crate) fn from_transforms<'a, I: Iterator<Item = &'a Transform>>(
     transforms: I,
     context: &RenderContext,
@@ -205,26 +209,16 @@ impl Affine {
     let mut instance = Affine::IDENTITY;
 
     for transform in transforms {
-      match *transform {
-        Transform::Translate(x_length, y_length) => {
-          instance *= Affine::translation(
-            x_length.resolve_to_px(context, border_box.width),
-            y_length.resolve_to_px(context, border_box.height),
-          );
-        }
-        Transform::Scale(x_scale, y_scale) => {
-          instance *= Affine::scale(x_scale, y_scale);
-        }
-        Transform::Rotate(angle) => {
-          instance *= Affine::rotation(angle);
-        }
-        Transform::Skew(x_angle, y_angle) => {
-          instance *= Affine::skew(x_angle, y_angle);
-        }
-        Transform::Matrix(affine) => {
-          instance *= affine;
-        }
-      }
+      instance *= match *transform {
+        Transform::Translate(x_length, y_length) => Affine::translation(
+          x_length.resolve_to_px(context, border_box.width),
+          y_length.resolve_to_px(context, border_box.height),
+        ),
+        Transform::Scale(x_scale, y_scale) => Affine::scale(x_scale, y_scale),
+        Transform::Rotate(angle) => Affine::rotation(angle),
+        Transform::Skew(x_angle, y_angle) => Affine::skew(x_angle, y_angle),
+        Transform::Matrix(affine) => affine,
+      };
     }
 
     instance

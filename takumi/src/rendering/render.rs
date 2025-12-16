@@ -90,45 +90,44 @@ pub fn render<'g, N: Node<N>>(options: RenderOptions<'g, N>) -> Result<RgbaImage
   Ok(canvas.into_inner())
 }
 
-fn create_transform(
-  mut transform: Affine,
+fn apply_transform(
+  transform: &mut Affine,
   style: &InheritedStyle,
   border_box: Size<f32>,
   context: &RenderContext,
-) -> Affine {
+) {
   let transform_origin = style.transform_origin.unwrap_or_default();
+  let origin = transform_origin.to_point(context, border_box);
 
-  let center = transform_origin.to_point(context, border_box) + transform.decompose_translation();
+  // CSS Transforms Level 2 order: T(origin) * translate * rotate * scale * transform * T(-origin)
+  // Ref: https://www.w3.org/TR/css-transforms-2/#ctm
 
-  transform *= Affine::translation(-center.x, -center.y);
-
-  // https://github.com/servo/servo/blob/9dfd6990ba381cbb7b7f9faa63d3425656ceac0a/components/layout/display_list/stacking_context.rs#L1717-L1720
-  if let Some(node_transform) = &style.transform {
-    transform *= Affine::from_transforms(node_transform.iter(), context, border_box);
-  }
-
-  if let Some(rotate) = style.rotate {
-    transform *= Affine::rotation(rotate);
-  }
-
-  let scale = style.resolve_scale();
-
-  if scale != SpacePair::default() {
-    transform *= Affine::scale(scale.x.0, scale.y.0);
-  }
+  let mut local = Affine::translation(origin.x, origin.y);
 
   let translate = style.resolve_translate();
-
   if translate != SpacePair::default() {
-    transform *= Affine::translation(
+    local *= Affine::translation(
       translate.x.resolve_to_px(context, border_box.width),
       translate.y.resolve_to_px(context, border_box.height),
     );
   }
 
-  transform *= Affine::translation(center.x, center.y);
+  if let Some(rotate) = style.rotate {
+    local *= Affine::rotation(rotate);
+  }
 
-  transform
+  let scale = style.resolve_scale();
+  if scale != SpacePair::default() {
+    local *= Affine::scale(scale.x.0, scale.y.0);
+  }
+
+  if let Some(node_transform) = &style.transform {
+    local *= Affine::from_transforms(node_transform.iter(), context, border_box);
+  }
+
+  local *= Affine::translation(-origin.x, -origin.y);
+
+  *transform *= local;
 }
 
 fn render_node<'g, Nodes: Node<Nodes>>(
@@ -147,9 +146,14 @@ fn render_node<'g, Nodes: Node<Nodes>>(
     return Ok(());
   }
 
-  transform = Affine::translation(layout.location.x, layout.location.y) * transform;
+  transform *= Affine::translation(layout.location.x, layout.location.y);
 
-  transform = create_transform(transform, &node.context.style, layout.size, &node.context);
+  apply_transform(
+    &mut transform,
+    &node.context.style,
+    layout.size,
+    &node.context,
+  );
 
   // If a transform function causes the current transformation matrix of an object to be non-invertible, the object and its content do not get displayed.
   // https://drafts.csswg.org/css-transforms/#transform-function-lists

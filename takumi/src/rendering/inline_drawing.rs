@@ -117,7 +117,7 @@ pub(crate) fn draw_inline_box<N: Node<N>>(
   }
 
   let context = RenderContext {
-    transform: Affine::translation(inline_box.x, inline_box.y) * transform,
+    transform: transform * Affine::translation(inline_box.x, inline_box.y),
     ..context.clone()
   };
 

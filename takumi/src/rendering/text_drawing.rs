@@ -50,12 +50,6 @@ pub(crate) fn draw_decoration(
   layout: Layout,
   transform: Affine,
 ) {
-  let transform = transform
-    * Affine::translation(
-      layout.border.left + layout.padding.left + glyph_run.offset(),
-      layout.border.top + layout.padding.top + offset,
-    );
-
   canvas.fill_color(
     Size {
       width: glyph_run.advance(),
@@ -63,7 +57,11 @@ pub(crate) fn draw_decoration(
     },
     color,
     BorderProperties::default(),
-    transform,
+    transform
+      * Affine::translation(
+        layout.border.left + layout.padding.left + glyph_run.offset(),
+        layout.border.top + layout.padding.top + offset,
+      ),
   );
 }
 
@@ -80,15 +78,14 @@ pub(crate) fn draw_glyph(
   text_style: &parley::Style<InlineBrush>,
   palette: Option<ColorPalette>,
 ) -> Result<()> {
-  transform = Affine::translation(
+  transform *= Affine::translation(
     layout.border.left + layout.padding.left + glyph.x,
     layout.border.top + layout.padding.top + glyph.y,
-  ) * transform;
+  );
 
   match (glyph_content, fill_image) {
     (ResolvedGlyph::Image(bitmap), Some(image_fill)) => {
-      transform =
-        Affine::translation(bitmap.placement.left as f32, -bitmap.placement.top as f32) * transform;
+      transform *= Affine::translation(bitmap.placement.left as f32, -bitmap.placement.top as f32);
 
       let mask = bitmap
         .data
@@ -135,8 +132,7 @@ pub(crate) fn draw_glyph(
       );
     }
     (ResolvedGlyph::Image(bitmap), None) => {
-      transform =
-        Affine::translation(bitmap.placement.left as f32, -bitmap.placement.top as f32) * transform;
+      transform *= Affine::translation(bitmap.placement.left as f32, -bitmap.placement.top as f32);
 
       let image = RgbaImage::from_raw(
         bitmap.placement.width,
