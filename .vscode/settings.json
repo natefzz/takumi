@@ -2,5 +2,8 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.preferences.importModuleSpecifier": "shortest",
   "rust-analyzer.diagnostics.disabled": ["inactive-code"],
-  "tailwindCSS.classAttributes": ["class", "className", "tw"]
+  "tailwindCSS.classAttributes": ["class", "className", "tw"],
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  }
 }
