@@ -405,6 +405,26 @@ pub enum TailwindProperty {
   Bottom(Length),
   /// `left` property.
   Left(Length),
+  /// `filter: blur()` property.
+  Blur(TwBlur),
+  /// `filter: brightness()` property.
+  Brightness(PercentageNumber),
+  /// `filter: contrast()` property.
+  Contrast(PercentageNumber),
+  /// `filter: drop-shadow()` property.
+  DropShadow(TextShadow),
+  /// `filter: grayscale()` property.
+  Grayscale(PercentageNumber),
+  /// `filter: hue-rotate()` property.
+  HueRotate(Angle),
+  /// `filter: invert()` property.
+  Invert(PercentageNumber),
+  /// `filter: saturate()` property.
+  Saturate(PercentageNumber),
+  /// `filter: sepia()` property.
+  Sepia(PercentageNumber),
+  /// `filter` property.
+  Filter(Filters),
 }
 
 /// A trait for parsing tailwind properties.
@@ -418,35 +438,36 @@ impl Neg for TailwindProperty {
 
   fn neg(self) -> Self::Output {
     match self {
-      TailwindProperty::Margin(length_unit) => TailwindProperty::Margin(-length_unit),
-      TailwindProperty::MarginX(length_unit) => TailwindProperty::MarginX(-length_unit),
-      TailwindProperty::MarginY(length_unit) => TailwindProperty::MarginY(-length_unit),
-      TailwindProperty::MarginTop(length_unit) => TailwindProperty::MarginTop(-length_unit),
-      TailwindProperty::MarginRight(length_unit) => TailwindProperty::MarginRight(-length_unit),
-      TailwindProperty::MarginBottom(length_unit) => TailwindProperty::MarginBottom(-length_unit),
-      TailwindProperty::MarginLeft(length_unit) => TailwindProperty::MarginLeft(-length_unit),
-      TailwindProperty::Padding(length_unit) => TailwindProperty::Padding(-length_unit),
-      TailwindProperty::PaddingX(length_unit) => TailwindProperty::PaddingX(-length_unit),
-      TailwindProperty::PaddingY(length_unit) => TailwindProperty::PaddingY(-length_unit),
-      TailwindProperty::PaddingTop(length_unit) => TailwindProperty::PaddingTop(-length_unit),
-      TailwindProperty::PaddingRight(length_unit) => TailwindProperty::PaddingRight(-length_unit),
-      TailwindProperty::PaddingBottom(length_unit) => TailwindProperty::PaddingBottom(-length_unit),
-      TailwindProperty::PaddingLeft(length_unit) => TailwindProperty::PaddingLeft(-length_unit),
-      TailwindProperty::Inset(length_unit) => TailwindProperty::Inset(-length_unit),
-      TailwindProperty::InsetX(length_unit) => TailwindProperty::InsetX(-length_unit),
-      TailwindProperty::InsetY(length_unit) => TailwindProperty::InsetY(-length_unit),
-      TailwindProperty::Top(length_unit) => TailwindProperty::Top(-length_unit),
-      TailwindProperty::Right(length_unit) => TailwindProperty::Right(-length_unit),
-      TailwindProperty::Bottom(length_unit) => TailwindProperty::Bottom(-length_unit),
-      TailwindProperty::Left(length_unit) => TailwindProperty::Left(-length_unit),
-      TailwindProperty::Translate(length_unit) => TailwindProperty::Translate(-length_unit),
-      TailwindProperty::TranslateX(length_unit) => TailwindProperty::TranslateX(-length_unit),
-      TailwindProperty::TranslateY(length_unit) => TailwindProperty::TranslateY(-length_unit),
+      TailwindProperty::Margin(length) => TailwindProperty::Margin(-length),
+      TailwindProperty::MarginX(length) => TailwindProperty::MarginX(-length),
+      TailwindProperty::MarginY(length) => TailwindProperty::MarginY(-length),
+      TailwindProperty::MarginTop(length) => TailwindProperty::MarginTop(-length),
+      TailwindProperty::MarginRight(length) => TailwindProperty::MarginRight(-length),
+      TailwindProperty::MarginBottom(length) => TailwindProperty::MarginBottom(-length),
+      TailwindProperty::MarginLeft(length) => TailwindProperty::MarginLeft(-length),
+      TailwindProperty::Padding(length) => TailwindProperty::Padding(-length),
+      TailwindProperty::PaddingX(length) => TailwindProperty::PaddingX(-length),
+      TailwindProperty::PaddingY(length) => TailwindProperty::PaddingY(-length),
+      TailwindProperty::PaddingTop(length) => TailwindProperty::PaddingTop(-length),
+      TailwindProperty::PaddingRight(length) => TailwindProperty::PaddingRight(-length),
+      TailwindProperty::PaddingBottom(length) => TailwindProperty::PaddingBottom(-length),
+      TailwindProperty::PaddingLeft(length) => TailwindProperty::PaddingLeft(-length),
+      TailwindProperty::Inset(length) => TailwindProperty::Inset(-length),
+      TailwindProperty::InsetX(length) => TailwindProperty::InsetX(-length),
+      TailwindProperty::InsetY(length) => TailwindProperty::InsetY(-length),
+      TailwindProperty::Top(length) => TailwindProperty::Top(-length),
+      TailwindProperty::Right(length) => TailwindProperty::Right(-length),
+      TailwindProperty::Bottom(length) => TailwindProperty::Bottom(-length),
+      TailwindProperty::Left(length) => TailwindProperty::Left(-length),
+      TailwindProperty::Translate(length) => TailwindProperty::Translate(-length),
+      TailwindProperty::TranslateX(length) => TailwindProperty::TranslateX(-length),
+      TailwindProperty::TranslateY(length) => TailwindProperty::TranslateY(-length),
       TailwindProperty::Scale(percentage_number) => TailwindProperty::Scale(-percentage_number),
       TailwindProperty::ScaleX(percentage_number) => TailwindProperty::ScaleX(-percentage_number),
       TailwindProperty::ScaleY(percentage_number) => TailwindProperty::ScaleY(-percentage_number),
       TailwindProperty::Rotate(angle) => TailwindProperty::Rotate(-angle),
-      TailwindProperty::LetterSpacing(length_unit) => TailwindProperty::LetterSpacing(-length_unit),
+      TailwindProperty::LetterSpacing(length) => TailwindProperty::LetterSpacing(-length),
+      TailwindProperty::HueRotate(angle) => TailwindProperty::HueRotate(-angle),
       _ => self,
     }
   }
@@ -733,14 +754,14 @@ impl TailwindProperty {
       TailwindProperty::LineHeight(line_height) => {
         style.line_height = line_height.into();
       }
-      TailwindProperty::Translate(length_unit) => {
-        style.translate = Some(SpacePair::from_single(length_unit)).into();
+      TailwindProperty::Translate(length) => {
+        style.translate = Some(SpacePair::from_single(length)).into();
       }
-      TailwindProperty::TranslateX(length_unit) => {
-        style.translate_x = Some(length_unit).into();
+      TailwindProperty::TranslateX(length) => {
+        style.translate_x = Some(length).into();
       }
-      TailwindProperty::TranslateY(length_unit) => {
-        style.translate_y = Some(length_unit).into();
+      TailwindProperty::TranslateY(length) => {
+        style.translate_y = Some(length).into();
       }
       TailwindProperty::Rotate(angle) => {
         style.rotate = Some(angle).into();
@@ -757,68 +778,68 @@ impl TailwindProperty {
       TailwindProperty::TransformOrigin(background_position) => {
         style.transform_origin = Some(background_position).into();
       }
-      TailwindProperty::Margin(length_unit) => {
-        style.margin = Sides([length_unit; 4]).into();
+      TailwindProperty::Margin(length) => {
+        style.margin = Sides([length; 4]).into();
       }
-      TailwindProperty::MarginX(length_unit) => {
-        style.margin_inline = Some(SpacePair::from_single(length_unit)).into();
+      TailwindProperty::MarginX(length) => {
+        style.margin_inline = Some(SpacePair::from_single(length)).into();
       }
-      TailwindProperty::MarginY(length_unit) => {
-        style.margin_block = Some(SpacePair::from_single(length_unit)).into();
+      TailwindProperty::MarginY(length) => {
+        style.margin_block = Some(SpacePair::from_single(length)).into();
       }
-      TailwindProperty::MarginTop(length_unit) => {
-        style.margin_top = Some(length_unit).into();
+      TailwindProperty::MarginTop(length) => {
+        style.margin_top = Some(length).into();
       }
-      TailwindProperty::MarginRight(length_unit) => {
-        style.margin_right = Some(length_unit).into();
+      TailwindProperty::MarginRight(length) => {
+        style.margin_right = Some(length).into();
       }
-      TailwindProperty::MarginBottom(length_unit) => {
-        style.margin_bottom = Some(length_unit).into();
+      TailwindProperty::MarginBottom(length) => {
+        style.margin_bottom = Some(length).into();
       }
-      TailwindProperty::MarginLeft(length_unit) => {
-        style.margin_left = Some(length_unit).into();
+      TailwindProperty::MarginLeft(length) => {
+        style.margin_left = Some(length).into();
       }
-      TailwindProperty::Padding(length_unit) => {
-        style.padding = Sides([length_unit; 4]).into();
+      TailwindProperty::Padding(length) => {
+        style.padding = Sides([length; 4]).into();
       }
-      TailwindProperty::PaddingX(length_unit) => {
-        style.padding_inline = Some(SpacePair::from_single(length_unit)).into();
+      TailwindProperty::PaddingX(length) => {
+        style.padding_inline = Some(SpacePair::from_single(length)).into();
       }
-      TailwindProperty::PaddingY(length_unit) => {
-        style.padding_block = Some(SpacePair::from_single(length_unit)).into();
+      TailwindProperty::PaddingY(length) => {
+        style.padding_block = Some(SpacePair::from_single(length)).into();
       }
-      TailwindProperty::PaddingTop(length_unit) => {
-        style.padding_top = Some(length_unit).into();
+      TailwindProperty::PaddingTop(length) => {
+        style.padding_top = Some(length).into();
       }
-      TailwindProperty::PaddingRight(length_unit) => {
-        style.padding_right = Some(length_unit).into();
+      TailwindProperty::PaddingRight(length) => {
+        style.padding_right = Some(length).into();
       }
-      TailwindProperty::PaddingBottom(length_unit) => {
-        style.padding_bottom = Some(length_unit).into();
+      TailwindProperty::PaddingBottom(length) => {
+        style.padding_bottom = Some(length).into();
       }
-      TailwindProperty::PaddingLeft(length_unit) => {
-        style.padding_left = Some(length_unit).into();
+      TailwindProperty::PaddingLeft(length) => {
+        style.padding_left = Some(length).into();
       }
-      TailwindProperty::Inset(length_unit) => {
-        style.inset = Sides([length_unit; 4]).into();
+      TailwindProperty::Inset(length) => {
+        style.inset = Sides([length; 4]).into();
       }
-      TailwindProperty::InsetX(length_unit) => {
-        style.inset_inline = Some(SpacePair::from_single(length_unit)).into();
+      TailwindProperty::InsetX(length) => {
+        style.inset_inline = Some(SpacePair::from_single(length)).into();
       }
-      TailwindProperty::InsetY(length_unit) => {
-        style.inset_block = Some(SpacePair::from_single(length_unit)).into();
+      TailwindProperty::InsetY(length) => {
+        style.inset_block = Some(SpacePair::from_single(length)).into();
       }
-      TailwindProperty::Top(length_unit) => {
-        style.top = Some(length_unit).into();
+      TailwindProperty::Top(length) => {
+        style.top = Some(length).into();
       }
-      TailwindProperty::Right(length_unit) => {
-        style.right = Some(length_unit).into();
+      TailwindProperty::Right(length) => {
+        style.right = Some(length).into();
       }
-      TailwindProperty::Bottom(length_unit) => {
-        style.bottom = Some(length_unit).into();
+      TailwindProperty::Bottom(length) => {
+        style.bottom = Some(length).into();
       }
-      TailwindProperty::Left(length_unit) => {
-        style.left = Some(length_unit).into();
+      TailwindProperty::Left(length) => {
+        style.left = Some(length).into();
       }
       TailwindProperty::GridAutoColumns(grid_auto_size) => {
         style.grid_auto_columns = Some(vec![grid_auto_size]).into();
@@ -877,6 +898,36 @@ impl TailwindProperty {
       }
       TailwindProperty::GridRowSpan(grid_placement_span) => {
         style.grid_row = Some(GridLine::span(grid_placement_span)).into();
+      }
+      TailwindProperty::Blur(tw_blur) => {
+        style.filter = smallvec![Filter::Blur(tw_blur.0)].into();
+      }
+      TailwindProperty::Brightness(percentage_number) => {
+        style.filter = smallvec![Filter::Brightness(percentage_number)].into();
+      }
+      TailwindProperty::Contrast(percentage_number) => {
+        style.filter = smallvec![Filter::Contrast(percentage_number)].into();
+      }
+      TailwindProperty::DropShadow(text_shadow) => {
+        style.filter = smallvec![Filter::DropShadow(text_shadow)].into();
+      }
+      TailwindProperty::Grayscale(percentage_number) => {
+        style.filter = smallvec![Filter::Grayscale(percentage_number)].into();
+      }
+      TailwindProperty::HueRotate(angle) => {
+        style.filter = smallvec![Filter::HueRotate(angle)].into();
+      }
+      TailwindProperty::Invert(percentage_number) => {
+        style.filter = smallvec![Filter::Invert(percentage_number)].into();
+      }
+      TailwindProperty::Saturate(percentage_number) => {
+        style.filter = smallvec![Filter::Saturate(percentage_number)].into();
+      }
+      TailwindProperty::Sepia(percentage_number) => {
+        style.filter = smallvec![Filter::Sepia(percentage_number)].into();
+      }
+      TailwindProperty::Filter(ref filters) => {
+        style.filter = filters.clone().into();
       }
     }
   }

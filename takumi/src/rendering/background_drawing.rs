@@ -87,7 +87,7 @@ pub(crate) fn resolve_background_size(
   }
 }
 
-pub(crate) fn resolve_length_unit_to_position_component(
+pub(crate) fn resolve_length_to_position_component(
   length: Length,
   available: i32,
   sizing: &Sizing,
@@ -111,7 +111,7 @@ pub(crate) fn resolve_position_component_x(
     PositionComponent::KeywordX(PositionKeywordX::Right) => available,
     PositionComponent::KeywordY(_) => available / 2,
     PositionComponent::Length(length) => {
-      resolve_length_unit_to_position_component(length, available, sizing)
+      resolve_length_to_position_component(length, available, sizing)
     }
   }
 }
@@ -129,7 +129,7 @@ pub(crate) fn resolve_position_component_y(
     PositionComponent::KeywordY(PositionKeywordY::Bottom) => available,
     PositionComponent::KeywordX(_) => available / 2,
     PositionComponent::Length(length) => {
-      resolve_length_unit_to_position_component(length, available, sizing)
+      resolve_length_to_position_component(length, available, sizing)
     }
   }
 }

@@ -4,7 +4,10 @@ use smallvec::SmallVec;
 use taffy::Size;
 
 use crate::{
-  layout::style::{Angle, Color, FromCss, Length, ParseResult, PercentageNumber, TextShadow},
+  layout::style::{
+    Angle, Color, FromCss, Length, ParseResult, PercentageNumber, TextShadow,
+    tw::TailwindPropertyParser,
+  },
   rendering::{SizedShadow, Sizing, apply_fast_blur, blend_pixel},
 };
 
@@ -23,6 +26,8 @@ pub enum Filter {
   HueRotate(Angle),
   /// Invert amount (0..1). Accepts number or percentage
   Invert(PercentageNumber),
+  /// Sepia amount (0..1). Accepts number or percentage
+  Sepia(PercentageNumber),
   /// Opacity amount (0..1). Accepts number or percentage
   Opacity(PercentageNumber),
   /// Blur radius in pixels
@@ -33,6 +38,12 @@ pub enum Filter {
 
 /// A list of filter operations
 pub type Filters = SmallVec<[Filter; 2]>;
+
+impl TailwindPropertyParser for Filters {
+  fn parse_tw(_token: &str) -> Option<Self> {
+    None
+  }
+}
 
 /// Categorizes filters for batch processing
 enum FilterCategory<'f> {
@@ -85,6 +96,20 @@ fn apply_single_pixel_filter(pixel: &mut Rgba<u8>, filter: &Filter) {
         *channel =
           ((*channel as f32 * (1.0 - amount)) + (inverted as f32 * amount)).clamp(0.0, 255.0) as u8;
       }
+    }
+    Filter::Sepia(PercentageNumber(amount)) => {
+      // Sepia tone matrix coefficients
+      let r = pixel.0[0] as f32;
+      let g = pixel.0[1] as f32;
+      let b = pixel.0[2] as f32;
+
+      let sepia_r = (r * 0.393 + g * 0.769 + b * 0.189).clamp(0.0, 255.0);
+      let sepia_g = (r * 0.349 + g * 0.686 + b * 0.168).clamp(0.0, 255.0);
+      let sepia_b = (r * 0.272 + g * 0.534 + b * 0.131).clamp(0.0, 255.0);
+
+      pixel.0[0] = (r * (1.0 - amount) + sepia_r * amount).clamp(0.0, 255.0) as u8;
+      pixel.0[1] = (g * (1.0 - amount) + sepia_g * amount).clamp(0.0, 255.0) as u8;
+      pixel.0[2] = (b * (1.0 - amount) + sepia_b * amount).clamp(0.0, 255.0) as u8;
     }
     Filter::Opacity(PercentageNumber(value)) => {
       pixel.0[3] = ((pixel.0[3]) as f32 * value).clamp(0.0, 255.0) as u8;
@@ -341,6 +366,9 @@ impl<'i> FromCss<'i> for Filter {
       }),
       "saturate" => parser.parse_nested_block(|input| {
         Ok(Filter::Saturate(PercentageNumber::from_css(input)?))
+      }),
+      "sepia" => parser.parse_nested_block(|input| {
+        Ok(Filter::Sepia(PercentageNumber::from_css(input)?))
       }),
       "blur" => parser.parse_nested_block(|input| {
         // blur() can have an optional radius, defaults to 0

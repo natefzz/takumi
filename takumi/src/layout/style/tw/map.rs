@@ -66,6 +66,8 @@ pub enum PropertyParser {
   Flex(fn(Flex) -> TailwindProperty),
   Angle(fn(Angle) -> TailwindProperty),
   BackgroundClip(fn(BackgroundClip) -> TailwindProperty),
+  Blur(fn(TwBlur) -> TailwindProperty),
+  Filter(fn(Filters) -> TailwindProperty),
 }
 
 impl PropertyParser {
@@ -104,6 +106,8 @@ impl PropertyParser {
       Self::LineHeight(f) => parse_property(suffix, *f),
       Self::Flex(f) => parse_property(suffix, *f),
       Self::Angle(f) => parse_property(suffix, *f),
+      Self::Blur(f) => parse_property(suffix, *f),
+      Self::Filter(f) => parse_property(suffix, *f),
     }
   }
 }
@@ -222,6 +226,15 @@ pub static PREFIX_PARSERS: phf::Map<&str, &[PropertyParser]> = phf_map! {
   "row-start" => &[PropertyParser::GridPlacement(TailwindProperty::GridRowStart)],
   "row-end" => &[PropertyParser::GridPlacement(TailwindProperty::GridRowEnd)],
   "tracking" => &[PropertyParser::LetterSpacing(TailwindProperty::LetterSpacing)],
+  "blur" => &[PropertyParser::Blur(TailwindProperty::Blur)],
+  "brightness" => &[PropertyParser::Percentage(TailwindProperty::Brightness)],
+  "contrast" => &[PropertyParser::Percentage(TailwindProperty::Contrast)],
+  "grayscale" => &[PropertyParser::Percentage(TailwindProperty::Grayscale)],
+  "hue-rotate" => &[PropertyParser::Angle(TailwindProperty::HueRotate)],
+  "invert" => &[PropertyParser::Percentage(TailwindProperty::Invert)],
+  "saturate" => &[PropertyParser::Percentage(TailwindProperty::Saturate)],
+  "sepia" => &[PropertyParser::Percentage(TailwindProperty::Sepia)],
+  "filter" => &[PropertyParser::Filter(TailwindProperty::Filter)],
 };
 
 pub static FIXED_PROPERTIES: phf::Map<&str, TailwindProperty> = phf_map! {
@@ -348,4 +361,7 @@ pub static FIXED_PROPERTIES: phf::Map<&str, TailwindProperty> = phf_map! {
     spread_radius: Length::Px(0.0),
     color: ColorInput::Value(Color([0, 0, 0, 0])),
   }),
+  "grayscale" => TailwindProperty::Grayscale(PercentageNumber(1.0)),
+  "invert" => TailwindProperty::Invert(PercentageNumber(1.0)),
+  "sepia" => TailwindProperty::Sepia(PercentageNumber(1.0)),
 };

@@ -94,6 +94,7 @@ fn test_style_filter_on_image_node() {
     "invert(50%)",
     "hue-rotate(90deg)",
     "saturate(0.3)",
+    "sepia(100%)",
   ];
 
   let container = create_filter_test_container(&effects, 16.0, 128.0, 24.0);
@@ -132,4 +133,12 @@ fn test_style_filter_combined() {
 
   let container = create_filter_test_container(&combined_filters, 16.0, 140.0, 16.0);
   run_style_width_test(container, "tests/fixtures/style_filter_combined.webp");
+}
+
+#[test]
+fn test_style_filter_sepia() {
+  let sepia_values = ["sepia(0%)", "sepia(50%)", "sepia(75%)", "sepia(100%)"];
+
+  let container = create_filter_test_container(&sepia_values, 16.0, 150.0, 24.0);
+  run_style_width_test(container, "tests/fixtures/style_filter_sepia.webp");
 }

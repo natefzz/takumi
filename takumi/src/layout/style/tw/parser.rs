@@ -189,3 +189,28 @@ impl TailwindPropertyParser for TwRounded {
     }
   }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TwBlur(pub(crate) Length);
+
+impl<'i> FromCss<'i> for TwBlur {
+  fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
+    Ok(TwBlur(Length::from_css(input)?))
+  }
+}
+
+impl TailwindPropertyParser for TwBlur {
+  fn parse_tw(token: &str) -> Option<Self> {
+    match_ignore_ascii_case! {token,
+      "none" => Some(TwBlur(Length::Px(0.0))),
+      "xs" => Some(TwBlur(Length::Px(4.0))),
+      "sm" => Some(TwBlur(Length::Px(8.0))),
+      "md" => Some(TwBlur(Length::Px(12.0))),
+      "lg" => Some(TwBlur(Length::Px(16.0))),
+      "xl" => Some(TwBlur(Length::Px(24.0))),
+      "2xl" => Some(TwBlur(Length::Px(40.0))),
+      "3xl" => Some(TwBlur(Length::Px(64.0))),
+      _ => None,
+    }
+  }
+}
