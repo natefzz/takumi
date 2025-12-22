@@ -8,7 +8,7 @@ use crate::{
     Angle, Color, FromCss, Length, ParseResult, PercentageNumber, TextShadow,
     tw::TailwindPropertyParser,
   },
-  rendering::{SizedShadow, Sizing, apply_blur, blend_pixel},
+  rendering::{SizedShadow, Sizing, apply_blur, blend_pixel, fast_div_255},
 };
 
 /// Represents a single CSS filter operation
@@ -261,7 +261,7 @@ fn apply_drop_shadow_filter(canvas: &mut RgbaImage, shadow: &SizedShadow) {
             shadow_color.0[1],
             shadow_color.0[2],
             // Blend shadow alpha with source alpha
-            ((shadow_color.0[3] as u32 * alpha as u32) / 255) as u8,
+            fast_div_255(shadow_color.0[3] as u16 * alpha as u16),
           ]),
         );
       }

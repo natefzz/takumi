@@ -15,7 +15,7 @@ use zeno::{Mask, PathData, Placement, Scratch};
 
 use crate::{
   layout::style::{Affine, Color, ImageScalingAlgorithm, InheritedStyle, Overflow},
-  rendering::{BorderProperties, RenderContext, create_mask},
+  rendering::{BorderProperties, RenderContext, create_mask, fast_div_255},
 };
 
 #[derive(Clone)]
@@ -547,7 +547,7 @@ pub(crate) fn apply_mask_alpha_to_pixel(pixel: &mut Rgba<u8>, alpha: u8) {
     }
     255 => {}
     alpha => {
-      pixel.0[3] = (pixel.0[3] as u16 * alpha as u16 / 255) as u8;
+      pixel.0[3] = fast_div_255(pixel.0[3] as u16 * alpha as u16);
     }
   }
 }
