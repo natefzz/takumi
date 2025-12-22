@@ -13,23 +13,36 @@ use crate::{
 /// This is necessary before blurring to avoid black halo artifacts.
 fn to_premultiplied_alpha(image: &mut RgbaImage) {
   for pixel in image.pixels_mut() {
-    let alpha = pixel.0[3] as f32 / 255.0;
-    pixel.0[0] = (pixel.0[0] as f32 * alpha).round() as u8;
-    pixel.0[1] = (pixel.0[1] as f32 * alpha).round() as u8;
-    pixel.0[2] = (pixel.0[2] as f32 * alpha).round() as u8;
+    let alpha = pixel.0[3];
+
+    // Skip fully transparent or fully opaque pixels (no change needed)
+    if alpha == 0 || alpha == 255 {
+      continue;
+    }
+
+    // Use integer math to avoid floating point operations
+    let alpha_u32 = alpha as u32;
+    pixel.0[0] = ((pixel.0[0] as u32 * alpha_u32) / 255) as u8;
+    pixel.0[1] = ((pixel.0[1] as u32 * alpha_u32) / 255) as u8;
+    pixel.0[2] = ((pixel.0[2] as u32 * alpha_u32) / 255) as u8;
   }
 }
 
 /// Converts an image from premultiplied alpha back to straight alpha.
 fn from_premultiplied_alpha(image: &mut RgbaImage) {
   for pixel in image.pixels_mut() {
-    let alpha = pixel.0[3] as f32;
-    if alpha > 0.0 {
-      let inv_alpha = 255.0 / alpha;
-      pixel.0[0] = (pixel.0[0] as f32 * inv_alpha).min(255.0).round() as u8;
-      pixel.0[1] = (pixel.0[1] as f32 * inv_alpha).min(255.0).round() as u8;
-      pixel.0[2] = (pixel.0[2] as f32 * inv_alpha).min(255.0).round() as u8;
+    let alpha = pixel.0[3];
+
+    // Skip fully transparent or fully opaque pixels (no change needed)
+    if alpha == 0 || alpha == 255 {
+      continue;
     }
+
+    // Use integer math with checked operations to avoid overflow
+    let alpha_u32 = alpha as u32;
+    pixel.0[0] = (((pixel.0[0] as u32 * 255) / alpha_u32).min(255)) as u8;
+    pixel.0[1] = (((pixel.0[1] as u32 * 255) / alpha_u32).min(255)) as u8;
+    pixel.0[2] = (((pixel.0[2] as u32 * 255) / alpha_u32).min(255)) as u8;
   }
 }
 
