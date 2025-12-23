@@ -337,7 +337,7 @@ jobs:
   test-template:
     name: Test @takumi-rs/template
     runs-on: ubuntu-latest
-    needs: [build-template, build-napi]
+    needs: [build-template, build-napi, build-helpers]
     steps:
       - uses: actions/checkout@v6
 
@@ -471,7 +471,7 @@ jobs:
     
   test-wasm:
     name: Test @takumi-rs/wasm
-    needs: [build-wasm]
+    needs: [build-wasm, build-helpers]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
