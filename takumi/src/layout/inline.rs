@@ -8,6 +8,7 @@ use crate::{
   layout::{
     node::Node,
     style::{Color, SizedFontStyle, TextWrapStyle},
+    tree::NodeTree,
   },
   rendering::{
     MaxHeight, RenderContext, apply_text_transform, apply_white_space_collapse, make_balanced_text,
@@ -69,13 +70,7 @@ impl Default for InlineBrush {
   }
 }
 
-pub(crate) fn measure_inline_layout(
-  layout: &mut InlineLayout,
-  max_width: f32,
-  max_height: Option<MaxHeight>,
-) -> Size<f32> {
-  break_lines(layout, max_width, max_height);
-
+pub(crate) fn measure_inline_layout(layout: &mut InlineLayout, max_width: f32) -> Size<f32> {
   let (max_run_width, total_height) =
     layout
       .lines()
@@ -111,11 +106,10 @@ pub(crate) fn create_inline_layout<'c, 'g: 'c, N: Node<N> + 'c>(
     for item in items {
       match item {
         InlineItem::Text { text, context } => {
+          let span_style = context.style.to_sized_font_style(context);
           let transformed = apply_text_transform(&text, context.style.text_transform);
           let collapsed =
             apply_white_space_collapse(&transformed, style.parent.white_space_collapse());
-
-          let span_style = context.style.to_sized_font_style(context);
 
           builder.push_style_span((&span_style).into());
           builder.push_text(&collapsed);
@@ -149,7 +143,6 @@ pub(crate) fn create_inline_layout<'c, 'g: 'c, N: Node<N> + 'c>(
           });
 
           builder.push_inline_box(inline_box);
-
           idx += 1;
         }
       }
@@ -243,65 +236,29 @@ pub(crate) fn break_lines(
     return layout.break_all_lines(Some(max_width));
   };
 
-  match max_height {
-    MaxHeight::Lines(lines) => {
-      let mut breaker = layout.break_lines();
+  let (limit_height, limit_lines) = match max_height {
+    MaxHeight::Lines(lines) => (f32::MAX, lines),
+    MaxHeight::Absolute(height) => (height, u32::MAX),
+    MaxHeight::HeightAndLines(height, lines) => (height, lines),
+  };
 
-      for _ in 0..lines {
-        if breaker.break_next(max_width).is_none() {
-          // no more lines to break
-          break;
-        };
-      }
+  let mut total_height = 0.0;
+  let mut line_count = 0;
+  let mut breaker = layout.break_lines();
 
-      breaker.finish();
-    }
-    MaxHeight::Absolute(max_height) => {
-      let mut total_height = 0.0;
-      let mut breaker = layout.break_lines();
-
-      while total_height < max_height {
-        let Some((_, height)) = breaker.break_next(max_width) else {
-          // no more lines to break
-          break;
-        };
-
-        total_height += height;
-      }
-
-      // if its over the max height after last break, revert the break
-      if total_height > max_height {
-        breaker.revert();
-      }
-
-      breaker.finish();
-    }
-    MaxHeight::HeightAndLines(max_height, max_lines) => {
-      let mut total_height = 0.0;
-      let mut line_count = 0;
-      let mut breaker = layout.break_lines();
-
-      while total_height < max_height {
-        if line_count >= max_lines {
-          break;
-        }
-
-        let Some((_, height)) = breaker.break_next(max_width) else {
-          // no more lines to break
-          break;
-        };
-
-        line_count += 1;
-        total_height += height;
-      }
-
-      if total_height > max_height {
-        breaker.revert();
-      }
-
-      breaker.finish();
-    }
+  while total_height < limit_height && line_count < limit_lines {
+    let Some((_, height)) = breaker.break_next(max_width) else {
+      break;
+    };
+    total_height += height;
+    line_count += 1;
   }
+
+  if total_height > limit_height {
+    breaker.revert();
+  }
+
+  breaker.finish();
 }
 
 /// Truncates text and inline boxes in the layout and appends an ellipsis character.
@@ -367,6 +324,50 @@ fn make_ellipsis_layout<'c, 'g: 'c, N: Node<N> + 'c>(
         } else {
           // Text span is empty, remove it
           spans.pop();
+        }
+      }
+    }
+  }
+}
+
+pub(crate) struct InlineItemIterator<'n, 'g, N: Node<N>> {
+  pub(crate) stack: Vec<(&'n NodeTree<'g, N>, usize)>, // (node, depth)
+  pub(crate) current_node_content: Option<InlineItem<'n, 'g, N>>,
+}
+
+impl<'n, 'g, N: Node<N>> Iterator for InlineItemIterator<'n, 'g, N> {
+  type Item = InlineItem<'n, 'g, N>;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    loop {
+      if let Some(content) = self.current_node_content.take() {
+        return Some(content);
+      }
+
+      let (node, depth) = self.stack.pop()?;
+
+      if let Some(children) = &node.children {
+        for child in children.iter().rev() {
+          self.stack.push((child, depth + 1));
+        }
+      }
+
+      if let Some(inline_content) = node.node.as_ref().and_then(Node::inline_content) {
+        match inline_content {
+          InlineContentKind::Box => {
+            if let Some(n) = &node.node {
+              self.current_node_content = Some(InlineItem::Node(InlineNodeItem {
+                node: n,
+                context: &node.context,
+              }));
+            }
+          }
+          InlineContentKind::Text(text) => {
+            self.current_node_content = Some(InlineItem::Text {
+              text,
+              context: &node.context,
+            });
+          }
         }
       }
     }

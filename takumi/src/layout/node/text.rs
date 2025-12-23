@@ -132,7 +132,7 @@ impl<Nodes: Node<Nodes>> Node<Nodes> for TextNode {
       InlineLayoutStage::Measure,
     );
 
-    measure_inline_layout(&mut layout, max_width, max_height)
+    measure_inline_layout(&mut layout, max_width)
   }
 
   fn get_style(&self) -> Option<&Style> {

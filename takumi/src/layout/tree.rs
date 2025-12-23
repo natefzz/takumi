@@ -6,8 +6,8 @@ use crate::{
   Result,
   layout::{
     inline::{
-      InlineContentKind, InlineItem, InlineLayoutStage, InlineNodeItem, ProcessedInlineSpan,
-      create_inline_constraint, create_inline_layout, measure_inline_layout,
+      InlineItemIterator, InlineLayoutStage, ProcessedInlineSpan, create_inline_constraint,
+      create_inline_layout, measure_inline_layout,
     },
     node::Node,
     style::{Display, InheritedStyle},
@@ -21,7 +21,7 @@ use crate::{
 pub(crate) struct NodeTree<'g, N: Node<N>> {
   pub(crate) context: RenderContext<'g>,
   pub(crate) node: Option<N>,
-  children: Option<Vec<NodeTree<'g, N>>>,
+  pub(crate) children: Option<Vec<NodeTree<'g, N>>>,
 }
 
 impl<'g, N: Node<N>> NodeTree<'g, N> {
@@ -274,7 +274,7 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
         InlineLayoutStage::Measure,
       );
 
-      return measure_inline_layout(&mut layout, max_width, max_height);
+      return measure_inline_layout(&mut layout, max_width);
     }
 
     assert_ne!(
@@ -294,55 +294,6 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
     InlineItemIterator {
       stack: vec![(self, 0)], // (node, depth)
       current_node_content: None,
-    }
-  }
-}
-
-/// Iterator for traversing inline items in document order
-pub(crate) struct InlineItemIterator<'n, 'g, N: Node<N>> {
-  stack: Vec<(&'n NodeTree<'g, N>, usize)>, // (node, depth)
-  current_node_content: Option<InlineItem<'n, 'g, N>>,
-}
-
-impl<'n, 'g, N: Node<N>> Iterator for InlineItemIterator<'n, 'g, N> {
-  type Item = InlineItem<'n, 'g, N>;
-
-  fn next(&mut self) -> Option<Self::Item> {
-    loop {
-      // If we have current node content to return, return it
-      if let Some(content) = self.current_node_content.take() {
-        return Some(content);
-      }
-
-      // Get the next node from the stack
-      let (node, depth) = self.stack.pop()?;
-
-      // Push children onto stack in reverse order (so they process in forward order)
-      if let Some(children) = &node.children {
-        for child in children.iter().rev() {
-          self.stack.push((child, depth + 1));
-        }
-      }
-
-      // Prepare the current node's content
-      if let Some(inline_content) = node.node.as_ref().and_then(Node::inline_content) {
-        match inline_content {
-          InlineContentKind::Box => {
-            if let Some(n) = &node.node {
-              self.current_node_content = Some(InlineItem::Node(InlineNodeItem {
-                node: n,
-                context: &node.context,
-              }));
-            }
-          }
-          InlineContentKind::Text(text) => {
-            self.current_node_content = Some(InlineItem::Text {
-              text,
-              context: &node.context,
-            });
-          }
-        }
-      }
     }
   }
 }
