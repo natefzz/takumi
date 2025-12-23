@@ -372,7 +372,7 @@ jobs:
         run: bun test
 
   test-napi:
-    needs: build-napi
+    needs: [build-napi, build-helpers, build-template]
     name: Test @takumi-rs/core for ${{ matrix.settings.target }}
     strategy:
       fail-fast: false
@@ -412,6 +412,12 @@ jobs:
         with:
           name: helpers-dist
           path: takumi-helpers/dist
+
+      - name: Download template artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: template-dist
+          path: takumi-template/dist
 
       - name: Install dependencies
         run: bun install --frozen-lockfile --filter ./takumi-napi-core
@@ -615,18 +621,6 @@ jobs:
         with:
           name: image-response-dist
           path: takumi-image-response/dist
-
-      - name: Download template artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: template-dist
-          path: takumi-template/dist
-
-      - name: Download helpers artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: helpers-dist
-          path: takumi-helpers/dist
 
       - name: Download template artifact
         uses: actions/download-artifact@v7
