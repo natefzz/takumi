@@ -1,5 +1,13 @@
 # takumi
 
+## 0.60.1
+
+### Patch Changes
+
+- 71ab744: Unify text node & inline logic
+
+  Brings more unified and consistent ellipsis, transform, collapse, measurement behavior.
+
 ## 0.60.0
 
 ### Minor Changes
