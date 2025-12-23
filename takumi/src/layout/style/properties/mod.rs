@@ -37,6 +37,7 @@ mod text_decoration;
 mod text_overflow;
 mod text_shadow;
 mod text_stroke;
+mod text_wrap;
 mod transform;
 mod white_space;
 mod word_break;
@@ -77,6 +78,7 @@ pub use text_decoration::*;
 pub use text_overflow::*;
 pub use text_shadow::*;
 pub use text_stroke::*;
+pub use text_wrap::*;
 pub use transform::*;
 pub use white_space::*;
 pub use word_break::*;
@@ -699,39 +701,6 @@ impl<'a> From<&'a FontFamily> for FontStack<'a> {
 impl From<&str> for FontFamily {
   fn from(family: &str) -> Self {
     FontFamily(family.to_string())
-  }
-}
-
-/// Controls whether text should be wrapped.
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
-pub enum TextWrapMode {
-  /// Text is wrapped across lines at appropriate characters to minimize overflow.
-  #[default]
-  Wrap,
-  /// Text does not wrap across lines. It will overflow its containing element rather than breaking onto a new line.
-  NoWrap,
-}
-
-impl From<TextWrapMode> for parley::TextWrapMode {
-  fn from(value: TextWrapMode) -> Self {
-    match value {
-      TextWrapMode::Wrap => parley::TextWrapMode::Wrap,
-      TextWrapMode::NoWrap => parley::TextWrapMode::NoWrap,
-    }
-  }
-}
-
-impl<'i> FromCss<'i> for TextWrapMode {
-  fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
-    let ident = input.expect_ident()?;
-    match_ignore_ascii_case! {ident,
-      "wrap" => Ok(TextWrapMode::Wrap),
-      "nowrap" => Ok(TextWrapMode::NoWrap),
-      _ => {
-        let token = Token::Ident(ident.clone());
-        Err(input.new_basic_unexpected_token_error(token).into())
-      }
-    }
   }
 }
 

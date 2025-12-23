@@ -13,7 +13,7 @@ use zeno::{Command, Join, PathData, Stroke};
 use crate::{
   GlobalContext, Result,
   layout::{
-    inline::{InlineBrush, break_lines},
+    inline::{InlineBrush, InlineLayout, break_lines},
     style::{
       Affine, Color, ImageScalingAlgorithm, SizedFontStyle, TextTransform, WhiteSpaceCollapse,
     },
@@ -506,6 +506,97 @@ pub(crate) fn apply_white_space_collapse<'a>(
 
       Cow::Owned(out.trim().to_string())
     }
+  }
+}
+
+/// Use binary search to find the minimum width that maintains the same number of lines.
+/// Returns `true` if a meaningful adjustment was made.
+pub(crate) fn make_balanced_text(
+  inline_layout: &mut InlineLayout,
+  max_width: f32,
+  target_lines: usize,
+) -> bool {
+  if target_lines <= 1 {
+    return false;
+  }
+
+  // Binary search between half width and full width
+  let mut left = max_width / 2.0;
+  let mut right = max_width;
+
+  // Safety limit on iterations to prevent infinite loops
+  const MAX_ITERATIONS: u32 = 20;
+  let mut iterations = 0;
+
+  while left + 1.0 < right && iterations < MAX_ITERATIONS {
+    iterations += 1;
+    let mid = (left + right) / 2.0;
+
+    break_lines(inline_layout, mid, None);
+    let lines_at_mid = inline_layout.lines().count();
+
+    if lines_at_mid > target_lines {
+      // Too narrow, need more width
+      left = mid;
+    } else {
+      // Can fit in target lines, try narrower
+      right = mid;
+    }
+  }
+
+  let balanced_width = right.ceil();
+
+  // No meaningful adjustment if within 1px of max_width
+  if (balanced_width - max_width).abs() < 1.0 {
+    // Reset to original max_width
+    break_lines(inline_layout, max_width, None);
+    false
+  } else {
+    // Apply the balanced width
+    break_lines(inline_layout, balanced_width, None);
+    true
+  }
+}
+
+/// Attempts to avoid orphans (single short words on the last line) by adjusting line breaks.
+/// Returns `true` if a meaningful adjustment was made.
+pub(crate) fn make_pretty_text(inline_layout: &mut InlineLayout, max_width: f32) -> bool {
+  // Get the last line width at the current max width (layout should already be broken)
+  let Some(last_line_width) = inline_layout
+    .lines()
+    .last()
+    .map(|line| line.runs().map(|run| run.advance()).sum::<f32>())
+  else {
+    return false;
+  };
+
+  // Check if the last line is too short (less than 1/3 of container width)
+  if last_line_width >= max_width / 3.0 {
+    return false;
+  }
+
+  // Get original line count
+  let original_lines = inline_layout.lines().count();
+
+  // Only apply if we have more than one line (single line text doesn't need adjustment)
+  if original_lines <= 1 {
+    return false;
+  }
+
+  // Try reflowing with 90% width to redistribute words
+  let adjusted_width = max_width * 0.9;
+  break_lines(inline_layout, adjusted_width, None);
+  let adjusted_lines = inline_layout.lines().count();
+
+  // Use the adjusted width only if it doesn't add too many lines (at most 30% more)
+  let max_acceptable_lines = ((original_lines as f32) * 1.3).ceil() as usize;
+
+  if adjusted_lines <= max_acceptable_lines {
+    true
+  } else {
+    // Reset to original max_width
+    break_lines(inline_layout, max_width, None);
+    false
   }
 }
 

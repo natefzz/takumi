@@ -523,7 +523,7 @@ fn fixtures_text_wrap_nowrap() {
         tw: None,
         style: Some(
           StyleBuilder::default()
-            .text_wrap(Some(TextWrapMode::Wrap))
+            .text_wrap_mode(Some(TextWrapMode::Wrap))
             .build()
             .unwrap(),
         ),
@@ -535,7 +535,7 @@ fn fixtures_text_wrap_nowrap() {
         tw: None,
         style: Some(
           StyleBuilder::default()
-            .text_wrap(Some(TextWrapMode::NoWrap))
+            .text_wrap_mode(Some(TextWrapMode::NoWrap))
             .build()
             .unwrap(),
         ),
@@ -647,7 +647,7 @@ fn fixtures_text_ellipsis_text_nowrap() {
         style: Some(
           StyleBuilder::default()
             .text_overflow(TextOverflow::Ellipsis)
-            .text_wrap(Some(TextWrapMode::NoWrap))
+            .text_wrap_mode(Some(TextWrapMode::NoWrap))
             .border_width(Some(Sides([Px(1.0); 4])))
             .border_color(Some(ColorInput::Value(Color([255, 0, 0, 255]))))
             .word_break(WordBreak::BreakAll)
@@ -665,4 +665,68 @@ fn fixtures_text_ellipsis_text_nowrap() {
     container.into(),
     "tests/fixtures/text_ellipsis_text_nowrap.webp",
   );
+}
+
+#[test]
+fn fixtures_text_wrap_style_all() {
+  let container = ContainerNode {
+    preset: None,
+    tw: None,
+    style: Some(
+      StyleBuilder::default()
+        .background_color(ColorInput::Value(Color([255, 255, 255, 255])))
+        .font_size(Some(Px(48.0)))
+        .width(Percentage(100.0))
+        .height(Percentage(100.0))
+        .display(Display::Flex)
+        .flex_direction(FlexDirection::Column)
+        .gap(SpacePair::from_single(Px(40.0)))
+        .padding(Sides([Px(20.0); 4]))
+        .build()
+        .unwrap(),
+    ),
+    children: Some(vec![
+      // Auto (default) - standard line breaking
+      TextNode {
+        preset: None,
+        tw: None,
+        style: Some(
+          StyleBuilder::default()
+            .text_wrap_style(Some(TextWrapStyle::Auto))
+            .build()
+            .unwrap(),
+        ),
+        text: "Auto: The quick brown fox jumps over the lazy dog.".to_string(),
+      }
+      .into(),
+      // Balance - evenly distributes text across lines
+      TextNode {
+        preset: None,
+        tw: None,
+        style: Some(
+          StyleBuilder::default()
+            .text_wrap_style(Some(TextWrapStyle::Balance))
+            .build()
+            .unwrap(),
+        ),
+        text: "Balance: The quick brown fox jumps over the lazy dog.".to_string(),
+      }
+      .into(),
+      // Pretty - avoids orphans on the last line (text ends with short word "it")
+      TextNode {
+        preset: None,
+        tw: None,
+        style: Some(
+          StyleBuilder::default()
+            .text_wrap_style(Some(TextWrapStyle::Pretty))
+            .build()
+            .unwrap(),
+        ),
+        text: "Pretty: The quick brown fox jumps over the lazy dog and catches it.".to_string(),
+      }
+      .into(),
+    ]),
+  };
+
+  run_style_width_test(container.into(), "tests/fixtures/text_wrap_style_all.webp");
 }

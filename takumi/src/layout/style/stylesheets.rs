@@ -185,7 +185,8 @@ define_style!(
   white_space: WhiteSpace where inherit = true,
   white_space_collapse: Option<WhiteSpaceCollapse> where inherit = true,
   text_wrap_mode: Option<TextWrapMode> where inherit = true,
-  text_wrap: Option<TextWrapMode> where inherit = true,
+  text_wrap_style: Option<TextWrapStyle> where inherit = true,
+  text_wrap: TextWrap where inherit = true,
 );
 
 /// Sized font style with resolved font size and line height.
@@ -316,7 +317,7 @@ impl InheritedStyle {
   pub(crate) fn text_wrap_mode_and_line_clamp(&self) -> (TextWrapMode, Option<Cow<'_, LineClamp>>) {
     let mut text_wrap_mode = self
       .text_wrap_mode
-      .or(self.text_wrap)
+      .or(self.text_wrap.mode)
       .unwrap_or(self.white_space.text_wrap_mode);
 
     let mut line_clamp = self.line_clamp.as_ref().map(Cow::Borrowed);

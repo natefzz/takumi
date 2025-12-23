@@ -89,17 +89,17 @@ impl<'i> FromCss<'i> for WhiteSpace {
     }
 
     // Otherwise parse individual components
-    let mut text_wrap_mode = None;
-    let mut white_space_collapse = None;
+    let mut text_wrap_mode = TextWrapMode::default();
+    let mut white_space_collapse = WhiteSpaceCollapse::default();
 
     while !input.is_exhausted() {
       if let Ok(value) = input.try_parse(TextWrapMode::from_css) {
-        text_wrap_mode = Some(value);
+        text_wrap_mode = value;
         continue;
       }
 
       if let Ok(value) = input.try_parse(WhiteSpaceCollapse::from_css) {
-        white_space_collapse = Some(value);
+        white_space_collapse = value;
         continue;
       }
 
@@ -107,8 +107,8 @@ impl<'i> FromCss<'i> for WhiteSpace {
     }
 
     Ok(WhiteSpace {
-      text_wrap_mode: text_wrap_mode.unwrap_or_default(),
-      white_space_collapse: white_space_collapse.unwrap_or_default(),
+      text_wrap_mode,
+      white_space_collapse,
     })
   }
 }

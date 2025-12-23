@@ -7,11 +7,11 @@ use crate::{
     Viewport,
     inline::{InlineBrush, InlineContentKind, break_lines, create_inline_constraint},
     node::Node,
-    style::{InheritedStyle, SizedFontStyle, Style, tw::TailwindValues},
+    style::{InheritedStyle, SizedFontStyle, Style, TextWrapStyle, tw::TailwindValues},
   },
   rendering::{
     Canvas, MaxHeight, RenderContext, apply_text_transform, apply_white_space_collapse,
-    inline_drawing::draw_inline_layout, make_ellipsis_text,
+    inline_drawing::draw_inline_layout, make_balanced_text, make_ellipsis_text, make_pretty_text,
   },
 };
 
@@ -170,8 +170,10 @@ fn create_text_only_layout(
     return inline_layout;
   };
 
+  let last_char_index = last_line.text_range().end;
+
   let should_handle_ellipsis =
-    font_style.parent.should_handle_ellipsis() && last_line.text_range().end < text.len();
+    font_style.parent.should_handle_ellipsis() && last_char_index < text.len();
 
   if should_handle_ellipsis {
     let truncated = make_ellipsis_text(
@@ -186,6 +188,20 @@ fn create_text_only_layout(
     return create_text_only_layout(
       &truncated, context, max_width, max_height, font_style, false,
     );
+  }
+
+  let text_wrap_style = context
+    .style
+    .text_wrap_style
+    .unwrap_or(context.style.text_wrap.style);
+  let line_count = inline_layout.lines().count();
+
+  if text_wrap_style == TextWrapStyle::Balance {
+    make_balanced_text(&mut inline_layout, max_width, line_count);
+  }
+
+  if text_wrap_style == TextWrapStyle::Pretty {
+    make_pretty_text(&mut inline_layout, max_width);
   }
 
   inline_layout.align(
