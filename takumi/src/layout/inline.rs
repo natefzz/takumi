@@ -1,15 +1,26 @@
 use std::borrow::Cow;
 
+use parley::InlineBox;
 use taffy::{AvailableSpace, Size};
 
 use crate::{
-  layout::{node::Node, style::Color},
-  rendering::{MaxHeight, RenderContext},
+  GlobalContext,
+  layout::{
+    node::Node,
+    style::{Color, SizedFontStyle},
+  },
+  rendering::{MaxHeight, RenderContext, apply_text_transform, apply_white_space_collapse},
 };
 
-pub(crate) enum InlineItem<'a, N: Node<N>> {
-  Node(&'a N),
-  Text(Cow<'a, str>),
+pub(crate) enum InlineItem<'c, 'g, N: Node<N>> {
+  Node {
+    node: &'c N,
+    context: &'c RenderContext<'g>,
+  },
+  Text {
+    text: Cow<'c, str>,
+    context: &'c RenderContext<'g>,
+  },
 }
 
 pub enum InlineContentKind {
@@ -33,6 +44,82 @@ impl Default for InlineBrush {
       decoration_color: Color::black(),
       stroke_color: Color::black(),
     }
+  }
+}
+
+pub(crate) fn measure_inline_layout<
+  'c,
+  'g: 'c,
+  N: Node<N> + 'c,
+  I: Iterator<Item = InlineItem<'c, 'g, N>>,
+>(
+  items: I,
+  available_space: Size<AvailableSpace>,
+  max_width: f32,
+  max_height: Option<MaxHeight>,
+  font_style: &SizedFontStyle,
+  global: &'g GlobalContext,
+) -> Size<f32> {
+  let mut boxes = Vec::new();
+
+  let (mut layout, _) = global
+    .font_context
+    .tree_builder(font_style.into(), |builder| {
+      let mut idx = 0;
+      let mut index_pos = 0;
+
+      for item in items {
+        match item {
+          InlineItem::Text { text, context } => {
+            let transformed = apply_text_transform(&text, context.style.text_transform);
+            let collapsed =
+              apply_white_space_collapse(&transformed, font_style.parent.white_space_collapse());
+
+            builder.push_style_span((&context.style.to_sized_font_style(context)).into());
+            builder.push_text(&collapsed);
+            builder.pop_style_span();
+
+            index_pos += collapsed.len();
+          }
+          InlineItem::Node { node, context } => {
+            let size = node.measure(
+              context,
+              available_space,
+              Size::NONE,
+              &taffy::Style::default(),
+            );
+
+            boxes.push(size);
+
+            builder.push_inline_box(InlineBox {
+              index: index_pos,
+              id: idx,
+              width: size.width,
+              height: size.height,
+            });
+
+            idx += 1;
+          }
+        }
+      }
+    });
+
+  break_lines(&mut layout, max_width, max_height);
+
+  let (max_run_width, total_height) =
+    layout
+      .lines()
+      .fold((0.0, 0.0), |(max_run_width, total_height), line| {
+        let metrics = line.metrics();
+        (
+          metrics.advance.max(max_run_width),
+          total_height + metrics.line_height,
+        )
+      });
+
+  Size {
+    width: max_run_width.ceil().min(max_width),
+    height: total_height.ceil(),
   }
 }
 

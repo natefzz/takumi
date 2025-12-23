@@ -6,7 +6,10 @@ use taffy::{AvailableSpace, Layout, NodeId, Size, TaffyTree};
 use crate::{
   GlobalContext, Result,
   layout::{
-    inline::{InlineContentKind, InlineItem, InlineLayout, break_lines, create_inline_constraint},
+    inline::{
+      InlineContentKind, InlineItem, InlineLayout, break_lines, create_inline_constraint,
+      measure_inline_layout,
+    },
     node::Node,
     style::{Display, InheritedStyle, SizedFontStyle},
   },
@@ -237,66 +240,14 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
 
       let font_style = self.context.style.to_sized_font_style(&self.context);
 
-      let mut boxes = Vec::new();
-
-      let (mut layout, _) =
-        self
-          .context
-          .global
-          .font_context
-          .tree_builder((&font_style).into(), |builder| {
-            let mut idx = 0;
-            let mut index_pos = 0;
-
-            for (item, context) in self.inline_items_iter() {
-              match item {
-                InlineItem::Text(text) => {
-                  builder.push_style_span((&context.style.to_sized_font_style(context)).into());
-                  builder.push_text(&text);
-                  builder.pop_style_span();
-
-                  index_pos += text.len();
-                }
-                InlineItem::Node(node) => {
-                  let size = node.measure(
-                    context,
-                    available_space,
-                    Size::NONE,
-                    &taffy::Style::default(),
-                  );
-
-                  boxes.push(size);
-
-                  builder.push_inline_box(InlineBox {
-                    index: index_pos,
-                    id: idx,
-                    width: size.width,
-                    height: size.height,
-                  });
-
-                  idx += 1;
-                }
-              }
-            }
-          });
-
-      break_lines(&mut layout, max_width, max_height);
-
-      let (max_run_width, total_height) =
-        layout
-          .lines()
-          .fold((0.0, 0.0), |(max_run_width, total_height), line| {
-            let metrics = line.metrics();
-            (
-              metrics.advance.max(max_run_width),
-              total_height + metrics.line_height,
-            )
-          });
-
-      return taffy::Size {
-        width: max_run_width.ceil().min(max_width),
-        height: total_height.ceil(),
-      };
+      return measure_inline_layout(
+        self.inline_items_iter(),
+        available_space,
+        max_width,
+        max_height,
+        &font_style,
+        self.context.global,
+      );
     }
 
     assert_ne!(
@@ -332,9 +283,9 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
         .tree_builder((&font_style).into(), |builder| {
           let mut index_pos = 0;
 
-          for (item, context) in self.inline_items_iter() {
+          for item in self.inline_items_iter() {
             match item {
-              InlineItem::Text(text) => {
+              InlineItem::Text { text, context } => {
                 let text_style = context.style.to_sized_font_style(context);
 
                 builder.push_style_span((&text_style).into());
@@ -345,7 +296,7 @@ impl<'g, N: Node<N>> NodeTree<'g, N> {
 
                 text_spans.push((text, text_style));
               }
-              InlineItem::Node(node) => {
+              InlineItem::Node { node, context } => {
                 let size = node.measure(
                   context,
                   Size {
@@ -497,11 +448,11 @@ fn create_ellipsis_layout<N: Node<N>>(
 /// Iterator for traversing inline items in document order
 pub(crate) struct InlineItemIterator<'n, 'g, N: Node<N>> {
   stack: Vec<(&'n NodeTree<'g, N>, usize)>, // (node, depth)
-  current_node_content: Option<(InlineItem<'n, N>, &'n RenderContext<'g>)>,
+  current_node_content: Option<InlineItem<'n, 'g, N>>,
 }
 
 impl<'n, 'g, N: Node<N>> Iterator for InlineItemIterator<'n, 'g, N> {
-  type Item = (InlineItem<'n, N>, &'n RenderContext<'g>);
+  type Item = InlineItem<'n, 'g, N>;
 
   fn next(&mut self) -> Option<Self::Item> {
     loop {
@@ -529,11 +480,17 @@ impl<'n, 'g, N: Node<N>> Iterator for InlineItemIterator<'n, 'g, N> {
         match inline_content {
           InlineContentKind::Box => {
             if let Some(n) = &node.node {
-              self.current_node_content = Some((InlineItem::Node(n), &node.context));
+              self.current_node_content = Some(InlineItem::Node {
+                node: n,
+                context: &node.context,
+              });
             }
           }
           InlineContentKind::Text(text) => {
-            self.current_node_content = Some((InlineItem::Text(text.into()), &node.context));
+            self.current_node_content = Some(InlineItem::Text {
+              text: text.into(),
+              context: &node.context,
+            });
           }
         }
       }

@@ -5,7 +5,10 @@ use crate::{
   Result,
   layout::{
     Viewport,
-    inline::{InlineBrush, InlineContentKind, break_lines, create_inline_constraint},
+    inline::{
+      InlineContentKind, InlineItem, InlineLayout, break_lines, create_inline_constraint,
+      measure_inline_layout,
+    },
     node::Node,
     style::{InheritedStyle, SizedFontStyle, Style, TextWrapStyle, tw::TailwindValues},
   },
@@ -103,35 +106,24 @@ impl<Nodes: Node<Nodes>> Node<Nodes> for TextNode {
     known_dimensions: Size<Option<f32>>,
     _style: &taffy::Style,
   ) -> Size<f32> {
+    let inline_content: InlineItem<'_, '_, Nodes> = InlineItem::Text {
+      text: self.text.as_str().into(),
+      context,
+    };
+
     let (max_width, max_height) =
       create_inline_constraint(context, available_space, known_dimensions);
 
     let font_style = context.style.to_sized_font_style(context);
 
-    let layout = create_text_only_layout(
-      &self.text,
-      context,
+    measure_inline_layout(
+      std::iter::once(inline_content),
+      available_space,
       max_width,
       max_height,
       &font_style,
-      true,
-    );
-
-    let (max_run_width, total_height) =
-      layout
-        .lines()
-        .fold((0.0, 0.0), |(max_run_width, total_height), line| {
-          let metrics = line.metrics();
-          (
-            metrics.advance.max(max_run_width),
-            total_height + metrics.line_height,
-          )
-        });
-
-    taffy::Size {
-      width: max_run_width.ceil().min(max_width),
-      height: total_height.ceil(),
-    }
+      context.global,
+    )
   }
 
   fn get_style(&self) -> Option<&Style> {
@@ -146,7 +138,7 @@ fn create_text_only_layout(
   max_height: Option<MaxHeight>,
   font_style: &SizedFontStyle<'_>,
   measure_only: bool,
-) -> parley::Layout<InlineBrush> {
+) -> InlineLayout {
   let (mut inline_layout, text) = {
     let transformed = apply_text_transform(text, context.style.text_transform);
     let collapsed =
