@@ -47,7 +47,23 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Visitor<'de>
   type Value = CssValue<T, DEFAULT_INHERIT>;
 
   fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-    formatter.write_str("a CSS value (string, number, 'initial', or 'inherit')")
+    if let Some(description) = T::value_description() {
+      write!(
+        formatter,
+        "{}; also accepts 'initial' or 'inherit'",
+        description
+      )
+    } else {
+      let type_name = std::any::type_name::<T>()
+        .rsplit("::")
+        .next()
+        .unwrap_or("value");
+      write!(
+        formatter,
+        "a valid value for {}; also accepts 'initial' or 'inherit'",
+        type_name
+      )
+    }
   }
 
   fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
@@ -68,7 +84,7 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Visitor<'de>
   {
     T::from_str(&value.to_string())
       .map(CssValue::Value)
-      .map_err(E::custom)
+      .map_err(|_| E::invalid_type(de::Unexpected::Signed(value), &self))
   }
 
   fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
@@ -77,7 +93,7 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Visitor<'de>
   {
     T::from_str(&value.to_string())
       .map(CssValue::Value)
-      .map_err(E::custom)
+      .map_err(|_| E::invalid_type(de::Unexpected::Unsigned(value), &self))
   }
 
   fn visit_f64<E>(self, value: f64) -> Result<Self::Value, E>
@@ -86,7 +102,7 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Visitor<'de>
   {
     T::from_str(&value.to_string())
       .map(CssValue::Value)
-      .map_err(E::custom)
+      .map_err(|_| E::invalid_type(de::Unexpected::Float(value), &self))
   }
 }
 
@@ -120,7 +136,23 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Visitor<'de>
   type Value = CssValue<Option<T>, DEFAULT_INHERIT>;
 
   fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-    formatter.write_str("a CSS value (string, number, 'none', 'initial', or 'inherit')")
+    if let Some(description) = T::value_description() {
+      write!(
+        formatter,
+        "{}; also accepts 'none', 'initial' or 'inherit'",
+        description
+      )
+    } else {
+      let type_name = std::any::type_name::<T>()
+        .rsplit("::")
+        .next()
+        .unwrap_or("value");
+      write!(
+        formatter,
+        "a valid value for {}; also accepts 'none', 'initial' or 'inherit'",
+        type_name
+      )
+    }
   }
 
   fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
@@ -142,7 +174,7 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Visitor<'de>
   {
     T::from_str(&value.to_string())
       .map(|v| CssValue::Value(Some(v)))
-      .map_err(E::custom)
+      .map_err(|_| E::invalid_type(de::Unexpected::Signed(value), &self))
   }
 
   fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
@@ -151,7 +183,7 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Visitor<'de>
   {
     T::from_str(&value.to_string())
       .map(|v| CssValue::Value(Some(v)))
-      .map_err(E::custom)
+      .map_err(|_| E::invalid_type(de::Unexpected::Unsigned(value), &self))
   }
 
   fn visit_f64<E>(self, value: f64) -> Result<Self::Value, E>
@@ -160,7 +192,7 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Visitor<'de>
   {
     T::from_str(&value.to_string())
       .map(|v| CssValue::Value(Some(v)))
-      .map_err(E::custom)
+      .map_err(|_| E::invalid_type(de::Unexpected::Float(value), &self))
   }
 }
 

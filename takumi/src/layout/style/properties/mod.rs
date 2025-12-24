@@ -109,6 +109,12 @@ pub trait FromCss<'i> {
 
     Self::from_css(&mut parser)
   }
+
+  /// Returns a human-readable description of valid values for this type.
+  /// Used in error messages to help developers understand what values are accepted.
+  fn value_description() -> Option<&'static str> {
+    None
+  }
 }
 
 /// Macro to implement From trait for Taffy enum conversions.
@@ -153,8 +159,16 @@ impl<'i> FromCss<'i> for ObjectFit {
       "cover" => Ok(ObjectFit::Cover),
       "scale-down" => Ok(ObjectFit::ScaleDown),
       "none" => Ok(ObjectFit::None),
-      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+      _ => Err(location.new_custom_error(Cow::Owned(format!(
+        "invalid value '{}', expected {}",
+        token,
+        Self::value_description().unwrap_or("a valid value for ObjectFit")
+      )))),
     }
+  }
+
+  fn value_description() -> Option<&'static str> {
+    Some("a string like 'fill', 'contain', 'cover', 'scale-down' or 'none'")
   }
 }
 
@@ -191,8 +205,16 @@ impl<'i> FromCss<'i> for BackgroundClip {
       "content-box" => Ok(BackgroundClip::ContentBox),
       "text" => Ok(BackgroundClip::Text),
       "border-area" => Ok(BackgroundClip::BorderArea),
-      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+      _ => Err(location.new_custom_error(Cow::Owned(format!(
+        "invalid value '{}', expected {}",
+        token,
+        Self::value_description().unwrap_or("a valid value for BackgroundClip")
+      )))),
     }
+  }
+
+  fn value_description() -> Option<&'static str> {
+    Some("a string like 'border-box', 'text' or 'border-area'")
   }
 }
 
@@ -253,8 +275,16 @@ impl<'i> FromCss<'i> for BoxSizing {
     match_ignore_ascii_case! { token,
       "content-box" => Ok(BoxSizing::ContentBox),
       "border-box" => Ok(BoxSizing::BorderBox),
-      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+      _ => Err(location.new_custom_error(Cow::Owned(format!(
+        "invalid value '{}', expected {}",
+        token,
+        Self::value_description().unwrap_or("a valid value for BoxSizing")
+      )))),
     }
+  }
+
+  fn value_description() -> Option<&'static str> {
+    Some("a string like 'content-box' or 'border-box'")
   }
 }
 
@@ -292,8 +322,16 @@ impl<'i> FromCss<'i> for TextAlign {
       "justify" => Ok(TextAlign::Justify),
       "start" => Ok(TextAlign::Start),
       "end" => Ok(TextAlign::End),
-      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+      _ => Err(location.new_custom_error(Cow::Owned(format!(
+        "invalid value '{}', expected {}",
+        token,
+        Self::value_description().unwrap_or("a valid value for TextAlign")
+      )))),
     }
+  }
+
+  fn value_description() -> Option<&'static str> {
+    Some("a string like 'left', 'center', 'justify' or 'start'")
   }
 }
 
@@ -329,8 +367,16 @@ impl<'i> FromCss<'i> for Position {
     match_ignore_ascii_case! { token,
       "relative" => Ok(Position::Relative),
       "absolute" => Ok(Position::Absolute),
-      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+      _ => Err(location.new_custom_error(Cow::Owned(format!(
+        "invalid value '{}', expected {}",
+        token,
+        Self::value_description().unwrap_or("a valid value for Position")
+      )))),
     }
+  }
+
+  fn value_description() -> Option<&'static str> {
+    Some("a string like 'relative' or 'absolute'")
   }
 }
 
@@ -362,8 +408,16 @@ impl<'i> FromCss<'i> for FlexDirection {
       "column" => Ok(FlexDirection::Column),
       "row-reverse" => Ok(FlexDirection::RowReverse),
       "column-reverse" => Ok(FlexDirection::ColumnReverse),
-      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+      _ => Err(location.new_custom_error(Cow::Owned(format!(
+        "invalid value '{}', expected {}",
+        token,
+        Self::value_description().unwrap_or("a valid value for FlexDirection")
+      )))),
     }
+  }
+
+  fn value_description() -> Option<&'static str> {
+    Some("a string like 'row', 'column', 'row-reverse', or 'column-reverse'")
   }
 }
 
@@ -428,8 +482,16 @@ impl<'i> FromCss<'i> for JustifyContent {
       "space-between" => Ok(JustifyContent::SpaceBetween),
       "space-around" => Ok(JustifyContent::SpaceAround),
       "space-evenly" => Ok(JustifyContent::SpaceEvenly),
-      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+      _ => Err(location.new_custom_error(Cow::Owned(format!(
+        "invalid value '{}', expected {}",
+        token,
+        Self::value_description().unwrap_or("a valid value for JustifyContent")
+      )))),
     }
+  }
+
+  fn value_description() -> Option<&'static str> {
+    Some("a string like 'start', 'flex-start', 'center' or 'space-between'")
   }
 }
 
@@ -488,8 +550,16 @@ impl<'i> FromCss<'i> for Display {
       "grid" => Ok(Display::Grid),
       "inline" => Ok(Display::Inline),
       "block" => Ok(Display::Block),
-      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+      _ => Err(location.new_custom_error(Cow::Owned(format!(
+        "invalid value '{}', expected {}",
+        token,
+        Self::value_description().unwrap_or("a valid value for Display")
+      )))),
     }
+  }
+
+  fn value_description() -> Option<&'static str> {
+    Some("a string like 'none', 'flex', 'grid', 'inline' or 'block'")
   }
 }
 
@@ -569,8 +639,16 @@ impl<'i> FromCss<'i> for AlignItems {
       "center" => Ok(AlignItems::Center),
       "baseline" => Ok(AlignItems::Baseline),
       "stretch" => Ok(AlignItems::Stretch),
-      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+      _ => Err(location.new_custom_error(Cow::Owned(format!(
+        "invalid value '{}', expected {}",
+        token,
+        Self::value_description().unwrap_or("a valid value for AlignItems")
+      )))),
     }
+  }
+
+  fn value_description() -> Option<&'static str> {
+    Some("a string like 'start', 'flex-start' or 'center'")
   }
 }
 
@@ -618,8 +696,16 @@ impl<'i> FromCss<'i> for FlexWrap {
       "nowrap" => Ok(FlexWrap::NoWrap),
       "wrap" => Ok(FlexWrap::Wrap),
       "wrap-reverse" => Ok(FlexWrap::WrapReverse),
-      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+      _ => Err(location.new_custom_error(Cow::Owned(format!(
+        "invalid value '{}', expected {}",
+        token,
+        Self::value_description().unwrap_or("a valid value for FlexWrap")
+      )))),
     }
+  }
+
+  fn value_description() -> Option<&'static str> {
+    Some("a string like 'nowrap', 'wrap', or 'wrap-reverse'")
   }
 }
 
@@ -649,8 +735,16 @@ impl<'i> FromCss<'i> for TextTransform {
       "uppercase" => Ok(TextTransform::Uppercase),
       "lowercase" => Ok(TextTransform::Lowercase),
       "capitalize" => Ok(TextTransform::Capitalize),
-      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+      _ => Err(location.new_custom_error(Cow::Owned(format!(
+        "invalid value '{}', expected {}",
+        token,
+        Self::value_description().unwrap_or("a valid value for TextTransform")
+      )))),
     }
+  }
+
+  fn value_description() -> Option<&'static str> {
+    Some("a string like 'none', 'uppercase', 'lowercase', or 'capitalize'")
   }
 }
 
@@ -758,8 +852,16 @@ impl<'i> FromCss<'i> for ImageScalingAlgorithm {
       "auto" => Ok(ImageScalingAlgorithm::Auto),
       "smooth" => Ok(ImageScalingAlgorithm::Smooth),
       "pixelated" => Ok(ImageScalingAlgorithm::Pixelated),
-      _ => Err(location.new_unexpected_token_error(Token::Ident(token.clone()))),
+      _ => Err(location.new_custom_error(Cow::Owned(format!(
+        "invalid value '{}', expected {}",
+        token,
+        Self::value_description().unwrap_or("a valid value for ImageScalingAlgorithm")
+      )))),
     }
+  }
+
+  fn value_description() -> Option<&'static str> {
+    Some("a string like 'auto', 'smooth', or 'pixelated'")
   }
 }
 
