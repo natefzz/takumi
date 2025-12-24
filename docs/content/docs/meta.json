@@ -5,11 +5,19 @@
     "--- For LLMs ---",
     "[Leaf][llms.txt](https://takumi.kane.tw/llms.txt)",
     "[Brain][llms-full.txt](https://takumi.kane.tw/llms-full.txt)",
-    "--- For Human ---",
+    "--- Getting Started ---",
     "index",
-    "architecture",
     "migration",
-    "troubleshooting",
-    "reference"
+    "--- Guide ---",
+    "layout-engine",
+    "typography-and-fonts",
+    "persistent-images",
+    "--- Advanced ---",
+    "architecture",
+    "performance-and-optimization",
+    "--- Reference ---",
+    "reference",
+    "--- Community ---",
+    "troubleshooting"
   ]
 }

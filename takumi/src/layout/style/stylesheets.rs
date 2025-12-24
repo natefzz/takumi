@@ -304,10 +304,6 @@ impl InheritedStyle {
     ELLIPSIS_CHAR
   }
 
-  pub(crate) fn should_handle_ellipsis(&self) -> bool {
-    self.text_overflow == TextOverflow::Ellipsis || self.line_clamp.is_some()
-  }
-
   pub(crate) fn white_space_collapse(&self) -> WhiteSpaceCollapse {
     self
       .white_space_collapse

@@ -22,15 +22,7 @@
 
 //! Takumi is a library with different parts to render your React components to images. This crate contains the core logic for layout, rendering.
 //!
-//! Checkout the [Integrations](https://takumi.kane.tw/docs/integrations) page if you are looking for Node.js / WASM bindings.
-//!
-//! # Walkthrough
-//!
-//! Create a [`GlobalContext`](crate::GlobalContext) to store image resources, font caches, the instance should be reused to speed up the rendering.
-//!
-//! Then call [`render`](crate::rendering::render) with [`Node`](crate::layout::node::Node) and [`Viewport`](crate::layout::viewport::Viewport) to get [`RgbaImage`](image::RgbaImage).
-//!
-//! Theres a helper function [`write_image`](crate::rendering::write::write_image) to write the image to a destination implements [`Write`](std::io::Write) and [`Seek`](std::io::Seek).
+//! Checkout the [Quick Start](https://takumi.kane.tw/docs) if you are looking for napi-rs / WASM bindings.
 //!
 //! # Example
 //!
@@ -65,8 +57,6 @@
 //! let mut global = GlobalContext::default();
 //!
 //! // Load fonts
-//! // pass an optional [`FontInfoOverride`](parley::FontInfoOverride) to override the font's metadata,
-//! // and an optional [`GenericFamily`](parley::GenericFamily) to specify the generic family of the font.
 //! global.font_context.load_and_store(include_bytes!("../../assets/fonts/geist/Geist[wght].woff2"), None, None);
 //!
 //! // Create a viewport

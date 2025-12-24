@@ -1,0 +1,90 @@
+---
+title: Typography & Fonts
+description: font management and advanced text rendering.
+icon: Type
+---
+
+Takumi does not use system fonts. All fonts must be explicitly loaded into the `GlobalContext` to be available for rendering.
+
+For `@takumi-rs/core` (napi-rs version), [Geist](https://vercel.com/font) and Geist Mono are embedded by default.
+
+## Font
+
+It's recommended to declare fonts in global scope so Takumi can identify and cache them with [`WeakSet`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet) reference to the font object.
+
+```tsx twoslash
+/** @jsxImportSource react */
+// ---cut-before---
+import { ImageResponse } from "@takumi-rs/image-response";
+import type { Font } from "@takumi-rs/core";
+
+const interBuffer = await fetch("/path-to-inter.woff2").then((res) => res.arrayBuffer());
+
+const fonts: Font[] = [
+  {
+    name: "Inter",
+    data: interBuffer
+  }
+];
+
+export function GET() {
+  return new ImageResponse(<div />, {
+    fonts,
+  });
+}
+```
+
+### Variations & Features
+
+Thanks to underlying engine support, you can control font axes using the `font-variation-settings` CSS property, or `font-feature-settings` for OpenType features.
+
+For variable fonts, `font-weight` has the same effect as `font-variation-settings: "wght" <weight>`.
+
+```tsx
+<div style={{
+  fontFamily: "Geist",
+  fontVariationSettings: "'wght' 700, 'wdth' 150",
+  fontFeatureSettings: "ss01"
+}}>
+  Variable Font Text
+</div>
+```
+
+### Emoji Support (COLR)
+
+Takumi supports the COLR font format, which is commonly used for emojis like `Twemoji-COLR`.
+
+The file size is much smaller than rasterized emoji fonts like `Noto Color Emoji`.
+
+## Typography
+
+### Overflow Ellipsis
+
+When `text-overflow` is set to `ellipsis`, Takumi tries to match the expected `line-clamp` constraint or maximum container height.
+
+Setting `white-space: nowrap` is not required, which enables multiline ellipsis handling.
+
+```tsx
+<div style={{
+  textOverflow: "ellipsis",
+  lineClamp: 3,
+}}>
+  Super Long Text
+</div>
+```
+
+### RTL & Bidirectional Text
+
+Support for Right-to-Left (RTL) languages like Arabic or Hebrew is handled automatically by the underlying Parley engine.
+
+But currently there's no manual control over the direction of the text (see [issue #330](https://github.com/kane50613/takumi/issues/330)).
+
+### Wrapping
+
+Takumi supports both `balance` and `pretty` text wrapping. The algorithm is modified from [satori's implementation](https://github.com/vercel/satori/blob/2a0878a7f329bdba3a17ad68f71186a47add0dde/src/text/index.ts#L365).
+
+```tsx
+<div style={{ textWrap: "balance" }}>
+  Super Long Text
+</div>
+```

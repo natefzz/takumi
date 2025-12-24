@@ -1,0 +1,36 @@
+---
+title: Performance & Optimization
+description: Best practices for building high-performance rendering pipelines with Takumi.
+icon: Zap
+---
+
+Takumi is designed from the ground up for speed. However, as your node trees grow in complexity, following these best practices will ensure you get the most out of the engine.
+
+## The Renderer
+
+### Reuse the Renderer Instance
+
+For both `@takumi-rs/core` and `@takumi-rs/wasm`, the `Renderer` is the heart of Takumi's resource management. Try to reuse the renderer instance across multiple renderings.
+
+#### For ImageResponse
+
+An internal renderer instance is managed automatically, or you can pass your own renderer instance via `renderer` option.
+
+It's recommended to reuse the `font` and `persistentImage` object for internal [`WeakSet`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet) to identify the same font and image and avoid re-decoding.
+
+Refer to both [Typography & Fonts](/docs/typography-and-fonts) and [Persistent Images](/docs/persistent-images) for more details.
+
+### Preload Frequently Used Images
+
+Loading images from URLs or bytes during the rendering pass can be a bottleneck. Register [Persistent Images](/docs/persistent-images) to avoid re-decoding.
+
+### Parallel Rendering
+
+Always prefer `@takumi-rs/core` over `@takumi-rs/wasm` for utilizing multiple threads.
+
+## Component Design
+
+### Stack Filters in a Single Node
+
+A composition layer with the same size as viewport has to be created in order to apply filters and blurs, which incurs additional memory usage. 
+

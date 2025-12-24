@@ -4,7 +4,7 @@
 
 Takumi is a library with different parts to render your React components to images. This crate contains the core logic for layout, rendering.
 
-Checkout the [Integrations](https://takumi.kane.tw/docs/integrations) page if you are looking for Node.js / WASM bindings.
+Checkout the [Quick Start](https://takumi.kane.tw/docs) if you are looking for napi-rs / WASM bindings.
 
 ## Walkthrough
 

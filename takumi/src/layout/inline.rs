@@ -7,7 +7,7 @@ use crate::{
   GlobalContext,
   layout::{
     node::Node,
-    style::{Color, SizedFontStyle, TextWrapStyle},
+    style::{Color, SizedFontStyle, TextOverflow, TextWrapStyle},
     tree::NodeTree,
   },
   rendering::{
@@ -156,7 +156,7 @@ pub(crate) fn create_inline_layout<'c, 'g: 'c, N: Node<N> + 'c>(
   }
 
   // Handle ellipsis when text overflows
-  if style.parent.should_handle_ellipsis() {
+  if style.parent.text_overflow == TextOverflow::Ellipsis {
     let is_overflowing = layout
       .lines()
       .last()

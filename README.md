@@ -27,11 +27,11 @@ You can try out Takumi in [Playground](https://takumi.kane.tw/playground) withou
 
 ## Showcase
 
-- Takumi's Open Graph image is generated with Takumi [(source)](./example/twitter-images/components/og-image.tsx).
+- Takumi's Open Graph Image is generated with Takumi [(source)](./example/twitter-images/components/og-image.tsx).
 
   ![Takumi OG Image](./example/twitter-images/output/og-image.png)
 
-- X post og image clone [(source)](./example/twitter-images/components/x-post-image.tsx).
+- X Open Graph Image [(source)](./example/twitter-images/components/x-post-image.tsx).
 
   ![X OG Image](./example/twitter-images/output/x-post-image.png)
 
