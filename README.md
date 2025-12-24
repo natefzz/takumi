@@ -41,6 +41,16 @@ You can try out Takumi in [Playground](https://takumi.kane.tw/playground) withou
 
 - [(Unofficial) Takumi Playground](https://takumi-playground.kapadiya.net/) In-browser playground for designing and rendering Open Graph style images.
 
+## Contributing
+
+Contributions are welcome! Please feel free to open an [issue](https://github.com/kane50613/takumi/issues) or submit a pull request.
+
+You need to have Rust 1.88+ & Bun installed.
+
+```bash
+bun install
+```
+
 ## Credits
 
 Takumi wouldn't be possible without the following works:
