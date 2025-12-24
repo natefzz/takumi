@@ -166,19 +166,18 @@ const contentTypeMapping = {
 
 export class ImageResponse extends Response {
   constructor(component: ReactNode, options: ImageResponseOptions) {
+    options.format ??= "webp";
+
     const stream = createStream(component, options);
-    const headers = new Headers(options?.headers);
+    const headers = new Headers(options.headers);
 
     if (!headers.get("content-type")) {
-      headers.set(
-        "content-type",
-        contentTypeMapping[options?.format ?? "webp"],
-      );
+      headers.set("content-type", contentTypeMapping[options.format]);
     }
 
     super(stream, {
-      status: options?.status,
-      statusText: options?.statusText,
+      status: options.status,
+      statusText: options.statusText,
       headers,
     });
   }

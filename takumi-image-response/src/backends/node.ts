@@ -38,9 +38,9 @@ export type ImageResponseOptions =
   | ImageResponseOptionsWithRenderer
   | ImageResponseOptionsWithoutRenderer;
 
-const defaultOptions: ImageResponseOptions = {
+const defaultOptions = {
   format: "webp",
-};
+} as const satisfies ImageResponseOptions;
 
 async function getRenderer(options?: ImageResponseOptions) {
   if (options && "renderer" in options) {
@@ -137,19 +137,24 @@ const contentTypeMapping = {
 
 export class ImageResponse extends Response {
   constructor(component: ReactNode, options?: ImageResponseOptions) {
-    const stream = createStream(component, options);
-    const headers = new Headers(options?.headers);
+    const mergedOptions: ImageResponseOptions = {
+      ...defaultOptions,
+      ...options,
+    };
+
+    const stream = createStream(component, mergedOptions);
+    const headers = new Headers(mergedOptions.headers);
 
     if (!headers.get("content-type")) {
       headers.set(
         "content-type",
-        contentTypeMapping[options?.format ?? "webp"],
+        contentTypeMapping[mergedOptions.format ?? defaultOptions.format],
       );
     }
 
     super(stream, {
-      status: options?.status,
-      statusText: options?.statusText,
+      status: mergedOptions.status,
+      statusText: mergedOptions.statusText,
       headers,
     });
   }
