@@ -178,12 +178,10 @@ Since `ImageResponse` extends standard [Response](https://developer.mozilla.org/
 
 It comes with pre-bundled full axis (which means 100-900 weights available) [Geist](https://vercel.com/font) and Geist Mono as default fonts. [Tailwind CSS](/docs/tailwind-css) is also supported out of the box.
 
-<Tabs items={["Node.js", "WASM"]}>
-<Tab>
-```tsx twoslash
+```tsx tab="Next.js" twoslash
 /** @jsxImportSource react */
 // ---cut-before---
-import { ImageResponse } from "@takumi-rs/image-response";
+import { ImageResponse, type ImageResponseOptions } from "@takumi-rs/image-response";
 import { serve } from "bun";
 
 serve({
@@ -192,6 +190,9 @@ serve({
       width: 1200,
       height: 630,
       format: "webp",
+      headers: {
+        "Cache-Control": "public, max-age=3600",
+      },
     });
   },
 });
@@ -204,15 +205,14 @@ function Hello() {
   );
 }
 ```
-</Tab>
-<Tab>
-```tsx twoslash
+
+```tsx tab="WebAssembly" twoslash
 /** @jsxImportSource react */
 // ---cut-before---
 import { ImageResponse } from "@takumi-rs/image-response/wasm";
 import { serve } from "bun";
 
-  // Check the additional bundler setup section for more details.
+// Check the additional bundler setup section for more details.
 import module from "@takumi-rs/wasm/next";
 
 export default {
@@ -222,6 +222,9 @@ export default {
       height: 630,
       format: "webp",
       module,
+      headers: {
+        "Cache-Control": "public, max-age=3600",
+      },
     });
   },
 }
@@ -234,8 +237,6 @@ function Hello() {
   );
 }
 ```
-</Tab>
-</Tabs>
 
 ### Templates
 
