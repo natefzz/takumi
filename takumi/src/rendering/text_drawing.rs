@@ -173,7 +173,7 @@ pub(crate) fn draw_glyph(
           width: placement.width,
           height: placement.height,
         },
-        None,
+        canvas.constrains.last(),
         |x, y| {
           let alpha = mask[mask_index_from_coord(x, y, placement.width)];
 
