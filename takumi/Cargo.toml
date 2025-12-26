@@ -19,8 +19,9 @@ png = "0.18"
 data-url = "0.3"
 dashmap = "6.1"
 color = "0.3"
-thiserror = "2.0.17"
-rustc-hash = "2.1.1"
+thiserror = "2.0"
+rustc-hash = "2.1"
+wide = "1.1"
 
 [dependencies.fast_image_resize]
 version = "5.3"

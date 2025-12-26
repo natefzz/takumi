@@ -6,7 +6,7 @@
 use std::borrow::Cow;
 
 use image::{
-  GenericImageView, Pixel, Rgba, RgbaImage,
+  GenericImageView, Rgba, RgbaImage,
   imageops::{interpolate_bilinear, interpolate_nearest},
 };
 use smallvec::SmallVec;
@@ -544,8 +544,41 @@ pub(crate) fn blend_pixel(bottom: &mut Rgba<u8>, top: Rgba<u8>) {
       bottom.0[1] = fast_div_255(top.0[1] as u16 * src_a + bottom.0[1] as u16 * inv_a);
       bottom.0[2] = fast_div_255(top.0[2] as u16 * src_a + bottom.0[2] as u16 * inv_a);
     }
-    // Both have partial transparency: use standard blend
-    _ => bottom.blend(&top),
+    // Both have partial transparency: use integer-only blend
+    (dst_a, src_a) => {
+      // Alpha compositing: out_a = src_a + dst_a * (1 - src_a)
+      // Using integer math: out_a = src_a + dst_a - (dst_a * src_a) / 255
+      let src_a_u16 = src_a as u16;
+      let dst_a_u16 = dst_a as u16;
+      let out_a = src_a_u16 + dst_a_u16 - fast_div_255(dst_a_u16 * src_a_u16) as u16;
+
+      if out_a == 0 {
+        return;
+      }
+
+      // Premultiply RGB channels: premul = color * alpha
+      let src_r_pm = top.0[0] as u32 * src_a as u32;
+      let src_g_pm = top.0[1] as u32 * src_a as u32;
+      let src_b_pm = top.0[2] as u32 * src_a as u32;
+
+      let dst_r_pm = bottom.0[0] as u32 * dst_a as u32;
+      let dst_g_pm = bottom.0[1] as u32 * dst_a as u32;
+      let dst_b_pm = bottom.0[2] as u32 * dst_a as u32;
+
+      // Alpha compositing on premultiplied: out_pm = src_pm + dst_pm * (255 - src_a) / 255
+      let inv_src_a = 255 - src_a as u32;
+      let out_r_pm = src_r_pm + ((dst_r_pm * inv_src_a + 127) / 255);
+      let out_g_pm = src_g_pm + ((dst_g_pm * inv_src_a + 127) / 255);
+      let out_b_pm = src_b_pm + ((dst_b_pm * inv_src_a + 127) / 255);
+
+      // Unpremultiply: out = out_pm / out_a
+      let out_a_u32 = out_a as u32;
+
+      bottom.0[0] = ((out_r_pm + out_a_u32 / 2) / out_a_u32).min(255) as u8;
+      bottom.0[1] = ((out_g_pm + out_a_u32 / 2) / out_a_u32).min(255) as u8;
+      bottom.0[2] = ((out_b_pm + out_a_u32 / 2) / out_a_u32).min(255) as u8;
+      bottom.0[3] = out_a.min(255) as u8;
+    }
   }
 }
 
