@@ -47,23 +47,36 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Visitor<'de>
   type Value = CssValue<T, DEFAULT_INHERIT>;
 
   fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-    if let Some(description) = T::value_description() {
-      write!(
-        formatter,
-        "{}; also accepts 'initial' or 'inherit'",
-        description
-      )
+    let base_msg = if let Some(description) = T::value_description() {
+      description.to_string()
+    } else if let Some(values) = T::enum_values() {
+      format!("a value of {}", merge_enum_values(values))
     } else {
-      let type_name = std::any::type_name::<T>()
+      let type_name = std::any::type_name::<T>();
+
+      let display_name = type_name
         .rsplit("::")
         .next()
-        .unwrap_or("value");
-      write!(
-        formatter,
-        "a valid value for {}; also accepts 'initial' or 'inherit'",
-        type_name
+        .unwrap_or(type_name)
+        .chars()
+        .take_while(|&c| c.is_alphanumeric() || c == '_')
+        .collect::<String>();
+
+      format!(
+        "a valid value for {}",
+        if type_name.is_empty() {
+          type_name
+        } else {
+          display_name.as_str()
+        }
       )
-    }
+    };
+
+    write!(
+      formatter,
+      "{}; also accepts 'initial' or 'inherit'.",
+      base_msg
+    )
   }
 
   fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
@@ -74,7 +87,9 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Visitor<'de>
       "initial" => Ok(CssValue::Initial),
       "inherit" => Ok(CssValue::Inherit),
       "unset" => Ok(CssValue::Unset),
-      _ => T::from_str(value).map(CssValue::Value).map_err(E::custom),
+      _ => T::from_str(value)
+        .map(CssValue::Value)
+        .map_err(|_| E::invalid_value(de::Unexpected::Str(value), &self)),
     }
   }
 
@@ -136,23 +151,36 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Visitor<'de>
   type Value = CssValue<Option<T>, DEFAULT_INHERIT>;
 
   fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-    if let Some(description) = T::value_description() {
-      write!(
-        formatter,
-        "{}; also accepts 'none', 'initial' or 'inherit'",
-        description
-      )
+    let base_msg = if let Some(description) = T::value_description() {
+      description.to_string()
+    } else if let Some(values) = T::enum_values() {
+      format!("a value of {}", merge_enum_values(values))
     } else {
-      let type_name = std::any::type_name::<T>()
+      let type_name = std::any::type_name::<T>();
+
+      let display_name = type_name
         .rsplit("::")
         .next()
-        .unwrap_or("value");
-      write!(
-        formatter,
-        "a valid value for {}; also accepts 'none', 'initial' or 'inherit'",
-        type_name
+        .unwrap_or(type_name)
+        .chars()
+        .take_while(|&c| c.is_alphanumeric() || c == '_')
+        .collect::<String>();
+
+      format!(
+        "a valid value for {}",
+        if type_name.is_empty() {
+          type_name
+        } else {
+          display_name.as_str()
+        }
       )
-    }
+    };
+
+    write!(
+      formatter,
+      "{}; also accepts 'none', 'initial' or 'inherit'.",
+      base_msg
+    )
   }
 
   fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
@@ -164,7 +192,9 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Visitor<'de>
       "initial" => Ok(CssValue::Initial),
       "inherit" => Ok(CssValue::Inherit),
       "unset" => Ok(CssValue::Unset),
-      _ => T::from_str(value).map(|v| CssValue::Value(Some(v))).map_err(E::custom),
+      _ => T::from_str(value)
+        .map(|v| CssValue::Value(Some(v)))
+        .map_err(|_| E::invalid_value(de::Unexpected::Str(value), &self)),
     }
   }
 

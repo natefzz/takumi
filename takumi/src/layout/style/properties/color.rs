@@ -311,6 +311,12 @@ impl<'i, const DEFAULT_CURRENT_COLOR: bool> FromCss<'i> for ColorInput<DEFAULT_C
 
     Ok(ColorInput::Value(Color::from_css(input)?))
   }
+
+  fn value_description() -> Option<std::borrow::Cow<'static, str>> {
+    Some(std::borrow::Cow::Borrowed(
+      "'currentcolor' or a color value (hex, named color, rgb(), rgba(), hsl(), hsla())",
+    ))
+  }
 }
 
 impl<'i> FromCss<'i> for Color {
@@ -319,28 +325,38 @@ impl<'i> FromCss<'i> for Color {
     let position = input.position();
     let token = input.next()?;
 
+    // Helper to generate error messages
+    let make_error = |token: &Token| {
+      let value_desc = Self::value_description()
+        .map(|d| d.into_owned())
+        .unwrap_or_else(|| "a color value".to_string());
+      let token_str = match token {
+        Token::Ident(ident) => ident.to_string(),
+        Token::Hash(hash) | Token::IDHash(hash) => format!("#{}", hash),
+        Token::Number { value, .. } => value.to_string(),
+        Token::Dimension { value, unit, .. } => format!("{}{}", value, unit),
+        Token::Percentage { unit_value, .. } => format!("{}%", unit_value * 100.0),
+        Token::Function(name) => format!("{}()", name),
+        _ => format!("{:?}", token),
+      };
+      location.new_custom_error(std::borrow::Cow::Owned(format!(
+        "invalid value '{}', expected {}",
+        token_str, value_desc
+      )))
+    };
+
     match *token {
       Token::Hash(ref value) | Token::IDHash(ref value) => parse_hash_color(value.as_bytes())
         .map(|(r, g, b, a)| Color([r, g, b, (a * 255.0) as u8]))
-        .map_err(|_| {
-          location
-            .new_basic_unexpected_token_error(token.clone())
-            .into()
-        }),
+        .map_err(|_| make_error(&token)),
       Token::Ident(ref ident) => {
         if ident.eq_ignore_ascii_case("transparent") {
           return Ok(Color::transparent());
         }
 
-        let Ok((r, g, b)) = parse_named_color(ident) else {
-          return Err(
-            location
-              .new_basic_unexpected_token_error(token.clone())
-              .into(),
-          );
-        };
-
-        Ok(Color([r, g, b, 255]))
+        parse_named_color(ident)
+          .map(|(r, g, b)| Color([r, g, b, 255]))
+          .map_err(|_| make_error(&token))
       }
       Token::Function(_) => {
         // Have to clone to persist token, and allow input to be borrowed
@@ -359,15 +375,17 @@ impl<'i> FromCss<'i> for Color {
 
           parse_color(&function)
             .map(|color| Color(color.to_alpha_color::<Srgb>().to_rgba8().to_u8_array()))
-            .map_err(|_| location.new_basic_unexpected_token_error(token).into())
+            .map_err(|_| make_error(&token))
         })
       }
-      _ => Err(
-        location
-          .new_basic_unexpected_token_error(token.clone())
-          .into(),
-      ),
+      _ => Err(make_error(&token)),
     }
+  }
+
+  fn value_description() -> Option<std::borrow::Cow<'static, str>> {
+    Some(std::borrow::Cow::Borrowed(
+      "a color value (hex, named color, rgb(), rgba(), hsl(), hsla())",
+    ))
   }
 }
 

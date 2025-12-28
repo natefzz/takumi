@@ -1,7 +1,8 @@
 use cssparser::Parser;
+use std::borrow::Cow;
 use taffy::Rect;
 
-use crate::layout::style::{FromCss, Length, ParseResult};
+use crate::layout::style::{FromCss, Length, ParseResult, merge_enum_values};
 
 /// Represents the values for the four sides of a box (top, right, bottom, left).
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -58,6 +59,18 @@ impl<'i, T: Copy + for<'j> FromCss<'j>> FromCss<'i> for Sides<T> {
     };
 
     Ok(sides)
+  }
+
+  fn value_description() -> Option<Cow<'static, str>> {
+    if let Some(values) = T::enum_values() {
+      return Some(Cow::Owned(format!(
+        "1 ~ 4 values of {}",
+        merge_enum_values(values)
+      )));
+    }
+
+    // If no enum values, try using inner type's value_description (for complex types like LengthUnit)
+    T::value_description().map(|desc| Cow::Owned(format!("1 ~ 4 values of {}", desc)))
   }
 }
 

@@ -130,13 +130,18 @@ impl<const DEFAULT_AUTO: bool> From<f32> for Length<DEFAULT_AUTO> {
 
 impl<'i, const DEFAULT_AUTO: bool> FromCss<'i> for Length<DEFAULT_AUTO> {
   fn from_css(input: &mut Parser<'i, '_>) -> ParseResult<'i, Self> {
+    use std::borrow::Cow;
     let location = input.current_source_location();
     let token = input.next()?;
 
     match *token {
       Token::Ident(ref unit) => match_ignore_ascii_case! {&unit,
         "auto" => Ok(Self::Auto),
-        _ => Err(location.new_basic_unexpected_token_error(token.clone()).into()),
+        _ => Err(location.new_custom_error(Cow::Owned(format!(
+          "invalid value '{}', expected {}",
+          unit,
+          Self::value_description().unwrap_or(Cow::Borrowed("a valid length value"))
+        )))),
       },
       Token::Dimension {
         value, ref unit, ..
@@ -153,17 +158,37 @@ impl<'i, const DEFAULT_AUTO: bool> FromCss<'i> for Length<DEFAULT_AUTO> {
           "q" => Ok(Self::Q(value)),
           "pt" => Ok(Self::Pt(value)),
           "pc" => Ok(Self::Pc(value)),
-          _ => Err(location.new_basic_unexpected_token_error(token.clone()).into()),
+          _ => Err(location.new_custom_error(Cow::Owned(format!(
+            "invalid value '{}', expected {}",
+            unit,
+            Self::value_description().unwrap_or(Cow::Borrowed("a valid length value"))
+          )))),
         }
       }
       Token::Percentage { unit_value, .. } => Ok(Self::Percentage(unit_value * 100.0)),
       Token::Number { value, .. } => Ok(Self::Px(value)),
-      _ => Err(
-        location
-          .new_basic_unexpected_token_error(token.clone())
-          .into(),
-      ),
+      _ => {
+        let token_str = match token {
+          Token::Ident(name) => format!("{}", name),
+          Token::Hash(hash) => format!("#{}", hash),
+          Token::IDHash(hash) => format!("#{}", hash),
+          Token::Function(name) => format!("{}()", name),
+          _ => format!("{:?}", token),
+        };
+
+        Err(location.new_custom_error(Cow::Owned(format!(
+          "invalid value '{}', expected {}",
+          token_str,
+          Self::value_description().unwrap_or(Cow::Borrowed("a valid length value"))
+        ))))
+      }
     }
+  }
+
+  fn value_description() -> Option<std::borrow::Cow<'static, str>> {
+    Some(std::borrow::Cow::Borrowed(
+      "a length value with optional unit: auto, px, em, rem, vw, vh, cm, mm, in, q, pt, pc, or %",
+    ))
   }
 }
 
