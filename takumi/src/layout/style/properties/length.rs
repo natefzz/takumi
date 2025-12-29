@@ -1,6 +1,6 @@
 use std::ops::Neg;
 
-use cssparser::{Parser, Token, match_ignore_ascii_case};
+use cssparser::{Parser, ToCss, Token, match_ignore_ascii_case};
 use taffy::{CompactLength, Dimension, LengthPercentage, LengthPercentageAuto};
 
 use crate::{
@@ -168,13 +168,7 @@ impl<'i, const DEFAULT_AUTO: bool> FromCss<'i> for Length<DEFAULT_AUTO> {
       Token::Percentage { unit_value, .. } => Ok(Self::Percentage(unit_value * 100.0)),
       Token::Number { value, .. } => Ok(Self::Px(value)),
       _ => {
-        let token_str = match token {
-          Token::Ident(name) => format!("{}", name),
-          Token::Hash(hash) => format!("#{}", hash),
-          Token::IDHash(hash) => format!("#{}", hash),
-          Token::Function(name) => format!("{}()", name),
-          _ => format!("{:?}", token),
-        };
+        let token_str = token.to_css_string();
 
         Err(location.new_custom_error(Cow::Owned(format!(
           "invalid value '{}', expected {}",

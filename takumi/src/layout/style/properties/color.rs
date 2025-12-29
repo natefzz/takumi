@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use color::{Srgb, parse_color};
 use cssparser::{
-  Parser, Token,
+  Parser, ToCss, Token,
   color::{parse_hash_color, parse_named_color},
   match_ignore_ascii_case,
 };
@@ -330,15 +330,7 @@ impl<'i> FromCss<'i> for Color {
       let value_desc = Self::value_description()
         .map(|d| d.into_owned())
         .unwrap_or_else(|| "a color value".to_string());
-      let token_str = match token {
-        Token::Ident(ident) => ident.to_string(),
-        Token::Hash(hash) | Token::IDHash(hash) => format!("#{}", hash),
-        Token::Number { value, .. } => value.to_string(),
-        Token::Dimension { value, unit, .. } => format!("{}{}", value, unit),
-        Token::Percentage { unit_value, .. } => format!("{}%", unit_value * 100.0),
-        Token::Function(name) => format!("{}()", name),
-        _ => format!("{:?}", token),
-      };
+      let token_str = token.to_css_string();
       location.new_custom_error(std::borrow::Cow::Owned(format!(
         "invalid value '{}', expected {}",
         token_str, value_desc
