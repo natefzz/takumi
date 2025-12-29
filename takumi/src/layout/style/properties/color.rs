@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{borrow::Cow, fmt::Display};
 
 use color::{Srgb, parse_color};
 use cssparser::{
@@ -328,7 +328,7 @@ impl<'i> FromCss<'i> for Color {
     // Helper to generate error messages
     let make_error = |token: &Token| {
       let value_desc = Self::value_description()
-        .map(|d| d.into_owned())
+        .map(Cow::into_owned)
         .unwrap_or_else(|| "a color value".to_string());
       let token_str = token.to_css_string();
       location.new_custom_error(std::borrow::Cow::Owned(format!(
@@ -340,7 +340,7 @@ impl<'i> FromCss<'i> for Color {
     match *token {
       Token::Hash(ref value) | Token::IDHash(ref value) => parse_hash_color(value.as_bytes())
         .map(|(r, g, b, a)| Color([r, g, b, (a * 255.0) as u8]))
-        .map_err(|_| make_error(&token)),
+        .map_err(|_| make_error(token)),
       Token::Ident(ref ident) => {
         if ident.eq_ignore_ascii_case("transparent") {
           return Ok(Color::transparent());
@@ -348,7 +348,7 @@ impl<'i> FromCss<'i> for Color {
 
         parse_named_color(ident)
           .map(|(r, g, b)| Color([r, g, b, 255]))
-          .map_err(|_| make_error(&token))
+          .map_err(|_| make_error(token))
       }
       Token::Function(_) => {
         // Have to clone to persist token, and allow input to be borrowed
@@ -370,7 +370,7 @@ impl<'i> FromCss<'i> for Color {
             .map_err(|_| make_error(&token))
         })
       }
-      _ => Err(make_error(&token)),
+      _ => Err(make_error(token)),
     }
   }
 
