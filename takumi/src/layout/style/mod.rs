@@ -59,10 +59,10 @@ fn get_base_error_message<T: for<'i> FromCss<'i>>() -> String {
 
     format!(
       "a valid value for {}",
-      if type_name.is_empty() {
+      if display_name.is_empty() {
         type_name
       } else {
-        display_name.as_str()
+        &display_name
       }
     )
   }
