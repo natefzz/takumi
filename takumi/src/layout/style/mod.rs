@@ -41,37 +41,40 @@ impl<T, const DEFAULT_INHERIT: bool> CssValueVisitor<T, DEFAULT_INHERIT> {
   }
 }
 
+fn get_base_error_message<T: for<'i> FromCss<'i>>() -> String {
+  if let Some(description) = T::value_description() {
+    description.to_string()
+  } else if let Some(values) = T::enum_values() {
+    format!("a value of {}", merge_enum_values(values))
+  } else {
+    let type_name = std::any::type_name::<T>();
+
+    let display_name = type_name
+      .rsplit("::")
+      .next()
+      .unwrap_or(type_name)
+      .chars()
+      .take_while(|&c| c.is_alphanumeric() || c == '_')
+      .collect::<String>();
+
+    format!(
+      "a valid value for {}",
+      if type_name.is_empty() {
+        type_name
+      } else {
+        display_name.as_str()
+      }
+    )
+  }
+}
+
 impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Visitor<'de>
   for CssValueVisitor<T, DEFAULT_INHERIT>
 {
   type Value = CssValue<T, DEFAULT_INHERIT>;
 
   fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-    let base_msg = if let Some(description) = T::value_description() {
-      description.to_string()
-    } else if let Some(values) = T::enum_values() {
-      format!("a value of {}", merge_enum_values(values))
-    } else {
-      let type_name = std::any::type_name::<T>();
-
-      let display_name = type_name
-        .rsplit("::")
-        .next()
-        .unwrap_or(type_name)
-        .chars()
-        .take_while(|&c| c.is_alphanumeric() || c == '_')
-        .collect::<String>();
-
-      format!(
-        "a valid value for {}",
-        if type_name.is_empty() {
-          type_name
-        } else {
-          display_name.as_str()
-        }
-      )
-    };
-
+    let base_msg = get_base_error_message::<T>();
     write!(
       formatter,
       "{}; also accepts 'initial' or 'inherit'.",
@@ -151,31 +154,7 @@ impl<'de, T: for<'i> FromCss<'i>, const DEFAULT_INHERIT: bool> Visitor<'de>
   type Value = CssValue<Option<T>, DEFAULT_INHERIT>;
 
   fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-    let base_msg = if let Some(description) = T::value_description() {
-      description.to_string()
-    } else if let Some(values) = T::enum_values() {
-      format!("a value of {}", merge_enum_values(values))
-    } else {
-      let type_name = std::any::type_name::<T>();
-
-      let display_name = type_name
-        .rsplit("::")
-        .next()
-        .unwrap_or(type_name)
-        .chars()
-        .take_while(|&c| c.is_alphanumeric() || c == '_')
-        .collect::<String>();
-
-      format!(
-        "a valid value for {}",
-        if type_name.is_empty() {
-          type_name
-        } else {
-          display_name.as_str()
-        }
-      )
-    };
-
+    let base_msg = get_base_error_message::<T>();
     write!(
       formatter,
       "{}; also accepts 'none', 'initial' or 'inherit'.",
